@@ -1,20 +1,57 @@
 # MailChannels Python SDK
 
-Typed Python SDK for the MailChannels Email API.
+`mailchannels` is a typed Python SDK for the MailChannels Email API. It is
+designed to make the first send small and obvious while still exposing the parts
+of MailChannels that matter in production: queued sending through `/send-async`,
+sub-account management, templates, unsubscribe behavior, custom headers, and
+metrics.
+
+The SDK accepts familiar dictionary payloads for quick scripts and Pydantic
+models for codebases that prefer explicit runtime validation.
 
 ## Install
+
+Install the SDK with uv:
 
 ```bash
 uv add mailchannels
 ```
 
-For async HTTP support:
+The synchronous client uses `requests`. Async HTTP support is optional so
+applications that do not need it avoid an extra dependency:
 
 ```bash
 uv add "mailchannels[async]"
 ```
 
+## Configure The SDK
+
+For small applications and scripts, set the module-level API key once and use
+the top-level resources. This mirrors the style of SDKs such as Resend and keeps
+common email sends readable.
+
+```python
+import mailchannels
+
+mailchannels.api_key = "YOUR-API-KEY"
+```
+
+For services that send on behalf of multiple accounts, create explicit clients.
+Each client carries its own API key, which is useful when parent-account and
+sub-account credentials are both active in the same process.
+
+```python
+import mailchannels
+
+parent_client = mailchannels.Client(api_key="PARENT-ACCOUNT-API-KEY")
+sub_account_client = mailchannels.Client(api_key="SUB-ACCOUNT-API-KEY")
+```
+
 ## Send An Email
+
+The quickest path is `Emails.send()`. It performs a synchronous HTTP request to
+MailChannels and returns the API response after the message has been accepted.
+Use this when you want immediate validation feedback from the send endpoint.
 
 ```python
 import mailchannels
@@ -33,10 +70,32 @@ email = mailchannels.Emails.send(
 print(email)
 ```
 
-## Queue An Email
+The SDK normalizes this compact payload into the MailChannels send shape. For
+advanced messages, you can pass MailChannels-native `personalizations` and
+`content` directly.
 
-MailChannels has a first-class asynchronous processing endpoint. Use `queue` to
-submit to `/send-async` and return as soon as MailChannels accepts the request.
+```python
+email = mailchannels.Emails.send(
+    {
+        "from": {"email": "sender@example.com"},
+        "personalizations": [
+            {"to": [{"email": "recipient@example.net"}]},
+        ],
+        "subject": "Native payload",
+        "content": [
+            {"type": "text/plain", "value": "Plain text body"},
+            {"type": "text/html", "value": "<strong>HTML body</strong>"},
+        ],
+    }
+)
+```
+
+## Queue An Email With `/send-async`
+
+MailChannels has a first-class asynchronous processing endpoint. Use
+`Emails.queue()` when your application should hand the message to MailChannels
+quickly and continue without waiting for the regular send path. The payload is
+the same as `Emails.send()`, but the SDK posts it to `/send-async`.
 
 ```python
 queued = mailchannels.Emails.queue(
@@ -49,11 +108,63 @@ queued = mailchannels.Emails.queue(
 )
 ```
 
+This is usually the better default for high-throughput web applications, job
+workers, or any path where email should not slow down the user-facing request.
+
+## Use Typed Models
+
+Dictionary payloads are convenient, but long-lived applications often benefit
+from explicit types. `EmailParams`, `EmailAddress`, `Content`, and
+`Personalization` are Pydantic models that validate the request before it reaches
+the HTTP layer.
+
+```python
+params = mailchannels.EmailParams(
+    from_=mailchannels.EmailAddress(email="sender@example.com"),
+    personalizations=[
+        mailchannels.Personalization(
+            to=[mailchannels.EmailAddress(email="recipient@example.net")]
+        )
+    ],
+    subject="Typed message",
+    content=[
+        mailchannels.Content(type="text/plain", value="Hello from typed models.")
+    ],
+)
+
+mailchannels.Emails.send(params)
+```
+
+Use typed models when you are constructing messages across several functions or
+want validation errors to appear close to the code that builds the payload.
+
+## Preview With Dry Run
+
+MailChannels supports dry-run validation on the send endpoint. Pass
+`dry_run=True` to send the request for validation and rendering checks without
+actually delivering the message.
+
+```python
+preview = mailchannels.Emails.send(
+    {
+        "from": {"email": "sender@example.com"},
+        "to": [{"email": "recipient@example.net"}],
+        "subject": "Dry run",
+        "text": "Validate this message without delivering it.",
+    },
+    dry_run=True,
+)
+```
+
+Dry runs are especially useful when testing templates, headers, and unsubscribe
+behavior.
+
 ## Send A Template Email
 
-MailChannels supports mustache templates directly in email content. Add
-`template_type: "mustache"` to each templated content part and provide
-per-recipient `dynamic_template_data` in each personalization.
+MailChannels templates are part of the send payload rather than a separate
+template CRUD API. Mark each templated content part with
+`template_type: "mustache"` and provide recipient-specific values in
+`dynamic_template_data`.
 
 ```python
 preview = mailchannels.Emails.send(
@@ -82,11 +193,15 @@ preview = mailchannels.Emails.send(
 )
 ```
 
+The example renders a different greeting for each recipient. `dry_run=True`
+keeps the example safe while you confirm the final rendered content.
+
 ## Add Unsubscribe Support
 
-Use the system placeholder `{{mc-unsubscribe-url}}` inside mustache content to
-let MailChannels render a hosted one-click unsubscribe URL. Each personalization
-must contain exactly one recipient for unsubscribe links.
+MailChannels can render a hosted one-click unsubscribe URL inside mustache
+content. Use the exported `UNSUBSCRIBE_URL_PLACEHOLDER` constant so the
+placeholder is not mistyped. MailChannels requires exactly one recipient per
+personalization when unsubscribe links are used.
 
 ```python
 mailchannels.Emails.queue(
@@ -109,10 +224,9 @@ mailchannels.Emails.queue(
 )
 ```
 
-Set `transactional` to `False` to have MailChannels add native
-`List-Unsubscribe` headers. MailChannels requires each personalization to have
-exactly one recipient and the email to be DKIM signed when `transactional` is
-`False`.
+For automatic `List-Unsubscribe` headers, set `transactional` to `False`.
+MailChannels documents that this mode also requires one recipient per
+personalization and DKIM signing.
 
 ```python
 mailchannels.Emails.queue(
@@ -135,8 +249,10 @@ mailchannels.Emails.queue(
 
 ## Add Custom Email Headers
 
-Add top-level custom headers with `headers`. MailChannels may reject restricted
-or duplicate headers, so use custom headers carefully.
+Use `headers` when a message needs additional email headers such as campaign
+metadata, unsubscribe hints, or application-specific tracking values.
+MailChannels may reject restricted or duplicate headers, so prefer a small,
+intentional set.
 
 ```python
 mailchannels.Emails.send(
@@ -153,8 +269,9 @@ mailchannels.Emails.send(
 )
 ```
 
-Custom headers can also be set per personalization. When the same header exists
-globally and in a personalization, MailChannels uses the personalization value.
+Headers can also be set per personalization. This is useful when each recipient
+needs a different value. If the same header exists globally and on a
+personalization, MailChannels uses the personalization-level value.
 
 ```python
 mailchannels.Emails.send(
@@ -182,6 +299,11 @@ mailchannels.Emails.send(
 
 ## Async Python
 
+Async methods use the same payloads as the synchronous methods and are named
+with the `_async` suffix. Use them in FastAPI, Starlette, aiohttp workers, or
+other asyncio applications where blocking the event loop would be the wrong
+tradeoff.
+
 ```python
 import asyncio
 import mailchannels
@@ -204,10 +326,13 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
+Install `mailchannels[async]` before using async methods.
+
 ## Sub-Accounts
 
-Sub-account management is a top-level SDK concern because it is a core
-MailChannels feature.
+Sub-accounts are a major MailChannels feature, so they are exposed as a
+top-level resource. Parent accounts can create sub-accounts, issue API keys,
+manage SMTP passwords, set limits, and inspect usage.
 
 ```python
 sub_account = mailchannels.SubAccounts.create(
@@ -220,7 +345,8 @@ mailchannels.SubAccounts.Limits.set("clienta", monthly_limit=100_000)
 usage = mailchannels.SubAccounts.retrieve_usage("clienta")
 ```
 
-Use a separate client when sending with a sub-account API key:
+When sending as a sub-account, create a separate client with that sub-account's
+API key. This keeps account boundaries explicit in code.
 
 ```python
 client = mailchannels.Client(api_key="SUB-ACCOUNT-API-KEY")
@@ -236,9 +362,10 @@ client.emails.queue(
 
 ## Metrics
 
-Metrics endpoints expose time-series analytics for engagement, performance,
-recipient behaviour, and volume. They also expose sender metrics grouped by
-campaigns or sub-accounts.
+Metrics endpoints expose the operational view of your email traffic. Use them
+to build dashboards, reconcile campaign performance, or monitor sender health.
+The time-series endpoints accept `start_time`, `end_time`, `campaign_id`, and
+`interval`.
 
 ```python
 engagement = mailchannels.Metrics.engagement(
@@ -247,7 +374,12 @@ engagement = mailchannels.Metrics.engagement(
     campaign_id="newsletter",
     interval="day",
 )
+```
 
+Sender metrics group results by campaigns or sub-accounts and support ordinary
+pagination controls.
+
+```python
 senders = mailchannels.Metrics.senders(
     "sub-accounts",
     limit=50,
@@ -256,7 +388,31 @@ senders = mailchannels.Metrics.senders(
 )
 ```
 
+Available metrics methods are `engagement()`, `performance()`,
+`recipient_behaviour()`, `recipient_behavior()`, `volume()`, and `senders()`.
+
+## Error Handling
+
+The SDK maps common MailChannels API failures to typed exceptions. Catch the
+specific error when your application can respond differently to authentication,
+authorization, conflicts, or payload size problems.
+
+```python
+try:
+    mailchannels.Emails.queue(message)
+except mailchannels.PayloadTooLargeError:
+    # Reduce attachments or message size before retrying.
+    raise
+except mailchannels.ForbiddenError:
+    # The API key is valid but cannot perform this operation.
+    raise
+```
+
+All SDK exceptions inherit from `MailChannelsError`.
+
 ## Development
+
+Install all development dependencies and run the local test suite:
 
 ```bash
 uv sync --extra async --extra dev
@@ -266,10 +422,11 @@ uv run pytest
 Current uv releases do not expose `uv pytest` as a native subcommand; use
 `uv run pytest` for the portable pytest harness.
 
-Run the suite in SmolVM before committing:
+Run the suite in SmolVM before committing. In this macOS sandbox, copying a tar
+archive into the VM is more reliable than a direct bind mount:
 
 ```bash
-tar --exclude .venv --exclude .git -cf /tmp/mailchannels-python-sdk.tar .
+tar --exclude .venv --exclude .git --exclude dist -cf /tmp/mailchannels-python-sdk.tar .
 smolvm machine create mc-sdk-tests --net --image python:3.13-slim
 smolvm machine start --name mc-sdk-tests
 smolvm machine cp /tmp/mailchannels-python-sdk.tar mc-sdk-tests:/workspace/mailchannels-python-sdk.tar
