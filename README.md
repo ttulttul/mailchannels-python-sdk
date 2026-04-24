@@ -133,6 +133,53 @@ mailchannels.Emails.queue(
 )
 ```
 
+## Add Custom Email Headers
+
+Add top-level custom headers with `headers`. MailChannels may reject restricted
+or duplicate headers, so use custom headers carefully.
+
+```python
+mailchannels.Emails.send(
+    {
+        "from": {"email": "sender@example.com"},
+        "to": [{"email": "recipient@example.net"}],
+        "subject": "Custom Header Example",
+        "text": "This email includes custom headers.",
+        "headers": {
+            "List-Unsubscribe": "<mailto:unsubscribe@example.com>",
+            "X-Campaign-ID": "newsletter-123",
+        },
+    }
+)
+```
+
+Custom headers can also be set per personalization. When the same header exists
+globally and in a personalization, MailChannels uses the personalization value.
+
+```python
+mailchannels.Emails.send(
+    {
+        "from": {"email": "sender@example.com"},
+        "personalizations": [
+            {
+                "to": [{"email": "banana-lover@example.net"}],
+                "subject": "Bananas Are On Sale",
+                "headers": {
+                    "List-Unsubscribe": "<mailto:unsubscribe@bananas.example>",
+                    "X-Custom-Header": "BananaFan123",
+                },
+            }
+        ],
+        "content": [
+            {
+                "type": "text/plain",
+                "value": "This email includes custom headers.",
+            }
+        ],
+    }
+)
+```
+
 ## Async Python
 
 ```python

@@ -52,6 +52,65 @@ def test_normalize_pydantic_email_params() -> None:
     assert normalize_email_params(params)["from"] == {"email": "sender@example.com"}
 
 
+def test_normalize_top_level_custom_headers() -> None:
+    """It preserves top-level custom headers in shortcut payloads."""
+    payload = normalize_email_params(
+        {
+            "from": {"email": "sender@example.com"},
+            "to": "recipient@example.net",
+            "subject": "Custom Header Example",
+            "text": "This email includes custom headers.",
+            "headers": {
+                "List-Unsubscribe": "<mailto:unsubscribe@example.com>",
+                "X-Campaign-ID": "newsletter-123",
+            },
+        }
+    )
+
+    assert payload["headers"] == {
+        "List-Unsubscribe": "<mailto:unsubscribe@example.com>",
+        "X-Campaign-ID": "newsletter-123",
+    }
+
+
+def test_normalize_personalization_custom_headers() -> None:
+    """It preserves recipient-specific custom headers."""
+    payload = normalize_email_params(
+        {
+            "from": {"email": "sender@example.com"},
+            "personalizations": [
+                {
+                    "to": [{"email": "banana-lover@example.net"}],
+                    "subject": "Bananas Are On Sale",
+                    "headers": {
+                        "List-Unsubscribe": "<mailto:unsubscribe@bananas.example>",
+                        "X-Custom-Header": "BananaFan123",
+                    },
+                },
+                {
+                    "to": [{"email": "apple-lover@example.net"}],
+                    "subject": "Apples Are On Sale",
+                    "headers": {
+                        "List-Unsubscribe": "<mailto:unsubscribe@apples.example>",
+                        "X-Custom-Header": "AppleFan123",
+                    },
+                },
+            ],
+            "subject": "Sale",
+            "text": "This email includes custom headers.",
+        }
+    )
+
+    assert payload["personalizations"][0]["headers"] == {
+        "List-Unsubscribe": "<mailto:unsubscribe@bananas.example>",
+        "X-Custom-Header": "BananaFan123",
+    }
+    assert payload["personalizations"][1]["headers"] == {
+        "List-Unsubscribe": "<mailto:unsubscribe@apples.example>",
+        "X-Custom-Header": "AppleFan123",
+    }
+
+
 def test_normalize_mailchannels_template_payload() -> None:
     """It preserves MailChannels mustache template fields."""
     payload = normalize_email_params(

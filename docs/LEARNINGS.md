@@ -33,3 +33,10 @@ endpoints share `start_time`, `end_time`, `campaign_id`, and `interval` query
 parameters. Sender metrics use `/metrics/senders/{sender_type}` where
 `sender_type` is `campaigns` or `sub-accounts`, with `limit`, `offset`, and
 `sort_order` query parameters.
+
+## 2026-04-24: Custom headers are send payload fields
+
+MailChannels custom email headers are expressed through the `headers` object in
+the send payload. The same `headers` field is valid inside each personalization
+for recipient-specific headers. If the same header exists in both places,
+MailChannels uses the personalization-level value.

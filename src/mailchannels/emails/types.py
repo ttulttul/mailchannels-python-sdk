@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 logger = logging.getLogger(__name__)
 
 UNSUBSCRIBE_URL_PLACEHOLDER = "{{mc-unsubscribe-url}}"
+EmailHeaders = dict[str, str]
 
 
 class EmailAddressDict(TypedDict, total=False):
@@ -46,7 +47,7 @@ class PersonalizationDict(TypedDict, total=False):
     subject: NotRequired[str]
     from_: NotRequired[EmailAddressDict]
     reply_to: NotRequired[EmailAddressDict]
-    headers: NotRequired[dict[str, str]]
+    headers: NotRequired[EmailHeaders]
     substitutions: NotRequired[dict[str, str]]
     dynamic_template_data: NotRequired[dict[str, Any]]
     dkim_domain: NotRequired[str]
@@ -72,7 +73,7 @@ class SendParams(TypedDict, total=False):
     content: list[ContentDict]
     text: str
     html: str
-    headers: dict[str, str]
+    headers: EmailHeaders
     attachments: list[AttachmentDict]
     transactional: bool
 
@@ -115,7 +116,7 @@ class Personalization(BaseModel):
     subject: str | None = None
     from_: EmailAddress | None = Field(default=None, alias="from")
     reply_to: EmailAddress | None = Field(default=None, alias="reply_to")
-    headers: dict[str, str] | None = None
+    headers: EmailHeaders | None = None
     substitutions: dict[str, str] | None = None
     dynamic_template_data: dict[str, Any] | None = None
     dkim_domain: str | None = None
@@ -133,7 +134,7 @@ class EmailParams(BaseModel):
     subject: str
     content: list[Content]
     reply_to: EmailAddress | None = Field(default=None, alias="reply_to")
-    headers: dict[str, str] | None = None
+    headers: EmailHeaders | None = None
     attachments: list[Attachment] | None = None
     transactional: bool | None = None
 
