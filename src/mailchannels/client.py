@@ -34,10 +34,12 @@ class Client:
         self.http_client = http_client or RequestsClient()
         self.async_http_client = async_http_client or HTTPXClient()
 
+        from .dkim import DkimResource
         from .emails import EmailsResource
         from .metrics import MetricsResource
         from .sub_accounts import SubAccountsResource
 
+        self.dkim = DkimResource(self)
         self.emails = EmailsResource(self)
         self.metrics = MetricsResource(self)
         self.sub_accounts = SubAccountsResource(self)

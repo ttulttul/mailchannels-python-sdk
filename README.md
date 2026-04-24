@@ -196,6 +196,66 @@ preview = mailchannels.Emails.send(
 The example renders a different greeting for each recipient. `dry_run=True`
 keeps the example safe while you confirm the final rendered content.
 
+## Manage DKIM Keys
+
+MailChannels can generate and store DKIM private keys for your account. This is
+the easiest way to avoid handling private key material in your own application:
+create a key pair with the DKIM API, publish the returned public DNS record, and
+then reference the selector when sending.
+
+```python
+key = mailchannels.Dkim.create(
+    "example.com",
+    selector="mcdkim",
+    algorithm="rsa",
+    key_length=2048,
+)
+
+for record in key.get("dkim_dns_records", []):
+    print(record["name"], record["type"], record["value"])
+```
+
+MailChannels hosts the private key used for signing. At this time,
+MailChannels does not host DKIM public keys for your domain; you must copy the
+returned public DKIM TXT record into your own DNS zone. The TXT record name will
+look like `mcdkim._domainkey.example.com`.
+
+After the DNS record is published, send mail with the selector. If
+`dkim_domain` is omitted, MailChannels can derive it from the `from` address,
+but setting it explicitly keeps the signing intent obvious.
+
+```python
+mailchannels.Emails.queue(
+    {
+        "from": {"email": "sender@example.com"},
+        "to": [{"email": "recipient@example.net"}],
+        "subject": "DKIM signed message",
+        "text": "This message is signed by a MailChannels-hosted DKIM key.",
+        "dkim_domain": "example.com",
+        "dkim_selector": "mcdkim",
+    }
+)
+```
+
+You can retrieve keys, include the suggested DNS record in the response, update
+key status, and rotate active keys. Rotation creates a replacement key and
+returns the DNS record you need to publish before switching all signing traffic
+to the new selector.
+
+```python
+keys = mailchannels.Dkim.list("example.com", include_dns_record=True)
+rotated = mailchannels.Dkim.rotate(
+    "example.com",
+    "mcdkim",
+    new_selector="mcdkim2",
+)
+mailchannels.Dkim.update_status("example.com", "mcdkim", status="rotated")
+```
+
+If you manage your own DKIM keys instead, pass `dkim_domain`, `dkim_selector`,
+and the Base64-encoded `dkim_private_key` in the send payload. Values set inside
+a personalization override root-level DKIM values for that recipient.
+
 ## Add Unsubscribe Support
 
 MailChannels can render a hosted one-click unsubscribe URL inside mustache
@@ -341,8 +401,35 @@ sub_account = mailchannels.SubAccounts.create(
 )
 
 api_key = mailchannels.SubAccounts.ApiKeys.create("clienta")
-mailchannels.SubAccounts.Limits.set("clienta", monthly_limit=100_000)
+```
+
+Rate limits are useful when each customer, tenant, or downstream sender should
+have its own monthly allocation. Set a monthly limit on the sub-account and
+MailChannels will enforce that cap independently from the parent account's
+overall allocation.
+
+```python
+limit = mailchannels.SubAccounts.Limits.set(
+    "clienta",
+    monthly_limit=100_000,
+)
+
+current_limit = mailchannels.SubAccounts.Limits.retrieve("clienta")
+```
+
+Usage stats let you show customers how much of their allocation has been used
+or decide when to raise, lower, or suspend a limit. Retrieve usage by handle
+from the parent account.
+
+```python
 usage = mailchannels.SubAccounts.retrieve_usage("clienta")
+```
+
+If you want the sub-account to inherit the parent account's remaining capacity
+again, delete the explicit sub-account limit.
+
+```python
+mailchannels.SubAccounts.Limits.delete("clienta")
 ```
 
 When sending as a sub-account, create a separate client with that sub-account's

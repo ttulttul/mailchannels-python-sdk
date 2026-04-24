@@ -40,3 +40,12 @@ MailChannels custom email headers are expressed through the `headers` object in
 the send payload. The same `headers` field is valid inside each personalization
 for recipient-specific headers. If the same header exists in both places,
 MailChannels uses the personalization-level value.
+
+## 2026-04-24: DKIM has both key-management and send-payload support
+
+MailChannels supports customer-managed DKIM private keys in send payloads and
+MailChannels-hosted private keys through `/domains/{domain}/dkim-keys`.
+MailChannels returns suggested DKIM DNS records from key-management endpoints,
+but the customer must still publish the public DKIM TXT record in their own DNS
+zone because MailChannels does not host public DKIM records for customer
+domains yet.

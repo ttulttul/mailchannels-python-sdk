@@ -76,6 +76,9 @@ class SendParams(TypedDict, total=False):
     headers: EmailHeaders
     attachments: list[AttachmentDict]
     transactional: bool
+    dkim_domain: str
+    dkim_private_key: str
+    dkim_selector: str
 
 
 class EmailAddress(BaseModel):
@@ -137,6 +140,9 @@ class EmailParams(BaseModel):
     headers: EmailHeaders | None = None
     attachments: list[Attachment] | None = None
     transactional: bool | None = None
+    dkim_domain: str | None = None
+    dkim_private_key: str | None = None
+    dkim_selector: str | None = None
 
     def to_payload(self) -> dict[str, Any]:
         """Convert this email model to a MailChannels API payload."""

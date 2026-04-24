@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .client import DEFAULT_BASE_URL, Client
+from .dkim import Dkim
 from .emails import (
     UNSUBSCRIBE_URL_PLACEHOLDER,
     Attachment,
@@ -47,6 +48,7 @@ __all__ = [
     "ConfigurationError",
     "ConflictError",
     "Content",
+    "Dkim",
     "EmailAddress",
     "EmailHeaders",
     "EmailParams",

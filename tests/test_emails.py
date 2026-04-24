@@ -231,6 +231,25 @@ def test_normalize_list_unsubscribe_payload() -> None:
     )
 
 
+def test_normalize_root_dkim_payload() -> None:
+    """It preserves root DKIM signing fields in send payloads."""
+    payload = normalize_email_params(
+        {
+            "from": {"email": "sender@example.com"},
+            "to": "recipient@example.net",
+            "subject": "DKIM Example",
+            "text": "This message is signed with DKIM.",
+            "dkim_domain": "example.com",
+            "dkim_selector": "mcdkim",
+            "dkim_private_key": "BASE64_PRIVATE_KEY",
+        }
+    )
+
+    assert payload["dkim_domain"] == "example.com"
+    assert payload["dkim_selector"] == "mcdkim"
+    assert payload["dkim_private_key"] == "BASE64_PRIVATE_KEY"
+
+
 def test_queue_uses_send_async_endpoint() -> None:
     """It posts queued sends to the MailChannels /send-async endpoint."""
     transport = FakeRequestsClient()

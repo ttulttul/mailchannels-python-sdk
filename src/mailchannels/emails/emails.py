@@ -140,6 +140,9 @@ def _normalize_mapping(params: SendParams) -> dict[str, Any]:
     _copy_optional(payload, normalized, "headers")
     _copy_optional(payload, normalized, "attachments")
     _copy_optional(payload, normalized, "transactional")
+    _copy_optional(payload, normalized, "dkim_domain")
+    _copy_optional(payload, normalized, "dkim_private_key")
+    _copy_optional(payload, normalized, "dkim_selector")
     return normalized
 
 
