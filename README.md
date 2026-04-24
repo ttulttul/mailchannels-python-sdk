@@ -49,6 +49,90 @@ queued = mailchannels.Emails.queue(
 )
 ```
 
+## Send A Template Email
+
+MailChannels supports mustache templates directly in email content. Add
+`template_type: "mustache"` to each templated content part and provide
+per-recipient `dynamic_template_data` in each personalization.
+
+```python
+preview = mailchannels.Emails.send(
+    {
+        "from": {"email": "sender@example.com"},
+        "personalizations": [
+            {
+                "to": [{"email": "jane@example.net"}],
+                "dynamic_template_data": {"name": "Jane Doe"},
+            },
+            {
+                "to": [{"email": "john@example.net"}],
+                "dynamic_template_data": {"name": "John Smith"},
+            },
+        ],
+        "subject": "Template Example",
+        "content": [
+            {
+                "type": "text/plain",
+                "value": "Hello {{name}}",
+                "template_type": "mustache",
+            }
+        ],
+    },
+    dry_run=True,
+)
+```
+
+## Add Unsubscribe Support
+
+Use the system placeholder `{{mc-unsubscribe-url}}` inside mustache content to
+let MailChannels render a hosted one-click unsubscribe URL. Each personalization
+must contain exactly one recipient for unsubscribe links.
+
+```python
+mailchannels.Emails.queue(
+    {
+        "from": {"email": "sender@example.com"},
+        "personalizations": [{"to": [{"email": "recipient@example.net"}]}],
+        "subject": "Newsletter",
+        "content": [
+            {
+                "type": "text/html",
+                "value": (
+                    "<p>Hello</p>"
+                    f"<a href='{mailchannels.UNSUBSCRIBE_URL_PLACEHOLDER}'>"
+                    "unsubscribe</a>"
+                ),
+                "template_type": "mustache",
+            }
+        ],
+    }
+)
+```
+
+Set `transactional` to `False` to have MailChannels add native
+`List-Unsubscribe` headers. MailChannels requires each personalization to have
+exactly one recipient and the email to be DKIM signed when `transactional` is
+`False`.
+
+```python
+mailchannels.Emails.queue(
+    {
+        "from": {"email": "sender@example.com"},
+        "personalizations": [
+            {
+                "to": [{"email": "recipient@example.net"}],
+                "dkim_domain": "example.com",
+                "dkim_selector": "mailchannels",
+                "dkim_private_key": "-----BEGIN PRIVATE KEY-----...",
+            }
+        ],
+        "subject": "Newsletter",
+        "text": "Hello",
+        "transactional": False,
+    }
+)
+```
+
 ## Async Python
 
 ```python

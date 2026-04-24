@@ -2,6 +2,7 @@
 
 from .emails import Emails, EmailsResource, normalize_email_params
 from .types import (
+    UNSUBSCRIBE_URL_PLACEHOLDER,
     Attachment,
     AttachmentDict,
     Content,
@@ -31,5 +32,6 @@ __all__ = [
     "QueuedSendResponse",
     "SendParams",
     "SendResponse",
+    "UNSUBSCRIBE_URL_PLACEHOLDER",
     "normalize_email_params",
 ]

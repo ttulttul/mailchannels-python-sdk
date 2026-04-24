@@ -9,6 +9,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 logger = logging.getLogger(__name__)
 
+UNSUBSCRIBE_URL_PLACEHOLDER = "{{mc-unsubscribe-url}}"
+
 
 class EmailAddressDict(TypedDict, total=False):
     """Dictionary form of a MailChannels email address."""
@@ -17,11 +19,12 @@ class EmailAddressDict(TypedDict, total=False):
     name: str
 
 
-class ContentDict(TypedDict):
+class ContentDict(TypedDict, total=False):
     """Dictionary form of a MailChannels content part."""
 
     type: str
     value: str
+    template_type: Literal["mustache"]
 
 
 class AttachmentDict(TypedDict, total=False):
@@ -40,8 +43,15 @@ class PersonalizationDict(TypedDict, total=False):
     to: list[EmailAddressDict]
     cc: NotRequired[list[EmailAddressDict]]
     bcc: NotRequired[list[EmailAddressDict]]
+    subject: NotRequired[str]
+    from_: NotRequired[EmailAddressDict]
+    reply_to: NotRequired[EmailAddressDict]
     headers: NotRequired[dict[str, str]]
     substitutions: NotRequired[dict[str, str]]
+    dynamic_template_data: NotRequired[dict[str, Any]]
+    dkim_domain: NotRequired[str]
+    dkim_private_key: NotRequired[str]
+    dkim_selector: NotRequired[str]
 
 
 class SendParams(TypedDict, total=False):
@@ -64,6 +74,7 @@ class SendParams(TypedDict, total=False):
     html: str
     headers: dict[str, str]
     attachments: list[AttachmentDict]
+    transactional: bool
 
 
 class EmailAddress(BaseModel):
@@ -80,6 +91,7 @@ class Content(BaseModel):
 
     type: Literal["text/plain", "text/html"] | str
     value: str
+    template_type: Literal["mustache"] | None = None
 
 
 class Attachment(BaseModel):
@@ -95,11 +107,20 @@ class Attachment(BaseModel):
 class Personalization(BaseModel):
     """Recipient-specific message customization."""
 
+    model_config = ConfigDict(populate_by_name=True)
+
     to: list[EmailAddress] = Field(default_factory=list)
     cc: list[EmailAddress] | None = None
     bcc: list[EmailAddress] | None = None
+    subject: str | None = None
+    from_: EmailAddress | None = Field(default=None, alias="from")
+    reply_to: EmailAddress | None = Field(default=None, alias="reply_to")
     headers: dict[str, str] | None = None
     substitutions: dict[str, str] | None = None
+    dynamic_template_data: dict[str, Any] | None = None
+    dkim_domain: str | None = None
+    dkim_private_key: str | None = None
+    dkim_selector: str | None = None
 
 
 class EmailParams(BaseModel):
@@ -114,6 +135,7 @@ class EmailParams(BaseModel):
     reply_to: EmailAddress | None = Field(default=None, alias="reply_to")
     headers: dict[str, str] | None = None
     attachments: list[Attachment] | None = None
+    transactional: bool | None = None
 
     def to_payload(self) -> dict[str, Any]:
         """Convert this email model to a MailChannels API payload."""

@@ -7,7 +7,13 @@ from conftest import FakeHTTPXClient, FakeRequestsClient
 
 import mailchannels
 from mailchannels.client import Client
-from mailchannels.emails import EmailAddress, EmailParams, normalize_email_params
+from mailchannels.emails import (
+    UNSUBSCRIBE_URL_PLACEHOLDER,
+    Content,
+    EmailAddress,
+    EmailParams,
+    normalize_email_params,
+)
 from mailchannels.response import SDKResponse
 
 
@@ -44,6 +50,126 @@ def test_normalize_pydantic_email_params() -> None:
     )
 
     assert normalize_email_params(params)["from"] == {"email": "sender@example.com"}
+
+
+def test_normalize_mailchannels_template_payload() -> None:
+    """It preserves MailChannels mustache template fields."""
+    payload = normalize_email_params(
+        {
+            "from": {"email": "sender@example.com"},
+            "personalizations": [
+                {
+                    "to": [{"email": "recipient1@example.net"}],
+                    "dynamic_template_data": {"name": "Jane Doe"},
+                },
+                {
+                    "to": [{"email": "recipient2@example.net"}],
+                    "dynamic_template_data": {"name": "John Smith"},
+                },
+            ],
+            "subject": "Template Example",
+            "content": [
+                {
+                    "type": "text/plain",
+                    "value": "Hello {{name}}",
+                    "template_type": "mustache",
+                }
+            ],
+        }
+    )
+
+    assert payload["content"] == [
+        {
+            "type": "text/plain",
+            "value": "Hello {{name}}",
+            "template_type": "mustache",
+        }
+    ]
+    assert payload["personalizations"][0]["dynamic_template_data"] == {
+        "name": "Jane Doe"
+    }
+
+
+def test_normalize_pydantic_template_params() -> None:
+    """It supports typed template content and dynamic template data."""
+    params = EmailParams(
+        from_=EmailAddress(email="sender@example.com"),
+        personalizations=[
+            {
+                "to": [{"email": "recipient@example.net"}],
+                "dynamic_template_data": {"name": {"first": "Jane", "last": "Doe"}},
+            }
+        ],
+        subject="Template Example",
+        content=[
+            Content(
+                type="text/html",
+                value="Hello {{name.first}} {{name.last}}",
+                template_type="mustache",
+            )
+        ],
+    )
+
+    payload = normalize_email_params(params)
+
+    assert payload["content"][0]["template_type"] == "mustache"
+    assert payload["personalizations"][0]["dynamic_template_data"] == {
+        "name": {"first": "Jane", "last": "Doe"}
+    }
+
+
+def test_normalize_unsubscribe_link_template_payload() -> None:
+    """It preserves the MailChannels unsubscribe placeholder in templates."""
+    payload = normalize_email_params(
+        {
+            "from": {"email": "sender@example.com"},
+            "personalizations": [{"to": [{"email": "recipient@example.net"}]}],
+            "subject": "Unsubscribe Example",
+            "content": [
+                {
+                    "type": "text/html",
+                    "value": (
+                        "<a href='"
+                        f"{UNSUBSCRIBE_URL_PLACEHOLDER}"
+                        "'>unsubscribe</a>"
+                    ),
+                    "template_type": "mustache",
+                }
+            ],
+        }
+    )
+
+    assert payload["content"][0]["value"] == (
+        "<a href='{{mc-unsubscribe-url}}'>unsubscribe</a>"
+    )
+    assert payload["content"][0]["template_type"] == "mustache"
+
+
+def test_normalize_list_unsubscribe_payload() -> None:
+    """It preserves fields needed for automatic List-Unsubscribe headers."""
+    payload = normalize_email_params(
+        {
+            "from": {"email": "sender@example.com"},
+            "personalizations": [
+                {
+                    "to": [{"email": "recipient@example.net"}],
+                    "dkim_domain": "example.com",
+                    "dkim_selector": "mailchannels",
+                    "dkim_private_key": "-----BEGIN PRIVATE KEY-----",
+                }
+            ],
+            "subject": "Marketing Example",
+            "text": "Hello",
+            "transactional": False,
+        }
+    )
+
+    assert payload["transactional"] is False
+    assert payload["personalizations"][0]["dkim_domain"] == "example.com"
+    assert payload["personalizations"][0]["dkim_selector"] == "mailchannels"
+    assert payload["personalizations"][0]["dkim_private_key"] == (
+        "-----BEGIN PRIVATE KEY-----"
+    )
 
 
 def test_queue_uses_send_async_endpoint() -> None:

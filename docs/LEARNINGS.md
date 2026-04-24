@@ -14,3 +14,13 @@ The current uv CLI rejects `uv pytest` as an unknown subcommand. The SDK uses
 the portable pytest harness `uv run pytest` instead. SmolVM tests can run by
 copying a tar archive of the working tree into a Python VM because direct
 SmolVM bind mounts appeared empty in this macOS sandbox.
+
+## 2026-04-24: Templates and unsubscribe are send payload fields
+
+MailChannels templates and unsubscribe behavior are not separate CRUD resources.
+Templates are expressed through `content[].template_type = "mustache"` and
+`personalizations[].dynamic_template_data`. Unsubscribe links use the
+`{{mc-unsubscribe-url}}` mustache placeholder, while automatic
+List-Unsubscribe headers are enabled by setting the root send field
+`transactional` to `false`. MailChannels documents that List-Unsubscribe also
+requires one recipient per personalization and DKIM signing.

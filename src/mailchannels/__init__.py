@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from .client import DEFAULT_BASE_URL, Client
 from .emails import (
+    UNSUBSCRIBE_URL_PLACEHOLDER,
     Attachment,
     Content,
     EmailAddress,
@@ -57,6 +58,7 @@ __all__ = [
     "SendParams",
     "SendResponse",
     "SubAccounts",
+    "UNSUBSCRIBE_URL_PLACEHOLDER",
     "api_key",
     "base_url",
     "default_async_http_client",
