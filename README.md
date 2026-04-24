@@ -187,6 +187,28 @@ client.emails.queue(
 )
 ```
 
+## Metrics
+
+Metrics endpoints expose time-series analytics for engagement, performance,
+recipient behaviour, and volume. They also expose sender metrics grouped by
+campaigns or sub-accounts.
+
+```python
+engagement = mailchannels.Metrics.engagement(
+    start_time="2026-04-01",
+    end_time="2026-04-24T00:00:00Z",
+    campaign_id="newsletter",
+    interval="day",
+)
+
+senders = mailchannels.Metrics.senders(
+    "sub-accounts",
+    limit=50,
+    offset=0,
+    sort_order="desc",
+)
+```
+
 ## Development
 
 ```bash

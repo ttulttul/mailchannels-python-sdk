@@ -28,6 +28,7 @@ from .exceptions import (
 )
 from .http_client import RequestsClient
 from .http_client_async import HTTPXClient
+from .metrics import Metrics
 from .sub_accounts import SubAccounts
 
 api_key: str | None = None
@@ -51,6 +52,7 @@ __all__ = [
     "ForbiddenError",
     "HTTPXClient",
     "MailChannelsError",
+    "Metrics",
     "PayloadTooLargeError",
     "Personalization",
     "QueuedSendResponse",

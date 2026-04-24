@@ -24,3 +24,12 @@ Templates are expressed through `content[].template_type = "mustache"` and
 List-Unsubscribe headers are enabled by setting the root send field
 `transactional` to `false`. MailChannels documents that List-Unsubscribe also
 requires one recipient per personalization and DKIM signing.
+
+## 2026-04-24: Metrics are GET resources under /metrics
+
+The Metrics API has five documented endpoint categories: engagement,
+performance, recipient behaviour, volume, and sender metrics. Time-series
+endpoints share `start_time`, `end_time`, `campaign_id`, and `interval` query
+parameters. Sender metrics use `/metrics/senders/{sender_type}` where
+`sender_type` is `campaigns` or `sub-accounts`, with `limit`, `offset`, and
+`sort_order` query parameters.

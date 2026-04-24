@@ -35,9 +35,11 @@ class Client:
         self.async_http_client = async_http_client or HTTPXClient()
 
         from .emails import EmailsResource
+        from .metrics import MetricsResource
         from .sub_accounts import SubAccountsResource
 
         self.emails = EmailsResource(self)
+        self.metrics = MetricsResource(self)
         self.sub_accounts = SubAccountsResource(self)
 
     def request(
