@@ -123,3 +123,7 @@ smolvm machine cp /tmp/mailchannels-python-sdk.tar mc-sdk-tests:/workspace/mailc
 smolvm machine exec --name mc-sdk-tests -- sh -lc 'cd /workspace && mkdir -p mailchannels-python-sdk && tar -xf mailchannels-python-sdk.tar -C mailchannels-python-sdk && cd mailchannels-python-sdk && pip install uv && uv sync --extra async --extra dev && uv run pytest'
 smolvm machine stop --name mc-sdk-tests
 ```
+
+## License
+
+MIT License. See [LICENSE](LICENSE).
