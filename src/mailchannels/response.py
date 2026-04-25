@@ -120,6 +120,7 @@ def _error_message(response: SDKResponse) -> str:
             value = response.data.get(key)
             if isinstance(value, str) and value:
                 return value
-    if response.text:
-        return response.text
+    text = response.text.strip()
+    if text and text.lower() != "null":
+        return text
     return f"MailChannels API request failed with status {response.status_code}."

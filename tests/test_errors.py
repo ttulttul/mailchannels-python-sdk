@@ -96,3 +96,16 @@ def test_api_error_includes_headers_and_request_metadata() -> None:
     assert error.value.to_dict()["suggested_action"] == (
         "Back off before retrying; inspect Retry-After if present."
     )
+
+
+def test_null_error_body_uses_status_fallback_message() -> None:
+    """It does not expose JSON null as the user-facing error message."""
+    client = Client(
+        api_key="test-key",
+        http_client=FakeRequestsClient(SDKResponse(500, None, "null\n")),
+    )
+
+    with pytest.raises(ApiError) as error:
+        client.usage.retrieve()
+
+    assert str(error.value) == "MailChannels API request failed with status 500."

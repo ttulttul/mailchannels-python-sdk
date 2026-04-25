@@ -854,6 +854,11 @@ uv run pytest -m online --online
 Use `MAILCHANNELS_API_URL` if you need to point the online tests at a non-default
 MailChannels API host.
 
+If the live MailChannels service returns a 5xx response for an online endpoint,
+that test is reported as `xfail` because the SDK successfully reached the API
+and the failure is outside the local test process. Authentication and
+authorization errors still fail the test normally.
+
 Run the suite in SmolVM before committing. In this macOS sandbox, copying a tar
 archive into the VM is more reliable than a direct bind mount:
 

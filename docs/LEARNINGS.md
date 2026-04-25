@@ -108,3 +108,10 @@ Live MailChannels API tests use the `online` pytest marker, require a real
 do not accidentally call production APIs. Online send validation uses
 `dry_run=True` and only runs when `MAILCHANNELS_ONLINE_FROM` and
 `MAILCHANNELS_ONLINE_TO` are set.
+
+## 2026-04-24: Live API 5xx responses should not look like SDK regressions
+
+The live `/usage` endpoint can return HTTP 500 with a JSON `null` body. Online
+tests now report live MailChannels 5xx responses as `xfail`, while preserving
+normal failures for 4xx/auth/validation issues. The SDK also avoids surfacing
+`null` as an exception message and falls back to a status-based message instead.

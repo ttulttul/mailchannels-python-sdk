@@ -412,6 +412,10 @@ The dry-run send test additionally needs `MAILCHANNELS_ONLINE_FROM` and
 `MAILCHANNELS_ONLINE_TO`. Do not make online tests deliver messages by default;
 use MailChannels dry-run behavior for send validation.
 
+Online tests may mark live MailChannels 5xx responses as `xfail`; 4xx
+authentication, authorization, validation, or SDK behavior errors should still
+fail normally.
+
 ## Repository Maintenance
 
 When adding or changing SDK behavior:

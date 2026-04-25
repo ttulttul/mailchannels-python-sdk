@@ -22,7 +22,11 @@ def _client() -> mailchannels.Client:
 
 def test_online_usage_retrieve() -> None:
     """Retrieve parent-account usage from the live API."""
-    result = _client().usage.retrieve()
+    try:
+        result = _client().usage.retrieve()
+    except mailchannels.ApiError as error:
+        _xfail_live_server_error(error)
+        raise
 
     assert "http_headers" in result
     assert isinstance(result.http_headers, dict)
@@ -31,7 +35,11 @@ def test_online_usage_retrieve() -> None:
 
 async def test_online_usage_retrieve_async() -> None:
     """Retrieve parent-account usage from the live API using async HTTP."""
-    result = await _client().usage.retrieve_async()
+    try:
+        result = await _client().usage.retrieve_async()
+    except mailchannels.ApiError as error:
+        _xfail_live_server_error(error)
+        raise
 
     assert "http_headers" in result
     assert isinstance(result.http_headers, dict)
@@ -65,3 +73,12 @@ def _dry_run_payload(from_address: str, to_address: str) -> dict[str, Any]:
         "subject": "MailChannels SDK online dry-run test",
         "text": "This dry-run validates SDK online testing without delivery.",
     }
+
+
+def _xfail_live_server_error(error: mailchannels.ApiError) -> None:
+    """Mark live MailChannels 5xx responses as external service failures."""
+    if error.status_code is not None and error.status_code >= 500:
+        pytest.xfail(
+            "Live MailChannels API returned a server error: "
+            f"status={error.status_code} request_id={error.request_id}"
+        )
