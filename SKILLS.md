@@ -459,6 +459,9 @@ When adding or changing SDK behavior:
 - Keep `.github/workflows/ci.yml` aligned with the local quality gates when the
   required checks change. Keep online API tests in the manual-only workflow so
   live sends and production API calls require explicit operator intent.
+- Keep `src/mailchannels/routes.py` updated whenever adding, removing, or
+  correcting an API endpoint. Run `uv run python scripts/check_openapi_drift.py`
+  when route declarations change.
 - Prefer Node 24-ready GitHub Actions versions in workflows, such as
   `actions/checkout@v6`, `actions/setup-python@v6`, and
   `astral-sh/setup-uv@v8.1.0` or newer.

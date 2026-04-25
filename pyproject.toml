@@ -19,8 +19,10 @@ dev = [
     "mypy>=1.10,<2",
     "pytest>=8,<9",
     "pytest-asyncio>=0.23,<1",
+    "pyyaml>=6,<7",
     "respx>=0.21,<1",
     "ruff>=0.5,<1",
+    "types-PyYAML>=6,<7",
     "types-requests>=2.31,<3",
 ]
 
@@ -47,7 +49,7 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.mypy]
 python_version = "3.9"
-files = ["src/mailchannels"]
+files = ["src/mailchannels", "scripts"]
 strict = false
 warn_unused_configs = true
 warn_redundant_casts = true

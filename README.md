@@ -863,18 +863,21 @@ Install all development dependencies and run the local test suite:
 ```bash
 uv sync --extra async --extra dev
 uv run pytest
-uv run ruff check src tests examples
+uv run ruff check src tests examples scripts
 uv run mypy
 uv build
+uv run python scripts/check_openapi_drift.py
 ```
 
 Current uv releases do not expose `uv pytest` as a native subcommand; use
 `uv run pytest` for the portable pytest harness.
 
 The GitHub Actions CI workflow runs the same checks on pushes to `main`, pull
-requests, and manual dispatches. The separate online API workflow is manual-only
-and expects `MAILCHANNELS_API_KEY` as a GitHub secret plus optional repository or
-environment variables for sender, recipient, DKIM domain, and API URL.
+requests, and manual dispatches. It also compares the SDK's declared routes with
+the official MailChannels OpenAPI spec so documented endpoint changes are caught
+early. The separate online API workflow is manual-only and expects
+`MAILCHANNELS_API_KEY` as a GitHub secret plus optional repository or environment
+variables for sender, recipient, DKIM domain, and API URL.
 
 ### Online API Tests
 

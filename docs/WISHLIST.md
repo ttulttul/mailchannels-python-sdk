@@ -38,8 +38,8 @@ official MailChannels OpenAPI specification or an equivalent live sandbox
 contract. This is especially important because the current tests can reinforce
 incorrect SDK behavior when they only assert internal request construction.
 
-Status: pending. This should be broader than the focused sub-account unit tests
-and should compare SDK route declarations against the official OpenAPI spec.
+Status: implemented. The SDK has a route registry and a drift checker that
+compares supported route declarations with the official OpenAPI spec.
 Priority: high.
 
 ## 4. Add OpenAPI Drift CI
@@ -49,8 +49,8 @@ the official MailChannels OpenAPI spec. The goal is not necessarily to generate
 the whole SDK immediately, but to fail fast when a hand-written resource drifts
 from documented API paths, methods, or required parameters.
 
-Status: implemented. Sub-account tests now assert singular `/limit`, `PUT` for
-setting limits, and the documented `sends` request payload.
+Status: implemented. CI runs `scripts/check_openapi_drift.py` as a separate
+OpenAPI drift job.
 Priority: high.
 
 ## 5. Rewrite Sub-Account Limit Tests
@@ -59,7 +59,8 @@ Update existing sub-account tests so they assert the correct singular
 `/sub-account/{handle}/limit` endpoint and the documented HTTP method. These
 tests should fail if the SDK regresses to `/limits` or uses the wrong method.
 
-Status: pending.
+Status: implemented. Sub-account tests now assert singular `/limit`, `PUT` for
+setting limits, and the documented `sends` request payload.
 Priority: high.
 
 ## 6. Return Strongly Typed Responses
