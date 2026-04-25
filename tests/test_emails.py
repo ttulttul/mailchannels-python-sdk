@@ -9,12 +9,23 @@ import mailchannels
 from mailchannels.client import Client
 from mailchannels.emails import (
     UNSUBSCRIBE_URL_PLACEHOLDER,
+    Attachment,
     Content,
     EmailAddress,
     EmailParams,
     normalize_email_params,
 )
 from mailchannels.response import SDKResponse
+
+
+class _FakeAttachmentResponse:
+    """Fake response for remote attachment tests."""
+
+    content = b"remote-data"
+    headers = {"Content-Type": "application/pdf; charset=binary"}
+
+    def raise_for_status(self) -> None:
+        """Simulate a successful HTTP response."""
 
 
 def test_normalize_resend_style_email_shortcuts() -> None:
@@ -248,6 +259,80 @@ def test_normalize_root_dkim_payload() -> None:
     assert payload["dkim_domain"] == "example.com"
     assert payload["dkim_selector"] == "mcdkim"
     assert payload["dkim_private_key"] == "BASE64_PRIVATE_KEY"
+
+
+def test_attachment_from_bytes_builds_encoded_attachment() -> None:
+    """It builds Base64-encoded attachments from bytes."""
+    attachment = Attachment.from_bytes(
+        b"hello",
+        filename="hello.txt",
+    )
+
+    assert attachment.content == "aGVsbG8="
+    assert attachment.filename == "hello.txt"
+    assert attachment.type == "text/plain"
+    assert attachment.disposition == "attachment"
+
+
+def test_attachment_from_file_supports_inline_content_id(tmp_path) -> None:
+    """It builds inline attachments from local files."""
+    image = tmp_path / "logo.png"
+    image.write_bytes(b"png-data")
+
+    attachment = Attachment.inline_file(image, content_id="logo")
+
+    assert attachment.content == "cG5nLWRhdGE="
+    assert attachment.filename == "logo.png"
+    assert attachment.type == "image/png"
+    assert attachment.disposition == "inline"
+    assert attachment.content_id == "logo"
+
+
+def test_normalize_attachment_helpers_in_send_payload(tmp_path) -> None:
+    """It accepts attachment helper objects in send payloads."""
+    document = tmp_path / "invoice.pdf"
+    document.write_bytes(b"pdf-data")
+
+    payload = normalize_email_params(
+        {
+            "from": {"email": "sender@example.com"},
+            "to": "recipient@example.net",
+            "subject": "Invoice",
+            "text": "Attached.",
+            "attachments": [Attachment.from_file(document)],
+        }
+    )
+
+    assert payload["attachments"] == [
+        {
+            "content": "cGRmLWRhdGE=",
+            "filename": "invoice.pdf",
+            "type": "application/pdf",
+            "disposition": "attachment",
+        }
+    ]
+
+
+def test_attachment_from_url_fetches_remote_content(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """It builds attachments from remote URLs."""
+    calls: list[dict[str, object]] = []
+
+    def fake_get(url: str, *, timeout: float) -> _FakeAttachmentResponse:
+        """Record the URL fetch and return a fake response."""
+        calls.append({"url": url, "timeout": timeout})
+        return _FakeAttachmentResponse()
+
+    monkeypatch.setattr("mailchannels.emails.types.requests.get", fake_get)
+
+    attachment = Attachment.from_url("https://example.com/invoice.pdf", timeout=5.0)
+
+    assert calls == [{"url": "https://example.com/invoice.pdf", "timeout": 5.0}]
+    assert attachment.content == "cmVtb3RlLWRhdGE="
+    assert attachment.filename == "invoice.pdf"
+    assert attachment.type == "application/pdf"
+    assert attachment.disposition == "attachment"
 
 
 def test_queue_uses_send_async_endpoint() -> None:

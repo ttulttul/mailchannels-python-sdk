@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
+import base64
 import logging
+import mimetypes
+from pathlib import Path
 from typing import Any, Literal, NotRequired, TypedDict
+from urllib.parse import urlparse
 
+import requests
 from pydantic import BaseModel, ConfigDict, Field
+
+from ..exceptions import MailChannelsError
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +81,7 @@ class SendParams(TypedDict, total=False):
     text: str
     html: str
     headers: EmailHeaders
-    attachments: list[AttachmentDict]
+    attachments: list[AttachmentDict | Attachment]
     transactional: bool
     dkim_domain: str
     dkim_private_key: str
@@ -106,6 +113,103 @@ class Attachment(BaseModel):
     type: str | None = None
     disposition: str | None = None
     content_id: str | None = None
+
+    @classmethod
+    def from_bytes(
+        cls,
+        data: bytes,
+        *,
+        filename: str,
+        content_type: str | None = None,
+        disposition: str = "attachment",
+        content_id: str | None = None,
+    ) -> Attachment:
+        """Build an attachment from bytes."""
+        logger.debug(
+            "Encoding MailChannels attachment from bytes filename=%s",
+            filename,
+        )
+        return cls(
+            content=_base64_content(data),
+            filename=filename,
+            type=content_type or _guess_content_type(filename),
+            disposition=disposition,
+            content_id=content_id,
+        )
+
+    @classmethod
+    def from_file(
+        cls,
+        path: str | Path,
+        *,
+        filename: str | None = None,
+        content_type: str | None = None,
+        disposition: str = "attachment",
+        content_id: str | None = None,
+    ) -> Attachment:
+        """Build an attachment from a local file."""
+        file_path = Path(path)
+        attachment_name = filename or file_path.name
+        logger.info("Encoding MailChannels attachment from file path=%s", file_path)
+        return cls.from_bytes(
+            file_path.read_bytes(),
+            filename=attachment_name,
+            content_type=content_type or _guess_content_type(attachment_name),
+            disposition=disposition,
+            content_id=content_id,
+        )
+
+    @classmethod
+    def from_url(
+        cls,
+        url: str,
+        *,
+        filename: str | None = None,
+        content_type: str | None = None,
+        disposition: str = "attachment",
+        content_id: str | None = None,
+        timeout: float = 30.0,
+    ) -> Attachment:
+        """Fetch a remote URL and build an attachment from its bytes."""
+        logger.info("Fetching MailChannels attachment from URL url=%s", url)
+        try:
+            response = requests.get(url, timeout=timeout)
+            response.raise_for_status()
+        except requests.RequestException as error:
+            logger.error("Unable to fetch attachment URL url=%s error=%s", url, error)
+            raise MailChannelsError(
+                "Unable to fetch attachment URL.",
+                code="AttachmentFetchError",
+            ) from error
+
+        attachment_name = filename or _filename_from_url(url)
+        return cls.from_bytes(
+            response.content,
+            filename=attachment_name,
+            content_type=content_type
+            or _content_type_from_header(response.headers.get("Content-Type"))
+            or _guess_content_type(attachment_name),
+            disposition=disposition,
+            content_id=content_id,
+        )
+
+    @classmethod
+    def inline_file(
+        cls,
+        path: str | Path,
+        *,
+        content_id: str,
+        filename: str | None = None,
+        content_type: str | None = None,
+    ) -> Attachment:
+        """Build an inline attachment from a local file."""
+        return cls.from_file(
+            path,
+            filename=filename,
+            content_type=content_type,
+            disposition="inline",
+            content_id=content_id,
+        )
 
 
 class Personalization(BaseModel):
@@ -160,3 +264,26 @@ class QueuedSendResponse(BaseModel):
     """Response returned when MailChannels queues an email for async processing."""
 
     model_config = ConfigDict(extra="allow")
+
+
+def _base64_content(data: bytes) -> str:
+    """Return Base64-encoded attachment content."""
+    return base64.b64encode(data).decode("ascii")
+
+
+def _guess_content_type(filename: str) -> str:
+    """Infer a MIME type for an attachment filename."""
+    return mimetypes.guess_type(filename)[0] or "application/octet-stream"
+
+
+def _filename_from_url(url: str) -> str:
+    """Infer an attachment filename from a URL path."""
+    parsed = urlparse(url)
+    return Path(parsed.path).name or "attachment"
+
+
+def _content_type_from_header(value: str | None) -> str | None:
+    """Extract a MIME type from a Content-Type header."""
+    if value is None:
+        return None
+    return value.split(";", maxsplit=1)[0].strip() or None

@@ -162,6 +162,53 @@ mailchannels.Emails.send(params)
 Use typed models when you are constructing messages across several functions or
 want validation errors to appear close to the code that builds the payload.
 
+## Add Attachments
+
+MailChannels expects attachment content to be Base64 encoded. The SDK's
+`Attachment` helper handles that encoding for local files or bytes, infers a
+MIME type from the filename, and preserves the MailChannels fields in the final
+send payload.
+
+```python
+invoice = mailchannels.Attachment.from_file("invoice.pdf")
+
+mailchannels.Emails.queue(
+    {
+        "from": {"email": "billing@example.com"},
+        "to": [{"email": "recipient@example.net"}],
+        "subject": "Your invoice",
+        "text": "Your invoice is attached.",
+        "attachments": [invoice],
+    }
+)
+```
+
+Inline attachments use the same encoded payload but set `disposition` to
+`inline` and provide a `content_id`. Reference that content ID from your HTML
+with a `cid:` URL.
+
+```python
+logo = mailchannels.Attachment.inline_file(
+    "logo.png",
+    content_id="company-logo",
+)
+
+mailchannels.Emails.queue(
+    {
+        "from": {"email": "sender@example.com"},
+        "to": [{"email": "recipient@example.net"}],
+        "subject": "Inline image",
+        "html": "<img src='cid:company-logo' alt='Company logo'>",
+        "attachments": [logo],
+    }
+)
+```
+
+Use `Attachment.from_bytes()` when the file is generated in memory, such as a
+PDF created by your application. Use `Attachment.from_url()` when the attachment
+already lives behind an HTTP URL and you want the SDK to fetch and encode it
+before sending.
+
 ## Preview With Dry Run
 
 MailChannels supports dry-run validation on the send endpoint. Pass

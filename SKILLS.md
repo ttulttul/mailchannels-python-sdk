@@ -115,6 +115,30 @@ params = mailchannels.EmailParams(
 Use `dry_run=True` with `Emails.send()` when validating rendering, templates, or
 headers without delivering a message.
 
+## Attachments
+
+Use `mailchannels.Attachment.from_file()` for local files,
+`Attachment.from_bytes()` for generated content, and `Attachment.from_url()` for
+remote HTTP objects. These helpers Base64 encode the content and infer the MIME
+type from the filename or response headers.
+
+```python
+mailchannels.Emails.queue(
+    {
+        "from": {"email": "sender@example.com"},
+        "to": [{"email": "recipient@example.net"}],
+        "subject": "Report",
+        "text": "Attached.",
+        "attachments": [
+            mailchannels.Attachment.from_file("report.pdf"),
+        ],
+    }
+)
+```
+
+For inline images, use `Attachment.inline_file(path, content_id="...")` and
+reference the content ID from HTML with `cid:...`.
+
 ## Templates
 
 MailChannels templates are send-payload fields, not a template CRUD resource.

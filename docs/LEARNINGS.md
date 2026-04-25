@@ -68,3 +68,12 @@ MailChannels exposes both parent-account `/usage` and sub-account
 share `compact_query()` and `pagination_query()` so date serialization,
 comma-separated list serialization, and `limit`/`offset` handling do not drift
 between resources.
+
+## 2026-04-24: Attachment ergonomics are local payload helpers
+
+MailChannels attachments are still ordinary send-payload fields, but the SDK can
+make them much easier to construct. `Attachment.from_file()`,
+`Attachment.from_bytes()`, `Attachment.from_url()`, and
+`Attachment.inline_file()` keep Base64 encoding, remote retrieval, MIME
+inference, inline disposition, and `content_id` handling close to the attachment
+model without adding an API resource that MailChannels does not have.
