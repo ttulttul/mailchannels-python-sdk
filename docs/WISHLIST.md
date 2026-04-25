@@ -166,3 +166,291 @@ access, async parity across resources, webhooks, suppressions, top-level usage,
 pagination helpers, attachment ergonomics, version export, formal custom HTTP
 client protocols, better exception metadata, CI, type checking, and manual
 online-test workflows.
+
+## Enhanced Testing
+
+You’re now past the “basic endpoint coverage” stage. The tests I’d add next are mostly **conformance, parity, and regression-hardening tests**.
+
+## Highest-priority additions
+
+### 1. Bidirectional OpenAPI drift detection
+
+Your current drift script validates that every SDK-declared route exists in the OpenAPI spec. That catches “SDK invented or stale route” bugs, but not “OpenAPI added a new route and the SDK forgot to implement it” bugs. The script currently computes only SDK routes missing from the spec via `_missing_routes(spec_routes)`. ([GitHub][1])
+
+Add tests and script logic for both directions:
+
+```python
+sdk_missing_from_spec = SDK_ROUTES - spec_routes
+spec_missing_from_sdk = spec_routes - SDK_ROUTES
+```
+
+Then allowlist only intentionally unsupported spec paths, if any.
+
+This is the single most important remaining conformance test because your route registry is now central to SDK/API alignment. ([GitHub][2])
+
+Status: implemented. The drift script now compares SDK and OpenAPI routes in both directions and the route snapshot asserts exact equality.
+
+I’d add fixture specs for:
+
+| Case                                       | Expected               |
+| ------------------------------------------ | ---------------------- |
+| Exact route match                          | pass                   |
+| SDK route absent from spec                 | fail                   |
+| Spec route absent from SDK                 | fail                   |
+| Intentional unsupported route in allowlist | pass                   |
+| Invalid OpenAPI YAML                       | fail cleanly           |
+| Local `--spec-path`                        | tested without network |
+
+### 2. Request-shape contract tests against OpenAPI schemas
+
+The current OpenAPI contract test is route-level: method/path membership and snapshot length. That is valuable, but it cannot detect wrong request bodies, wrong query names, wrong header placement, or omitted required fields. ([GitHub][3])
+
+Add operation-level contract tests that validate the SDK-generated request against the OpenAPI request schema. For each operation, construct a minimal valid SDK call, intercept the fake transport call, then validate:
+
+| Contract area        | Example                                           |
+| -------------------- | ------------------------------------------------- |
+| Path                 | `/sub-account/{handle}/limit`                     |
+| Method               | `PUT`                                             |
+| JSON body            | `{"sends": 100000}`                               |
+| Query params         | `dry-run=true`, `limit`, `offset`, `start_time`   |
+| Headers              | `X-Api-Key`, `X-Customer-Handle` where applicable |
+| No accidental extras | no legacy `monthly_limit` in outgoing JSON        |
+
+This would have caught the earlier plural `/limits` problem and would also catch future subtle shape regressions.
+
+Status: implemented. `tests/test_openapi_request_contract.py` executes every supported SDK operation through the fake transport and validates the generated request method, concrete path, JSON keys, query keys, required headers, forbidden headers, and legacy payload-key exclusions.
+
+### 3. A generated “every route has a call test” matrix
+
+Right now, route coverage is spread across resource-specific tests: DKIM, metrics, sub-accounts, suppressions, usage, webhooks, domain checks, etc. That is readable, but it leaves room for a new route to be added to `SDK_ROUTES` without a concrete request-construction test. ([GitHub][4])
+
+Add a parametrized test table keyed by route operation:
+
+```python
+ROUTE_CALLS = {
+    ("POST", "/send"): lambda client: client.emails.send(...),
+    ("POST", "/send-async"): lambda client: client.emails.queue(...),
+    ("POST", "/check-domain"): lambda client: client.check_domain.check("example.com"),
+    ...
+}
+```
+
+Then assert:
+
+```python
+assert set(ROUTE_CALLS) == sdk_route_keys()
+```
+
+For each route:
+
+```python
+call = transport.calls[0]
+assert call["method"] == method
+assert strip_base_url(call["url"]) == path_with_sample_values
+```
+
+This gives you an immediate failure when a developer updates the route registry but forgets to add an executable request test.
+
+Status: implemented. `ROUTE_CONTRACTS` is keyed by SDK method/path and `test_operation_contracts_cover_every_sdk_route` requires the matrix to match `sdk_route_keys()` exactly.
+
+### 4. Sync/async parity tests for every async-capable method
+
+You already test async for representative methods, including emails, DKIM, metrics, sub-accounts, suppressions, usage, webhooks, and domain checks. ([GitHub][5])
+
+The next step is systematic parity: for every sync method with an async counterpart, assert the async call emits the same method, URL, params, JSON, and headers. Resend’s test tree is stronger here because it has many paired sync/async test files across resources. ([GitHub][6])
+
+This is especially useful for SDKs because async methods often drift when features are added quickly.
+
+### 5. HTTP transport tests, not just fake transport tests
+
+Most current tests use fake transports, which is good for unit tests. But the real sync and async transports deserve direct tests too. `RequestsClient` wraps `requests.request`, handles JSON decoding failure, returns `SDKResponse`, and preserves response headers. `HTTPXClient` imports `httpx` lazily, opens an `AsyncClient`, handles JSON decode errors, and raises `AsyncClientNotConfigured` when async dependencies are missing. ([GitHub][7])
+
+Add tests for:
+
+| Transport case                                                     | Why                                          |
+| ------------------------------------------------------------------ | -------------------------------------------- |
+| `requests.request` receives method/url/headers/json/params/timeout | catches transport signature regressions      |
+| Non-JSON response returns `data=None`                              | protects 204 / HTML / plain-text responses   |
+| Headers preserved exactly                                          | request ID and retry metadata depend on this |
+| Timeout parameter honored                                          | production reliability                       |
+| Async transport with mocked `httpx.AsyncClient`                    | catches async request construction bugs      |
+| Async import failure                                               | verifies the optional `[async]` extra UX     |
+
+### 6. Negative webhook helper tests
+
+Webhook helper tests currently cover a happy-path parse/digest/freshness case. ([GitHub][8]) Add the ugly cases:
+
+| Test                                | Expected          |
+| ----------------------------------- | ----------------- |
+| Missing `Content-Digest`            | `False`           |
+| Wrong digest                        | `False`           |
+| Malformed digest                    | `False`           |
+| Non-base64 digest                   | no crash; `False` |
+| Header case variations              | still works       |
+| Missing `Signature-Input`           | `None` key ID     |
+| Malformed `Signature-Input`         | `ValueError`      |
+| Missing `created`                   | stale / not fresh |
+| Created timestamp outside tolerance | `False`           |
+| Future timestamp outside tolerance  | `False`           |
+
+These are high-value because webhook verification code usually fails in edge cases, not in the happy path.
+
+### 7. More complete error mapping tests
+
+Current error tests cover 403, 409, 413, 429 metadata, and null-body fallback. ([GitHub][9]) Add the missing direct mappings:
+
+| Status/body                | Expected                                        |
+| -------------------------- | ----------------------------------------------- |
+| 401                        | `AuthenticationError`                           |
+| 400                        | generic `ApiError` with `invalid_request_error` |
+| 404                        | generic `ApiError`                              |
+| 422                        | generic `ApiError`                              |
+| 500                        | generic `ApiError` with `server_error`          |
+| 502                        | `BadGatewayError`                               |
+| dict body with `error`     | message extracted                               |
+| dict body with `detail`    | message extracted                               |
+| dict body with `title`     | message extracted                               |
+| plain-text body            | text fallback                                   |
+| empty body                 | status fallback                                 |
+| request ID header variants | all recognized                                  |
+
+The exception class already supports request IDs from multiple header names and stable diagnostic fields, so tests should lock that behavior down. ([GitHub][10])
+
+## Medium-priority additions
+
+### 8. Strict response model coverage for every typed response
+
+You already test strict responses for usage, including validation failure. ([GitHub][11]) Extend that across every response model you expose: usage, domain checks, DKIM, metrics, suppressions, webhooks, and sub-account usage.
+
+For each model:
+
+1. Valid minimal API body parses.
+2. Extra fields are handled as intended.
+3. Missing required fields fail.
+4. Invalid types fail with `ResponseValidationError`.
+5. `http_headers` are preserved.
+
+This turns strict response mode into a reliable product feature rather than a partially tested option.
+
+### 9. Email payload negative tests
+
+Your email tests are already good on normalization, templates, custom headers, DKIM fields, attachments, dry-run, async queueing, and module-level config. ([GitHub][5]) Add negative payload tests:
+
+| Case                               | Expected                      |
+| ---------------------------------- | ----------------------------- |
+| Missing `from`                     | validation error              |
+| Missing recipient                  | validation error              |
+| Missing subject if API requires it | validation error              |
+| No content/text/html               | validation error              |
+| Invalid email address shape        | validation error, if enforced |
+| Empty attachments list             | normalized cleanly            |
+| Attachment file missing            | clear exception               |
+| Remote attachment 404              | propagates clear error        |
+| URL attachment with no filename    | sensible filename fallback    |
+| Conflicting shortcut/native fields | deterministic behavior        |
+
+The goal is to test what developers will get wrong.
+
+### 10. Live online CRUD lifecycle tests, carefully isolated
+
+The online tests now cover usage, async usage, send dry-run, optional real send, metrics volume, sub-account list, suppression list, webhooks list, DKIM list, and live domain checks. ([GitHub][12]) The manual workflow runs these via `workflow_dispatch` and uses environment variables for API key, URL, test sender/recipient, test domain, and real-send opt-in. ([GitHub][13])
+
+Add a separate `online_destructive` or `online_crud` marker for isolated create/update/delete flows:
+
+| Resource       | Suggested live test                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------- |
+| Suppressions   | create unique recipient, list/filter it, delete it                                                      |
+| Sub-accounts   | create unique handle, set limit, retrieve limit, delete limit, suspend/activate if safe, delete account |
+| API keys       | create/list/delete under throwaway sub-account                                                          |
+| SMTP passwords | create/list/delete under throwaway sub-account                                                          |
+| Webhooks       | create test endpoint, validate, list, delete                                                            |
+| DKIM           | create/list/update/rotate only on a designated test domain                                              |
+
+Use `try/finally` cleanup and unique names like `sdk-test-{timestamp}`. Keep these separate from routine CI to avoid accidental production mutation.
+
+### 11. Consumer typing tests
+
+The package presents itself as typed, and `pyproject.toml` runs mypy only on `src/mailchannels` and `scripts`. ([GitHub][14]) Add a small `typing_tests/` or `tests/typing/` fixture that simulates a user project:
+
+```python
+from mailchannels import Client
+from mailchannels.emails import EmailParams, EmailAddress
+
+client = Client(api_key="x")
+params = EmailParams(
+    from_=EmailAddress(email="sender@example.com"),
+    personalizations=[{"to": [{"email": "to@example.com"}]}],
+    subject="Hello",
+    content=[{"type": "text/plain", "value": "Hi"}],
+)
+client.emails.queue(params)
+```
+
+Then run mypy against that fixture in CI. This catches issues that internal package typing can miss, especially exported aliases and public model names.
+
+### 12. Package installation smoke tests
+
+Add CI jobs that build the wheel, install it into a clean virtual environment, and run import/smoke tests:
+
+| Install mode             | Test                                                |
+| ------------------------ | --------------------------------------------------- |
+| `pip install dist/*.whl` | `import mailchannels; mailchannels.Client`          |
+| without `[async]`        | sync works; async gives helpful missing-extra error |
+| with `[async]`           | async client imports and can use mocked transport   |
+| wheel metadata           | version, dependencies, `py.typed` included          |
+
+The current CI builds the package, but I do not see an install-from-wheel smoke test. ([GitHub][15])
+
+## Lower-priority but valuable
+
+### 13. Coverage threshold and branch coverage
+
+Resend’s CI uploads coverage; your current CI runs tests, quality checks, build, and OpenAPI drift, but I do not see coverage collection or a threshold. ([GitHub][16])
+
+Add:
+
+```bash
+pytest --cov=mailchannels --cov-branch --cov-report=term-missing --cov-fail-under=90
+```
+
+The number can start lower and ratchet up. Branch coverage is especially useful for error handling, optional async imports, and webhook helper negatives.
+
+### 14. CI Python matrix expansion
+
+The package supports Python `>=3.9`; current CI tests Python 3.9 and 3.13. ([GitHub][14]) I’d add 3.10, 3.11, and 3.12. This is not as urgent as contract tests, but it catches dependency and typing edge cases across the supported range.
+
+### 15. README example extraction tests
+
+You already test example files directly, which is excellent. ([GitHub][17]) The next level is extracting fenced Python snippets from `README.md` and smoke-testing them after replacing credentials/transports. That prevents the README from drifting away from executable SDK behavior.
+
+## My recommended order
+
+1. **Bidirectional OpenAPI drift detection**
+2. **OpenAPI request-shape validation**
+3. **Every-route executable request matrix**
+4. **Sync/async parity matrix**
+5. **Transport and error edge-case tests**
+6. **Webhook negative tests**
+7. **Online CRUD lifecycle tests under a separate marker**
+8. **Consumer typing and wheel-install smoke tests**
+9. **Coverage threshold and fuller Python matrix**
+
+This would make MailChannels stronger than Resend not only in SDK design and docs, but also in API-conformance discipline. Resend still has broader raw unit-test volume, especially paired async coverage, but you can leapfrog it by making OpenAPI conformance and route/request parity the backbone of the suite.
+
+[1]: https://raw.githubusercontent.com/ttulttul/mailchannels-python-sdk/main/scripts/check_openapi_drift.py "raw.githubusercontent.com"
+[2]: https://raw.githubusercontent.com/ttulttul/mailchannels-python-sdk/main/src/mailchannels/routes.py "raw.githubusercontent.com"
+[3]: https://raw.githubusercontent.com/ttulttul/mailchannels-python-sdk/main/tests/test_openapi_contract.py "raw.githubusercontent.com"
+[4]: https://raw.githubusercontent.com/ttulttul/mailchannels-python-sdk/main/tests/test_dkim.py "raw.githubusercontent.com"
+[5]: https://raw.githubusercontent.com/ttulttul/mailchannels-python-sdk/main/tests/test_emails.py "raw.githubusercontent.com"
+[6]: https://github.com/resend/resend-python/tree/main/tests "resend-python/tests at main · resend/resend-python · GitHub"
+[7]: https://raw.githubusercontent.com/ttulttul/mailchannels-python-sdk/main/src/mailchannels/http_client.py "raw.githubusercontent.com"
+[8]: https://raw.githubusercontent.com/ttulttul/mailchannels-python-sdk/main/tests/test_webhooks.py "raw.githubusercontent.com"
+[9]: https://raw.githubusercontent.com/ttulttul/mailchannels-python-sdk/main/tests/test_errors.py "raw.githubusercontent.com"
+[10]: https://raw.githubusercontent.com/ttulttul/mailchannels-python-sdk/main/src/mailchannels/exceptions.py "raw.githubusercontent.com"
+[11]: https://raw.githubusercontent.com/ttulttul/mailchannels-python-sdk/main/tests/test_response_config.py "raw.githubusercontent.com"
+[12]: https://raw.githubusercontent.com/ttulttul/mailchannels-python-sdk/main/tests/test_online_api.py "raw.githubusercontent.com"
+[13]: https://raw.githubusercontent.com/ttulttul/mailchannels-python-sdk/main/.github/workflows/online-tests.yml "raw.githubusercontent.com"
+[14]: https://raw.githubusercontent.com/ttulttul/mailchannels-python-sdk/main/pyproject.toml "raw.githubusercontent.com"
+[15]: https://raw.githubusercontent.com/ttulttul/mailchannels-python-sdk/main/.github/workflows/ci.yml "raw.githubusercontent.com"
+[16]: https://raw.githubusercontent.com/resend/resend-python/main/.github/workflows/ci.yaml "raw.githubusercontent.com"
+[17]: https://raw.githubusercontent.com/ttulttul/mailchannels-python-sdk/main/tests/test_examples.py "raw.githubusercontent.com"

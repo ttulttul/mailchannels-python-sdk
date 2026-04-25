@@ -477,6 +477,11 @@ When adding or changing SDK behavior:
 - Keep `tests/test_openapi_contract.py` aligned with the route registry so API
   coverage remains visible in the public test tree. The snapshot should match
   `sdk_route_keys()` exactly.
+- Keep `tests/test_openapi_request_contract.py` aligned with
+  `src/mailchannels/routes.py`. Every SDK route needs an executable contract row
+  that calls the public SDK method and validates method, path, JSON/query keys,
+  required headers, forbidden headers, and legacy payload keys such as
+  `monthly_limit`.
 - Prefer Node 24-ready GitHub Actions versions in workflows, such as
   `actions/checkout@v6`, `actions/setup-python@v6`, and
   `astral-sh/setup-uv@v8.1.0` or newer.

@@ -223,3 +223,12 @@ Checking only whether SDK routes exist in OpenAPI misses newly documented API
 endpoints. Keep `scripts/check_openapi_drift.py` symmetric: fail when SDK routes
 drop out of the spec and when spec routes are missing from the SDK route
 registry, so OpenAPI additions create visible SDK work.
+
+## 2026-04-25: Route coverage also needs executable request contracts
+
+Method/path snapshots catch route drift, but they do not catch request-shape
+regressions. Keep an every-route contract matrix that calls the public SDK
+surface through a fake transport and validates the generated method, concrete
+path, JSON keys, query keys, and operation-specific headers. This catches
+subtle regressions such as legacy payload names or auth headers on public
+webhook-key operations.

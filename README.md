@@ -175,13 +175,17 @@ most often:
 | Manage suppressions | `/suppression-list` | `mailchannels.Suppressions` |
 | Receive delivery events | `/webhook*` | `mailchannels.Webhooks` |
 
-Route coverage is guarded in two places. The normal test tree includes
+Route coverage is guarded in three layers. The normal test tree includes
 `tests/test_openapi_contract.py`, which checks exact agreement between SDK
-route declarations and a local OpenAPI route snapshot. CI also runs
-`scripts/check_openapi_drift.py`, which parses and validates the official
+route declarations and a local OpenAPI route snapshot.
+`tests/test_openapi_request_contract.py` executes every declared route through a
+fake transport and validates the emitted method, path, JSON keys, query keys,
+and operation-specific headers against the documented request shape. CI also
+runs `scripts/check_openapi_drift.py`, which parses and validates the official
 MailChannels OpenAPI document with `openapi-spec-validator` before comparing
-its routes with the SDK route registry in both directions. That catches both
-stale SDK routes and newly documented endpoints before drift lands on `main`.
+its routes with the SDK route registry in both directions. That catches stale
+SDK routes, newly documented endpoints, and subtle request-shape drift before
+it lands on `main`.
 
 ### Choosing The Right Entry Point
 
