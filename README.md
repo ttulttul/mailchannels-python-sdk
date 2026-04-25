@@ -220,6 +220,79 @@ MailChannels does not host DKIM public keys for your domain; you must copy the
 returned public DKIM TXT record into your own DNS zone. The TXT record name will
 look like `mcdkim._domainkey.example.com`.
 
+If your DNS is hosted in Cloudflare, you can publish the returned DKIM TXT
+record with Cloudflare's official Python SDK. The example below uses
+`CLOUDFLARE_API_TOKEN` from the environment, finds the zone, updates an existing
+TXT record when it is present, and creates it when it is missing.
+
+```bash
+uv add cloudflare
+export CLOUDFLARE_API_TOKEN="your_cloudflare_api_token"
+```
+
+```python
+from cloudflare import Cloudflare
+
+import mailchannels
+
+
+DOMAIN = "example.com"
+SELECTOR = "mcdkim"
+
+mailchannels.api_key = "YOUR-MAILCHANNELS-API-KEY"
+cloudflare = Cloudflare()
+
+
+def publish_mailchannels_dkim_record() -> None:
+    """Create a MailChannels DKIM key and publish its public key in Cloudflare."""
+    key = mailchannels.Dkim.create(
+        DOMAIN,
+        selector=SELECTOR,
+        algorithm="rsa",
+        key_length=2048,
+    )
+    dns_record = key["dkim_dns_records"][0]
+
+    zones = cloudflare.zones.list(name=DOMAIN)
+    zone = next(iter(zones), None)
+    if zone is None:
+        raise RuntimeError(f"Cloudflare zone not found: {DOMAIN}")
+
+    records = cloudflare.dns.records.list(
+        zone_id=zone.id,
+        type="TXT",
+        name=dns_record["name"],
+    )
+    existing_record = next(iter(records), None)
+
+    if existing_record is None:
+        updated_record = cloudflare.dns.records.create(
+            zone_id=zone.id,
+            type="TXT",
+            name=dns_record["name"],
+            content=dns_record["value"],
+            ttl=1,
+        )
+    else:
+        updated_record = cloudflare.dns.records.update(
+            existing_record.id,
+            zone_id=zone.id,
+            type="TXT",
+            name=dns_record["name"],
+            content=dns_record["value"],
+            ttl=1,
+        )
+
+    print(f"Published DKIM record: {updated_record.name}")
+
+
+publish_mailchannels_dkim_record()
+```
+
+The Cloudflare token needs permission to read the zone and edit DNS records. In
+Cloudflare's dashboard, grant at least `Zone: Read` and `DNS: Edit` for the
+zone that owns the sending domain.
+
 After the DNS record is published, send mail with the selector. If
 `dkim_domain` is omitted, MailChannels can derive it from the `from` address,
 but setting it explicitly keeps the signing intent obvious.
