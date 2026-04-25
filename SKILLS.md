@@ -414,7 +414,7 @@ The dry-run send test additionally needs `MAILCHANNELS_ONLINE_FROM` and
 
 Keep online metrics tests bounded with explicit `start_time` and `end_time`
 values. The live `/metrics/volume?interval=day` query can time out when the
-range is left implicit; MailChannels tracks this service issue as `CLOUD-5801`.
+range is left implicit.
 
 Do not make online tests deliver messages by default. The real send test must
 stay gated behind `MAILCHANNELS_ONLINE_SEND_REAL=1` and should be run directly
