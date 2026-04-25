@@ -6,11 +6,12 @@ import base64
 import logging
 import mimetypes
 from pathlib import Path
-from typing import Any, Literal, NotRequired, TypedDict
+from typing import Any, Literal, TypedDict
 from urllib.parse import urlparse
 
 import requests
 from pydantic import BaseModel, ConfigDict, Field
+from typing_extensions import NotRequired
 
 from ..exceptions import MailChannelsError
 

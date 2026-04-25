@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from builtins import list as list_type
 from typing import Any
 
 from ..query import compact_query, pagination_query
@@ -76,7 +77,7 @@ class SuppressionsResource:
 
     def create(
         self,
-        entries: list[SuppressionEntryParams],
+        entries: list_type[SuppressionEntryParams],
         *,
         add_to_sub_accounts: bool | None = None,
     ) -> dict[str, Any]:
@@ -95,7 +96,7 @@ class SuppressionsResource:
 
     async def create_async(
         self,
-        entries: list[SuppressionEntryParams],
+        entries: list_type[SuppressionEntryParams],
         *,
         add_to_sub_accounts: bool | None = None,
     ) -> dict[str, Any]:
@@ -167,7 +168,7 @@ class Suppressions:
     @classmethod
     def create(
         cls,
-        entries: list[SuppressionEntryParams],
+        entries: list_type[SuppressionEntryParams],
         *,
         add_to_sub_accounts: bool | None = None,
     ) -> dict[str, Any]:
@@ -182,7 +183,7 @@ class Suppressions:
     @classmethod
     async def create_async(
         cls,
-        entries: list[SuppressionEntryParams],
+        entries: list_type[SuppressionEntryParams],
         *,
         add_to_sub_accounts: bool | None = None,
     ) -> dict[str, Any]:

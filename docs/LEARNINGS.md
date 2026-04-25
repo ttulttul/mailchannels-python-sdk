@@ -133,3 +133,17 @@ provided. The online volume metrics test now sends an explicit recent 24-hour
 UTC `start_time` and `end_time` range so it still exercises the endpoint without
 depending on the service to infer an unbounded query window. MailChannels bug
 `CLOUD-5801` tracks the timeout issue in the metrics API.
+
+## 2026-04-25: CI mirrors local quality gates
+
+The repository now has a GitHub Actions CI workflow that runs pytest on Python
+3.9 and 3.13, plus ruff, mypy, and package builds on Python 3.13. Live API tests
+belong in a separate manual-only workflow because they require a real
+MailChannels API key and may optionally deliver a real email.
+
+## 2026-04-25: SmolVM archives should exclude local tool caches
+
+After adding mypy, the local archive used for SmolVM verification ballooned when
+it included `.mypy_cache` and other tool caches, which made VM extraction noisy
+and slow. Build SmolVM tarballs with `COPYFILE_DISABLE=1` and exclude `.venv`,
+`.git`, `dist`, `.mypy_cache`, `.ruff_cache`, and `.pytest_cache`.

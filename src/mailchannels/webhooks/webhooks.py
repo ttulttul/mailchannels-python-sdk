@@ -7,6 +7,7 @@ import hashlib
 import logging
 import re
 import time
+from builtins import list as list_type
 from typing import Any
 
 from ..query import compact_query, pagination_query
@@ -74,7 +75,7 @@ class WebhooksResource:
         *,
         created_after: str | None = None,
         created_before: str | None = None,
-        statuses: list[WebhookBatchStatus] | None = None,
+        statuses: list_type[WebhookBatchStatus] | None = None,
         webhook: str | None = None,
         limit: int | None = None,
         offset: int | None = None,
@@ -100,7 +101,7 @@ class WebhooksResource:
         *,
         created_after: str | None = None,
         created_before: str | None = None,
-        statuses: list[WebhookBatchStatus] | None = None,
+        statuses: list_type[WebhookBatchStatus] | None = None,
         webhook: str | None = None,
         limit: int | None = None,
         offset: int | None = None,
@@ -251,7 +252,7 @@ class Webhooks:
         *,
         created_after: str | None = None,
         created_before: str | None = None,
-        statuses: list[WebhookBatchStatus] | None = None,
+        statuses: list_type[WebhookBatchStatus] | None = None,
         webhook: str | None = None,
         limit: int | None = None,
         offset: int | None = None,
@@ -274,7 +275,7 @@ class Webhooks:
         *,
         created_after: str | None = None,
         created_before: str | None = None,
-        statuses: list[WebhookBatchStatus] | None = None,
+        statuses: list_type[WebhookBatchStatus] | None = None,
         webhook: str | None = None,
         limit: int | None = None,
         offset: int | None = None,

@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, Union
 
 from pydantic import BaseModel, ConfigDict
+from typing_extensions import TypeAlias
 
 MetricsInterval = Literal["hour", "day", "week", "month"]
 MetricsSenderType = Literal["campaigns", "sub-accounts"]
 MetricsSortOrder = Literal["asc", "desc"]
-MetricsTime = str | date | datetime
+MetricsTime: TypeAlias = Union[str, date, datetime]
 
 
 class MetricsQueryParams(TypedDict, total=False):

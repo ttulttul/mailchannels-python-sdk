@@ -1,0 +1,44 @@
+name: Online API Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      send_real_email:
+        description: "Set to true to run the real email send test."
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  online:
+    name: Online API
+    runs-on: ubuntu-latest
+    environment: online-api
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --extra async --extra dev
+
+      - name: Run online tests
+        env:
+          MAILCHANNELS_API_KEY: ${{ secrets.MAILCHANNELS_API_KEY }}
+          MAILCHANNELS_API_URL: ${{ vars.MAILCHANNELS_API_URL }}
+          MAILCHANNELS_ONLINE_FROM: ${{ vars.MAILCHANNELS_ONLINE_FROM }}
+          MAILCHANNELS_ONLINE_TO: ${{ vars.MAILCHANNELS_ONLINE_TO }}
+          MAILCHANNELS_ONLINE_DOMAIN: ${{ vars.MAILCHANNELS_ONLINE_DOMAIN }}
+          MAILCHANNELS_ONLINE_SEND_REAL: ${{ github.event.inputs.send_real_email == 'true' && '1' || '0' }}
+        run: uv run pytest -m online --online

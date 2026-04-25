@@ -1,5 +1,11 @@
 # MailChannels Python SDK
 
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-46aef7.svg)](https://github.com/astral-sh/ruff)
+[![CI](https://github.com/ttulttul/mailchannels-python-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/ttulttul/mailchannels-python-sdk/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![PyPI](https://img.shields.io/pypi/v/mailchannels)](https://pypi.org/project/mailchannels/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/mailchannels)](https://pypi.org/project/mailchannels/)
+
 `mailchannels` is a typed Python SDK for the MailChannels Email API. It is
 designed to make the first send small and obvious while still exposing the parts
 of MailChannels that matter in production: queued sending through `/send-async`,
@@ -824,10 +830,18 @@ Install all development dependencies and run the local test suite:
 ```bash
 uv sync --extra async --extra dev
 uv run pytest
+uv run ruff check src tests examples
+uv run mypy
+uv build
 ```
 
 Current uv releases do not expose `uv pytest` as a native subcommand; use
 `uv run pytest` for the portable pytest harness.
+
+The GitHub Actions CI workflow runs the same checks on pushes to `main`, pull
+requests, and manual dispatches. The separate online API workflow is manual-only
+and expects `MAILCHANNELS_API_KEY` as a GitHub secret plus optional repository or
+environment variables for sender, recipient, DKIM domain, and API URL.
 
 ### Online API Tests
 
@@ -884,7 +898,7 @@ Run the suite in SmolVM before committing. In this macOS sandbox, copying a tar
 archive into the VM is more reliable than a direct bind mount:
 
 ```bash
-tar --exclude .venv --exclude .git --exclude dist -cf /tmp/mailchannels-python-sdk.tar .
+COPYFILE_DISABLE=1 tar --exclude .venv --exclude .git --exclude dist --exclude .mypy_cache --exclude .ruff_cache --exclude .pytest_cache -cf /tmp/mailchannels-python-sdk.tar .
 smolvm machine create mc-sdk-tests --net --image python:3.13-slim
 smolvm machine start --name mc-sdk-tests
 smolvm machine cp /tmp/mailchannels-python-sdk.tar mc-sdk-tests:/workspace/mailchannels-python-sdk.tar

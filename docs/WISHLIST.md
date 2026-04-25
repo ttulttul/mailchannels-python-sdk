@@ -156,5 +156,7 @@ Resend has CI, type-checking configuration, and broader test automation.
 MailChannels has pytest, ruff, and SmolVM instructions, but no committed GitHub
 Actions workflow or static type-check job.
 
-Status: pending.
+Status: implemented. The repository includes GitHub Actions CI for pytest,
+ruff, mypy, and package builds, plus a manual online-test workflow for live API
+checks with repository secrets.
 Priority: low.

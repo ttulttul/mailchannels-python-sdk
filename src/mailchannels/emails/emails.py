@@ -8,7 +8,8 @@ from typing import Any
 from pydantic import ValidationError
 
 from ..exceptions import MailChannelsError
-from .types import EmailAddress, EmailParams, SendParams
+from .types import EmailAddress, EmailParams
+from .types import SendParams as SendParamsType
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class EmailsResource:
 
     def send(
         self,
-        params: SendParams | EmailParams,
+        params: SendParamsType | EmailParams,
         *,
         dry_run: bool = False,
     ) -> dict[str, Any]:
@@ -34,7 +35,7 @@ class EmailsResource:
 
     async def send_async(
         self,
-        params: SendParams | EmailParams,
+        params: SendParamsType | EmailParams,
         *,
         dry_run: bool = False,
     ) -> dict[str, Any]:
@@ -49,13 +50,13 @@ class EmailsResource:
             params=query,
         )
 
-    def queue(self, params: SendParams | EmailParams) -> dict[str, Any]:
+    def queue(self, params: SendParamsType | EmailParams) -> dict[str, Any]:
         """Queue an email through the MailChannels `/send-async` endpoint."""
         payload = normalize_email_params(params)
         logger.info("Queueing email through MailChannels /send-async")
         return self._client.request("POST", "/send-async", json=payload)
 
-    async def queue_async(self, params: SendParams | EmailParams) -> dict[str, Any]:
+    async def queue_async(self, params: SendParamsType | EmailParams) -> dict[str, Any]:
         """Queue an email through `/send-async` using async HTTP."""
         payload = normalize_email_params(params)
         logger.info("Queueing email through MailChannels /send-async using async HTTP")
@@ -65,12 +66,12 @@ class EmailsResource:
 class Emails:
     """Module-level email operations using global SDK configuration."""
 
-    SendParams = SendParams
+    SendParams = SendParamsType
 
     @classmethod
     def send(
         cls,
-        params: SendParams | EmailParams,
+        params: SendParamsType | EmailParams,
         *,
         dry_run: bool = False,
     ) -> dict[str, Any]:
@@ -82,7 +83,7 @@ class Emails:
     @classmethod
     async def send_async(
         cls,
-        params: SendParams | EmailParams,
+        params: SendParamsType | EmailParams,
         *,
         dry_run: bool = False,
     ) -> dict[str, Any]:
@@ -92,21 +93,21 @@ class Emails:
         return await get_default_client().emails.send_async(params, dry_run=dry_run)
 
     @classmethod
-    def queue(cls, params: SendParams | EmailParams) -> dict[str, Any]:
+    def queue(cls, params: SendParamsType | EmailParams) -> dict[str, Any]:
         """Queue an email through the globally configured client."""
         from ..client import get_default_client
 
         return get_default_client().emails.queue(params)
 
     @classmethod
-    async def queue_async(cls, params: SendParams | EmailParams) -> dict[str, Any]:
+    async def queue_async(cls, params: SendParamsType | EmailParams) -> dict[str, Any]:
         """Queue an email through the globally configured async client."""
         from ..client import get_default_client
 
         return await get_default_client().emails.queue_async(params)
 
 
-def normalize_email_params(params: SendParams | EmailParams) -> dict[str, Any]:
+def normalize_email_params(params: SendParamsType | EmailParams) -> dict[str, Any]:
     """Normalize SDK email parameters into MailChannels API JSON."""
     if isinstance(params, EmailParams):
         return params.to_payload()
@@ -122,7 +123,7 @@ def normalize_email_params(params: SendParams | EmailParams) -> dict[str, Any]:
         ) from error
 
 
-def _normalize_mapping(params: SendParams) -> dict[str, Any]:
+def _normalize_mapping(params: SendParamsType) -> dict[str, Any]:
     """Normalize dictionary email parameters into MailChannels structure."""
     payload: dict[str, Any] = dict(params)
     from_value = _extract_from(payload)

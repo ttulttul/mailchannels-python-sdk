@@ -438,3 +438,10 @@ When adding or changing SDK behavior:
 - Update `docs/LEARNINGS.md` for important discoveries or API semantics.
 - Run `uv run pytest`, ruff, build, and the SmolVM pytest workflow before
   committing.
+- Keep `.github/workflows/ci.yml` aligned with the local quality gates when the
+  required checks change. Keep online API tests in the manual-only workflow so
+  live sends and production API calls require explicit operator intent.
+- When preparing the SmolVM archive on macOS, use `COPYFILE_DISABLE=1` and
+  exclude `.venv`, `.git`, `dist`, `.mypy_cache`, `.ruff_cache`, and
+  `.pytest_cache` so cache files and extended metadata do not make extraction
+  slow or noisy.
