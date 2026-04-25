@@ -194,3 +194,10 @@ The first implementation exposed `/check-domain` as `DomainChecks`, but users
 reviewing API coverage naturally look for the documented endpoint spelling.
 Expose `CheckDomain` and `client.check_domain` as first-class aliases while
 keeping `DomainChecks` and `client.domain_checks` for compatibility.
+
+## 2026-04-25: API coverage needs obvious public signposts
+
+Even when route support exists, reviewers scan the README introduction and test
+filenames first. Keep API coverage summarized near the top of README and keep a
+plainly named `tests/test_openapi_contract.py` alongside the live OpenAPI drift
+script so contract coverage is visible from the repository tree.

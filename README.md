@@ -15,6 +15,26 @@ validation through `/check-domain`, and metrics.
 The SDK accepts familiar dictionary payloads for quick scripts and Pydantic
 models for codebases that prefer explicit runtime validation.
 
+## API Coverage
+
+The SDK covers the MailChannels Email API surfaces that production senders need
+most often:
+
+- Email sending through `/send` and queued sending through `/send-async`.
+- Domain validation through `POST /check-domain`, exposed as
+  `mailchannels.CheckDomain` and `client.check_domain`.
+- MailChannels-hosted DKIM key creation, listing, status updates, and rotation.
+- Sub-account creation, suspension, activation, credentials, singular
+  `/sub-account/{handle}/limit` rate limits, and usage stats.
+- Templates, unsubscribe metadata, custom email headers, suppression lists,
+  metrics, usage, and webhooks.
+
+Route coverage is guarded in two places. The normal test tree includes
+`tests/test_openapi_contract.py`, which checks SDK route declarations against a
+local OpenAPI route snapshot. CI also runs `scripts/check_openapi_drift.py`
+against the official MailChannels OpenAPI document to catch upstream route drift
+before it lands on `main`.
+
 ## Install
 
 Install the SDK with uv:

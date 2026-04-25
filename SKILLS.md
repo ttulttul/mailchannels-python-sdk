@@ -463,6 +463,8 @@ When adding or changing SDK behavior:
 - Keep `src/mailchannels/routes.py` updated whenever adding, removing, or
   correcting an API endpoint. Run `uv run python scripts/check_openapi_drift.py`
   when route declarations change.
+- Keep `tests/test_openapi_contract.py` aligned with the route registry so API
+  coverage remains visible in the public test tree.
 - Prefer Node 24-ready GitHub Actions versions in workflows, such as
   `actions/checkout@v6`, `actions/setup-python@v6`, and
   `astral-sh/setup-uv@v8.1.0` or newer.
