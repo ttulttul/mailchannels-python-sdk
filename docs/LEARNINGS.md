@@ -239,3 +239,10 @@ Async methods can drift from sync methods even when route-level coverage passes.
 Keep sync and async calls in the same operation contract row and compare the
 captured fake-transport requests directly. This keeps parity checks tied to the
 same concrete inputs used for OpenAPI request-shape validation.
+
+## 2026-04-25: PyPI releases should use trusted publishing
+
+Release automation should not depend on long-lived PyPI API tokens. Use a
+separate GitHub Actions workflow with a build-and-verify job and a narrowly
+permissioned publish job that grants `id-token: write` only when uploading to
+PyPI through the `pypi` environment.

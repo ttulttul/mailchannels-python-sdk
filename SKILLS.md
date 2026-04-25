@@ -470,6 +470,10 @@ When adding or changing SDK behavior:
 - Keep `.github/workflows/ci.yml` aligned with the local quality gates when the
   required checks change. Keep online API tests in the manual-only workflow so
   live sends and production API calls require explicit operator intent.
+- Keep `.github/workflows/publish.yml` scoped to release publishing. It should
+  build and verify distributions before publishing, use the `pypi` GitHub
+  environment, and rely on PyPI trusted publishing with `id-token: write`
+  instead of long-lived API-token secrets.
 - Keep `src/mailchannels/routes.py` updated whenever adding, removing, or
   correcting an API endpoint. Run `uv run python scripts/check_openapi_drift.py`
   when route declarations change; it fails if SDK routes are missing from the

@@ -433,17 +433,19 @@ OpenID Connect over long-lived API tokens, and gate publication on tags or
 manual `workflow_dispatch` so routine pushes to `main` keep running tests
 without publishing a release.
 
-Status: pending.
+Status: implemented. `.github/workflows/publish.yml` builds and verifies the
+package, checks tag/version alignment for `v*` tags, uploads the distribution as
+an artifact, and publishes through PyPI trusted publishing from the `pypi`
+environment.
 Priority: high.
 
 ## My recommended order
 
-1. **Automate PyPI publishing via GitHub Actions**
-2. **Transport and error edge-case tests**
-3. **Webhook negative tests**
-4. **Online CRUD lifecycle tests under a separate marker**
-5. **Consumer typing and wheel-install smoke tests**
-6. **Coverage threshold and fuller Python matrix**
+1. **Transport and error edge-case tests**
+2. **Webhook negative tests**
+3. **Online CRUD lifecycle tests under a separate marker**
+4. **Consumer typing and wheel-install smoke tests**
+5. **Coverage threshold and fuller Python matrix**
 
 This would make MailChannels stronger than Resend not only in SDK design and docs, but also in API-conformance discipline. Resend still has broader raw unit-test volume, especially paired async coverage, but you can leapfrog it by making OpenAPI conformance and route/request parity the backbone of the suite.
 

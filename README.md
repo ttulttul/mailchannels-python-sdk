@@ -978,6 +978,13 @@ early. The separate online API workflow is manual-only and expects
 `MAILCHANNELS_API_KEY` as a GitHub secret plus optional repository or environment
 variables for sender, recipient, DKIM domain, and API URL.
 
+The PyPI publishing workflow builds, tests, type-checks, validates OpenAPI
+drift, runs `twine check`, and publishes the verified `dist/` artifact through
+PyPI trusted publishing. Configure PyPI with a trusted publisher for
+`.github/workflows/publish.yml` and the GitHub environment `pypi`. Push a
+version tag such as `v0.1.0`, matching `pyproject.toml`, to publish
+automatically, or run the workflow manually with `publish=true`.
+
 ### Online API Tests
 
 The default test suite never calls the live MailChannels API. Online tests are
