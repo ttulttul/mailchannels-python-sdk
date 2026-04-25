@@ -412,6 +412,10 @@ The dry-run send test additionally needs `MAILCHANNELS_ONLINE_FROM` and
 `MAILCHANNELS_ONLINE_TO`. Optional DKIM listing needs
 `MAILCHANNELS_ONLINE_DOMAIN`.
 
+Keep online metrics tests bounded with explicit `start_time` and `end_time`
+values. The live `/metrics/volume?interval=day` query can time out when the
+range is left implicit.
+
 Do not make online tests deliver messages by default. The real send test must
 stay gated behind `MAILCHANNELS_ONLINE_SEND_REAL=1` and should be run directly
 when needed:

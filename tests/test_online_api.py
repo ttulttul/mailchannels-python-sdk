@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import pytest
@@ -118,9 +118,14 @@ def test_online_send_real_email() -> None:
 
 
 def test_online_metrics_volume() -> None:
-    """Retrieve live volume metrics with a narrow default query."""
+    """Retrieve live volume metrics with an explicit bounded time range."""
+    start_time, end_time = _bounded_metrics_window()
     try:
-        result = _client().metrics.volume(interval="day")
+        result = _client().metrics.volume(
+            start_time=start_time,
+            end_time=end_time,
+            interval="day",
+        )
     except mailchannels.ApiError as error:
         _xfail_live_server_error(error)
         raise
@@ -210,6 +215,18 @@ def _send_payload(
         "subject": subject,
         "text": body,
     }
+
+
+def _bounded_metrics_window() -> tuple[str, str]:
+    """Return a recent 24-hour UTC metrics window in API timestamp format."""
+    end_time = datetime.now(timezone.utc).replace(microsecond=0)
+    start_time = end_time - timedelta(days=1)
+    return _format_utc_timestamp(start_time), _format_utc_timestamp(end_time)
+
+
+def _format_utc_timestamp(value: datetime) -> str:
+    """Format a UTC datetime with a trailing Z for the MailChannels API."""
+    return value.isoformat().replace("+00:00", "Z")
 
 
 def _xfail_live_server_error(error: mailchannels.ApiError) -> None:

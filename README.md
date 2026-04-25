@@ -842,9 +842,11 @@ uv run pytest -m online --online
 
 The online suite includes parent-account usage, async usage, volume metrics,
 sub-account listing, suppression listing, webhook listing, and optional DKIM
-listing. It can also validate the send endpoint with a MailChannels dry run,
-which does not deliver a message. Set sender and recipient addresses to enable
-that dry-run test:
+listing. The volume metrics test sends an explicit 24-hour `start_time` and
+`end_time` window so the live service does not need to infer an unbounded range.
+It can also validate the send endpoint with a MailChannels dry run, which does
+not deliver a message. Set sender and recipient addresses to enable that dry-run
+test:
 
 ```bash
 export MAILCHANNELS_ONLINE_FROM="sender@example.com"

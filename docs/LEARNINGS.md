@@ -125,3 +125,10 @@ test that actually sends an email is intentionally gated behind
 `MAILCHANNELS_ONLINE_SEND_REAL=1`, in addition to `MAILCHANNELS_API_KEY`,
 `MAILCHANNELS_ONLINE_FROM`, `MAILCHANNELS_ONLINE_TO`, and `--online`, so broad
 online test runs do not deliver mail accidentally.
+
+## 2026-04-25: Online metrics tests should use bounded windows
+
+The live `/metrics/volume?interval=day` query can time out when no time range is
+provided. The online volume metrics test now sends an explicit recent 24-hour
+UTC `start_time` and `end_time` range so it still exercises the endpoint without
+depending on the service to infer an unbounded query window.
