@@ -444,6 +444,9 @@ When adding or changing SDK behavior:
 - Prefer Node 24-ready GitHub Actions versions in workflows, such as
   `actions/checkout@v6`, `actions/setup-python@v6`, and
   `astral-sh/setup-uv@v8.1.0` or newer.
+- Keep `setup-uv` workflow caching disabled unless there is a clear need for it;
+  this small test matrix runs quickly and parallel cache saves can create noisy
+  GitHub Actions annotations.
 - When preparing the SmolVM archive on macOS, use `COPYFILE_DISABLE=1` and
   exclude `.venv`, `.git`, `dist`, `.mypy_cache`, `.ruff_cache`, and
   `.pytest_cache` so cache files and extended metadata do not make extraction

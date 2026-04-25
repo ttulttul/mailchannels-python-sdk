@@ -154,3 +154,5 @@ GitHub CI warned that Node.js 20 actions are deprecated. The workflows now use
 `actions/checkout@v6`, `actions/setup-python@v6`, and
 `astral-sh/setup-uv@v8.1.0`, which declare the Node 24 runtime and avoid the
 deprecation warning without adding a temporary compatibility environment flag.
+`setup-uv` caching is disabled because the jobs are fast and parallel cache
+saves can produce noisy "Unable to reserve cache" annotations.
