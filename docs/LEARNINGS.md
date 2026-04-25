@@ -100,3 +100,11 @@ MailChannels errors now preserve response headers and derive request IDs,
 retry-after hints, error types, suggested actions, and `to_dict()` metadata.
 This makes example error handling and production logging more useful without
 forcing callers to parse raw HTTP responses.
+
+## 2026-04-24: Online tests are explicit and non-delivering by default
+
+Live MailChannels API tests use the `online` pytest marker, require a real
+`MAILCHANNELS_API_KEY`, and also require the `--online` flag so local test runs
+do not accidentally call production APIs. Online send validation uses
+`dry_run=True` and only runs when `MAILCHANNELS_ONLINE_FROM` and
+`MAILCHANNELS_ONLINE_TO` are set.

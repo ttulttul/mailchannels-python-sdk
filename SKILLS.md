@@ -399,6 +399,19 @@ suppressions, webhooks, usage, custom HTTP clients, and structured error
 handling. Keep examples importable and avoid doing network work at import time;
 tests should exercise example functions with fake transports.
 
+## Online Tests
+
+Online tests are marked `online` and require both a real
+`MAILCHANNELS_API_KEY` environment variable and the pytest `--online` flag:
+
+```bash
+uv run pytest -m online --online
+```
+
+The dry-run send test additionally needs `MAILCHANNELS_ONLINE_FROM` and
+`MAILCHANNELS_ONLINE_TO`. Do not make online tests deliver messages by default;
+use MailChannels dry-run behavior for send validation.
+
 ## Repository Maintenance
 
 When adding or changing SDK behavior:

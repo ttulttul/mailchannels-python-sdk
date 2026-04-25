@@ -2,11 +2,41 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
+
+import pytest
 
 from mailchannels.http_client import RequestsClient
 from mailchannels.http_client_async import HTTPXClient
 from mailchannels.response import SDKResponse
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Add command-line options for the test suite."""
+    parser.addoption(
+        "--online",
+        action="store_true",
+        default=False,
+        help="Run tests that call the live MailChannels Email API.",
+    )
+
+
+def pytest_collection_modifyitems(
+    config: pytest.Config,
+    items: list[pytest.Item],
+) -> None:
+    """Skip online tests unless explicitly enabled and configured."""
+    if config.getoption("--online") and os.environ.get("MAILCHANNELS_API_KEY"):
+        return
+
+    reason = (
+        "set MAILCHANNELS_API_KEY and pass --online to run live MailChannels API tests"
+    )
+    skip_online = pytest.mark.skip(reason=reason)
+    for item in items:
+        if "online" in item.keywords:
+            item.add_marker(skip_online)
 
 
 class FakeRequestsClient(RequestsClient):

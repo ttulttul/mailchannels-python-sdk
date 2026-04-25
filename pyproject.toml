@@ -30,6 +30,9 @@ packages = ["src/mailchannels"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "online: tests that call the live MailChannels Email API",
+]
 
 [tool.ruff]
 line-length = 88

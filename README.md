@@ -829,6 +829,31 @@ uv run pytest
 Current uv releases do not expose `uv pytest` as a native subcommand; use
 `uv run pytest` for the portable pytest harness.
 
+### Online API Tests
+
+The default test suite never calls the live MailChannels API. Online tests are
+marked with `online` and run only when you both provide a real API key in the
+environment and pass `--online`.
+
+```bash
+export MAILCHANNELS_API_KEY="your_real_mailchannels_api_key"
+uv run pytest -m online --online
+```
+
+The online suite includes a safe parent-account usage request and an async usage
+request. It can also validate the send endpoint with a MailChannels dry run,
+which does not deliver a message. Set sender and recipient addresses to enable
+that dry-run test:
+
+```bash
+export MAILCHANNELS_ONLINE_FROM="sender@example.com"
+export MAILCHANNELS_ONLINE_TO="recipient@example.net"
+uv run pytest -m online --online
+```
+
+Use `MAILCHANNELS_API_URL` if you need to point the online tests at a non-default
+MailChannels API host.
+
 Run the suite in SmolVM before committing. In this macOS sandbox, copying a tar
 archive into the VM is more reliable than a direct bind mount:
 
