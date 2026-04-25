@@ -156,3 +156,11 @@ GitHub CI warned that Node.js 20 actions are deprecated. The workflows now use
 deprecation warning without adding a temporary compatibility environment flag.
 `setup-uv` caching is disabled because the jobs are fast and parallel cache
 saves can produce noisy "Unable to reserve cache" annotations.
+
+## 2026-04-25: Wishlist now prioritizes API conformance
+
+The SDK wishlist has shifted from Resend-alignment ergonomics to MailChannels API
+conformance. The highest-priority work is correcting sub-account limit routes,
+adding `/check-domain`, and introducing OpenAPI-backed contract tests and drift
+detection so hand-written SDK routes cannot silently diverge from the official
+specification.

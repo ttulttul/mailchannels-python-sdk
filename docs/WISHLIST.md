@@ -1,162 +1,126 @@
 # SDK Wishlist
 
-This wishlist compares the MailChannels Python SDK with the local
-`../resend-python` SDK from an SDK ergonomics point of view. It does not assume
-MailChannels should copy Resend's API surface; it identifies reusable SDK
-features and support patterns that would make this package feel more complete.
+This wishlist is the current product and engineering roadmap for the
+MailChannels Python SDK. Earlier Resend-alignment work has mostly landed; the
+next phase should focus on API conformance, drift detection, stronger response
+typing, and formal documentation coverage.
 
-## 1. Environment Variable Configuration
+## 1. Fix Sub-Account Limit API Conformance
 
-Resend auto-loads its API key and API URL from environment variables. The
-MailChannels SDK should support `MAILCHANNELS_API_KEY` and
-`MAILCHANNELS_API_URL` so scripts and deployed services can be configured
-without assigning module globals in code.
+The SDK currently models sub-account limits with `/sub-account/{handle}/limits`
+and `POST` for setting limits. The official MailChannels documentation specifies
+`PUT /sub-account/:handle/limit` with a singular `limit` path. Existing
+retrieval and deletion paths should also be checked and corrected to the
+documented singular endpoint.
 
-Status: implemented.
+Status: pending.
 Priority: high.
 
-## 2. Response Headers
+## 2. Implement `/check-domain`
 
-Resend preserves HTTP response headers in API responses. MailChannels responses
-should expose `http_headers` so callers can inspect request IDs, rate-limit
-headers, retry hints, and diagnostic metadata.
+Add support for `POST /check-domain`, which checks DKIM, SPF, and Domain
+Lockdown status. This should include sync and async client-bound methods,
+module-level helpers if consistent with the rest of the SDK, typed request
+models where useful, tests, README coverage, and a focused example if the
+endpoint has enough setup nuance.
 
-Status: implemented.
+Status: pending.
 Priority: high.
 
-## 3. Attribute-Style Response Access
+## 3. Add API-Contract Tests
 
-Resend responses can be read as dictionaries or with attribute access. The
-MailChannels SDK should return a dict-like response wrapper so both
-`response["request_id"]` and `response.request_id` work.
+The test suite should validate SDK routes, paths, and methods against the
+official MailChannels OpenAPI specification or an equivalent live sandbox
+contract. This is especially important because the current tests can reinforce
+incorrect SDK behavior when they only assert internal request construction.
 
-Status: implemented.
-Priority: medium.
-
-## 4. Async Parity
-
-Resend provides async variants broadly across resources. MailChannels should
-provide `_async` methods for every resource that performs network I/O, not just
-email sending.
-
-Status: implemented. Email, DKIM, metrics, sub-account, webhook, and suppression
-resources all expose async methods for network I/O.
+Status: pending.
 Priority: high.
 
-## 5. Webhook Resource And Verification Helpers
+## 4. Add OpenAPI Drift CI
 
-Resend has webhook management and local verification helpers. MailChannels has
-webhook enrollment, deletion, validation, batch listing, batch resend, and
-public-key retrieval endpoints. The SDK should expose these as a typed
-`Webhooks` resource. If MailChannels webhook signatures can be verified locally
-from the documented public-key model, add a verification helper as a follow-up.
+Add an automated CI job that compares the SDK's declared routes and methods with
+the official MailChannels OpenAPI spec. The goal is not necessarily to generate
+the whole SDK immediately, but to fail fast when a hand-written resource drifts
+from documented API paths, methods, or required parameters.
 
-Status: implemented. The SDK includes webhook API operations plus helpers for
-Signature-Input parsing, key ID extraction, replay-age checks, and
-Content-Digest verification. Full Ed25519 verification remains intentionally
-delegated to a dedicated HTTP-signature library.
+Status: pending.
 Priority: high.
 
-## 6. Suppression List Resource
+## 5. Rewrite Sub-Account Limit Tests
 
-Resend has recipient-management resources such as contacts and audiences.
-MailChannels' closest equivalent is suppression-list management. The SDK should
-support listing, creating, and deleting suppression entries.
+Update existing sub-account tests so they assert the correct singular
+`/sub-account/{handle}/limit` endpoint and the documented HTTP method. These
+tests should fail if the SDK regresses to `/limits` or uses the wrong method.
 
-Status: implemented.
+Status: pending.
 Priority: high.
 
-## 7. Top-Level Usage Resource
+## 6. Return Strongly Typed Responses
 
-The SDK supports sub-account usage, but not parent-account `/usage`. Add a
-top-level `Usage` resource or `Client.usage.retrieve()`.
+The SDK has strong Pydantic validation for incoming request payloads, but most
+operations return dict-like response wrappers. Introduce strongly typed response
+objects where the API has stable response shapes, while preserving ergonomic
+dict-style and attribute-style access for callers who prefer lightweight usage.
 
-Status: implemented. The SDK exposes `client.usage.retrieve()`,
-`client.usage.retrieve_async()`, `mailchannels.Usage.retrieve()`, and
-`mailchannels.Usage.retrieve_async()` for `/usage`.
+Status: pending.
 Priority: medium.
 
-## 8. Pagination Helper
+## 7. Explore OpenAPI Generation
 
-Resend has a shared pagination/query helper. MailChannels currently builds query
-parameters resource by resource. Add a small shared query helper for list
-endpoints and date serialization.
+Investigate generating core route declarations, response models, or request
+models from the MailChannels OpenAPI spec. A full generated SDK may not be the
+right design, but generated routing metadata or model tests would reduce human
+error while preserving the hand-written ergonomics that make this SDK pleasant
+to use.
 
-Status: implemented. The SDK has shared `compact_query()` and
-`pagination_query()` helpers used by paginated DKIM, sub-account, suppression,
-webhook, and metrics query builders.
+Status: pending.
 Priority: medium.
 
-## 9. Attachment Ergonomics
+## 8. Add an OpenAPI Coverage Matrix
 
-Resend has examples and types for local, base64, remote, and inline
-attachments. MailChannels supports raw attachment fields but lacks helpers for
-reading files, Base64 encoding, MIME type inference, and inline `content_id`
-examples.
+Create a documentation matrix that maps MailChannels OpenAPI endpoints to SDK
+support. Each row should include method, path, SDK resource/method, sync support,
+async support, test coverage, online-test coverage where applicable, and status
+such as supported, partial, pending, or intentionally omitted.
 
-Status: implemented. The SDK exposes `Attachment.from_file()`,
-`Attachment.from_bytes()`, `Attachment.from_url()`, and
-`Attachment.inline_file()` for Base64 encoding, MIME type inference, filename
-overrides, remote content, and inline `content_id` attachments.
-Priority: high.
-
-## 10. Version Export
-
-Resend exposes `__version__` and `get_version()`. MailChannels should expose the
-same kind of version metadata and use it in the User-Agent.
-
-Status: implemented. The SDK exports `mailchannels.__version__`,
-`mailchannels.get_version()`, and uses the exported value in the User-Agent.
+Status: pending.
 Priority: medium.
 
-## 11. Formal Custom HTTP Client Contract
+## 9. Generate an API Reference
 
-Resend defines HTTP client interfaces and tests custom-client behavior. The
-MailChannels SDK accepts transport-like objects but does not expose a formal
-`Protocol` or ABC for sync and async clients.
+The README is strong as a guide and tutorial, but the project also needs a
+formal generated API reference that lists public classes, methods, parameters,
+return types, and examples. This could be built with a lightweight documentation
+tool that reads type hints and docstrings from `src/mailchannels`.
 
-Status: implemented. The SDK exports `SyncHTTPClient` and `AsyncHTTPClient`
-protocols and accepts protocol-compatible custom transports both on explicit
-clients and through module-level default client configuration.
+Status: pending.
 Priority: medium.
 
-## 12. Better Exception Metadata
+## 10. Complete Focused Example Coverage
 
-Resend exceptions include code, error type, suggested action, and headers.
-MailChannels exceptions include status, code, and response. Add headers and
-possibly suggested actions for common failures.
+The repository has tested examples for async sending, attachments,
+suppressions, webhooks, usage, custom HTTP clients, and structured error
+handling. Add or verify focused examples for templates, unsubscribe, custom
+headers, DKIM, Cloudflare DKIM publication, sub-accounts, and metrics.
 
-Status: implemented. SDK exceptions include response headers, request ID,
-retry-after, error type, suggested action, and `to_dict()` metadata for logging.
+Status: pending.
 Priority: medium.
 
-## 13. Example Coverage
+## 11. Request Options
 
-Resend has many focused examples. MailChannels should add examples for async,
-templates, unsubscribe, custom headers, DKIM, Cloudflare DNS publication,
-sub-accounts, metrics, webhooks, suppressions, custom HTTP clients, and errors.
-
-Status: implemented. The repository includes tested examples for async sending,
-attachments, suppressions, webhooks, usage, custom HTTP clients, and structured
-error handling.
-Priority: medium.
-
-## 14. Request Options
-
-Resend supports request options such as idempotency keys where its API supports
-them. If MailChannels adds per-request option headers, the SDK should model an
-`options` argument rather than forcing those controls into payloads.
+If MailChannels exposes per-request option headers such as idempotency keys,
+model them as an `options` argument rather than forcing those controls into
+payloads. Keep this low priority until there is a concrete MailChannels API need.
 
 Status: pending.
 Priority: low.
 
-## 15. CI And Type Checking
+## Completed Foundation Work
 
-Resend has CI, type-checking configuration, and broader test automation.
-MailChannels has pytest, ruff, and SmolVM instructions, but no committed GitHub
-Actions workflow or static type-check job.
-
-Status: implemented. The repository includes GitHub Actions CI for pytest,
-ruff, mypy, and package builds, plus a manual online-test workflow for live API
-checks with repository secrets.
-Priority: low.
+The following Resend-alignment and SDK-foundation items are already implemented:
+environment variable configuration, response headers, attribute-style response
+access, async parity across resources, webhooks, suppressions, top-level usage,
+pagination helpers, attachment ergonomics, version export, formal custom HTTP
+client protocols, better exception metadata, CI, type checking, and manual
+online-test workflows.
