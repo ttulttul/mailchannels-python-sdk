@@ -6,7 +6,14 @@ import logging
 from typing import Any
 
 from ..query import pagination_query
-from .types import DkimAlgorithm, DkimKeyStatus, DkimUpdateStatus
+from .types import (
+    DkimAlgorithm,
+    DkimKeyInfo,
+    DkimKeyList,
+    DkimKeyStatus,
+    DkimRotateResponse,
+    DkimUpdateStatus,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +50,7 @@ class DkimResource:
             "POST",
             f"/domains/{domain}/dkim-keys",
             json=payload,
+            response_model=DkimKeyInfo,
         )
 
     async def create_async(
@@ -71,6 +79,7 @@ class DkimResource:
             "POST",
             f"/domains/{domain}/dkim-keys",
             json=payload,
+            response_model=DkimKeyInfo,
         )
 
     def list(
@@ -96,6 +105,7 @@ class DkimResource:
             "GET",
             f"/domains/{domain}/dkim-keys",
             params=params or None,
+            response_model=DkimKeyList,
         )
 
     async def list_async(
@@ -121,6 +131,7 @@ class DkimResource:
             "GET",
             f"/domains/{domain}/dkim-keys",
             params=params or None,
+            response_model=DkimKeyList,
         )
 
     def update_status(
@@ -182,6 +193,7 @@ class DkimResource:
             "POST",
             f"/domains/{domain}/dkim-keys/{selector}/rotate",
             json={"new_key": {"selector": new_selector}},
+            response_model=DkimRotateResponse,
         )
 
     async def rotate_async(
@@ -203,6 +215,7 @@ class DkimResource:
             "POST",
             f"/domains/{domain}/dkim-keys/{selector}/rotate",
             json={"new_key": {"selector": new_selector}},
+            response_model=DkimRotateResponse,
         )
 
 

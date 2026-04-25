@@ -208,6 +208,24 @@ print(queued.id)
 print(queued.http_headers)
 ```
 
+Set `strict_responses=True` when you want modeled endpoints to return Pydantic
+response objects instead. Strict mode validates the API response body against
+the SDK's response model and raises `ResponseValidationError` if the response no
+longer matches the expected shape. Endpoints without a stable model still return
+the normal dict-like response.
+
+```python
+client = mailchannels.Client(
+    api_key="YOUR-API-KEY",
+    strict_responses=True,
+)
+
+usage = client.usage.retrieve()
+
+print(usage.total_usage)
+print(usage.http_headers)
+```
+
 ### Use Typed Models
 
 Dictionary payloads are convenient, but long-lived applications often benefit

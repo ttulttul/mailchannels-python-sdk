@@ -6,7 +6,15 @@ import logging
 from typing import Any
 
 from ..query import pagination_query
-from .types import compact_payload, limit_payload
+from .types import (
+    ApiKey,
+    SmtpPassword,
+    SubAccount,
+    SubAccountLimit,
+    UsageStats,
+    compact_payload,
+    limit_payload,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +29,11 @@ class SubAccountApiKeysResource:
     def create(self, handle: str) -> dict[str, Any]:
         """Create an API key for a sub-account."""
         logger.info("Creating MailChannels sub-account API key handle=%s", handle)
-        return self._client.request("POST", f"/sub-account/{handle}/api-key")
+        return self._client.request(
+            "POST",
+            f"/sub-account/{handle}/api-key",
+            response_model=ApiKey,
+        )
 
     async def create_async(self, handle: str) -> dict[str, Any]:
         """Create an API key for a sub-account using async HTTP."""
@@ -32,6 +44,7 @@ class SubAccountApiKeysResource:
         return await self._client.request_async(
             "POST",
             f"/sub-account/{handle}/api-key",
+            response_model=ApiKey,
         )
 
     def list(self, handle: str) -> dict[str, Any]:
@@ -83,7 +96,11 @@ class SubAccountSmtpPasswordsResource:
     def create(self, handle: str) -> dict[str, Any]:
         """Create an SMTP password for a sub-account."""
         logger.info("Creating MailChannels sub-account SMTP password handle=%s", handle)
-        return self._client.request("POST", f"/sub-account/{handle}/smtp-password")
+        return self._client.request(
+            "POST",
+            f"/sub-account/{handle}/smtp-password",
+            response_model=SmtpPassword,
+        )
 
     async def create_async(self, handle: str) -> dict[str, Any]:
         """Create an SMTP password for a sub-account using async HTTP."""
@@ -95,6 +112,7 @@ class SubAccountSmtpPasswordsResource:
         return await self._client.request_async(
             "POST",
             f"/sub-account/{handle}/smtp-password",
+            response_model=SmtpPassword,
         )
 
     def list(self, handle: str) -> dict[str, Any]:
@@ -165,6 +183,7 @@ class SubAccountLimitsResource:
             "PUT",
             f"/sub-account/{handle}/limit",
             json=payload,
+            response_model=SubAccountLimit,
         )
 
     async def set_async(
@@ -186,12 +205,17 @@ class SubAccountLimitsResource:
             "PUT",
             f"/sub-account/{handle}/limit",
             json=payload,
+            response_model=SubAccountLimit,
         )
 
     def retrieve(self, handle: str) -> dict[str, Any]:
         """Retrieve the sending limit for a sub-account."""
         logger.info("Retrieving MailChannels sub-account limit handle=%s", handle)
-        return self._client.request("GET", f"/sub-account/{handle}/limit")
+        return self._client.request(
+            "GET",
+            f"/sub-account/{handle}/limit",
+            response_model=SubAccountLimit,
+        )
 
     async def retrieve_async(self, handle: str) -> dict[str, Any]:
         """Retrieve the sending limit for a sub-account using async HTTP."""
@@ -199,7 +223,11 @@ class SubAccountLimitsResource:
             "Retrieving MailChannels sub-account limit using async HTTP handle=%s",
             handle,
         )
-        return await self._client.request_async("GET", f"/sub-account/{handle}/limit")
+        return await self._client.request_async(
+            "GET",
+            f"/sub-account/{handle}/limit",
+            response_model=SubAccountLimit,
+        )
 
     def delete(self, handle: str) -> dict[str, Any]:
         """Delete the sending limit for a sub-account."""
@@ -237,7 +265,12 @@ class SubAccountsResource:
         """Create a sub-account under the parent account."""
         logger.info("Creating MailChannels sub-account handle=%s", handle)
         payload = compact_payload({"company_name": company_name, "handle": handle})
-        return self._client.request("POST", "/sub-account", json=payload)
+        return self._client.request(
+            "POST",
+            "/sub-account",
+            json=payload,
+            response_model=SubAccount,
+        )
 
     async def create_async(
         self,
@@ -251,7 +284,12 @@ class SubAccountsResource:
             handle,
         )
         payload = compact_payload({"company_name": company_name, "handle": handle})
-        return await self._client.request_async("POST", "/sub-account", json=payload)
+        return await self._client.request_async(
+            "POST",
+            "/sub-account",
+            json=payload,
+            response_model=SubAccount,
+        )
 
     def list(
         self,
@@ -284,7 +322,11 @@ class SubAccountsResource:
     def retrieve_usage(self, handle: str) -> dict[str, Any]:
         """Retrieve usage statistics for a sub-account."""
         logger.info("Retrieving MailChannels sub-account usage handle=%s", handle)
-        return self._client.request("GET", f"/sub-account/{handle}/usage")
+        return self._client.request(
+            "GET",
+            f"/sub-account/{handle}/usage",
+            response_model=UsageStats,
+        )
 
     async def retrieve_usage_async(self, handle: str) -> dict[str, Any]:
         """Retrieve usage statistics for a sub-account using async HTTP."""
@@ -292,7 +334,11 @@ class SubAccountsResource:
             "Retrieving MailChannels sub-account usage using async HTTP handle=%s",
             handle,
         )
-        return await self._client.request_async("GET", f"/sub-account/{handle}/usage")
+        return await self._client.request_async(
+            "GET",
+            f"/sub-account/{handle}/usage",
+            response_model=UsageStats,
+        )
 
     def suspend(self, handle: str) -> dict[str, Any]:
         """Suspend a sub-account."""

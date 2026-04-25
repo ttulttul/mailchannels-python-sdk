@@ -7,10 +7,15 @@ from typing import Any
 
 from ..query import compact_query
 from .types import (
+    MetricsEngagement,
     MetricsInterval,
+    MetricsPerformance,
+    MetricsRecipientBehaviour,
+    MetricsSenderResponse,
     MetricsSenderType,
     MetricsSortOrder,
     MetricsTime,
+    MetricsVolume,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,6 +42,7 @@ class MetricsResource:
             "GET",
             "/metrics/engagement",
             params=_time_series_query(start_time, end_time, campaign_id, interval),
+            response_model=MetricsEngagement,
         )
 
     async def engagement_async(
@@ -53,6 +59,7 @@ class MetricsResource:
             "GET",
             "/metrics/engagement",
             params=_time_series_query(start_time, end_time, campaign_id, interval),
+            response_model=MetricsEngagement,
         )
 
     def performance(
@@ -69,6 +76,7 @@ class MetricsResource:
             "GET",
             "/metrics/performance",
             params=_time_series_query(start_time, end_time, campaign_id, interval),
+            response_model=MetricsPerformance,
         )
 
     async def performance_async(
@@ -85,6 +93,7 @@ class MetricsResource:
             "GET",
             "/metrics/performance",
             params=_time_series_query(start_time, end_time, campaign_id, interval),
+            response_model=MetricsPerformance,
         )
 
     def recipient_behaviour(
@@ -101,6 +110,7 @@ class MetricsResource:
             "GET",
             "/metrics/recipient-behaviour",
             params=_time_series_query(start_time, end_time, campaign_id, interval),
+            response_model=MetricsRecipientBehaviour,
         )
 
     async def recipient_behaviour_async(
@@ -119,6 +129,7 @@ class MetricsResource:
             "GET",
             "/metrics/recipient-behaviour",
             params=_time_series_query(start_time, end_time, campaign_id, interval),
+            response_model=MetricsRecipientBehaviour,
         )
 
     def recipient_behavior(
@@ -167,6 +178,7 @@ class MetricsResource:
             "GET",
             "/metrics/volume",
             params=_time_series_query(start_time, end_time, campaign_id, interval),
+            response_model=MetricsVolume,
         )
 
     async def volume_async(
@@ -183,6 +195,7 @@ class MetricsResource:
             "GET",
             "/metrics/volume",
             params=_time_series_query(start_time, end_time, campaign_id, interval),
+            response_model=MetricsVolume,
         )
 
     def senders(
@@ -210,6 +223,7 @@ class MetricsResource:
             "GET",
             f"/metrics/senders/{sender_type}",
             params=params or None,
+            response_model=MetricsSenderResponse,
         )
 
     async def senders_async(
@@ -240,6 +254,7 @@ class MetricsResource:
             "GET",
             f"/metrics/senders/{sender_type}",
             params=params or None,
+            response_model=MetricsSenderResponse,
         )
 
 

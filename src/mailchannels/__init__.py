@@ -43,6 +43,7 @@ from .exceptions import (
     ForbiddenError,
     MailChannelsError,
     PayloadTooLargeError,
+    ResponseValidationError,
 )
 from .http_client import RequestsClient
 from .http_client_async import HTTPXClient
@@ -67,6 +68,7 @@ api_key: str | None = os.environ.get("MAILCHANNELS_API_KEY")
 base_url: str = os.environ.get("MAILCHANNELS_API_URL", DEFAULT_BASE_URL)
 default_http_client: RequestsClient | None = None
 default_async_http_client: HTTPXClient | None = None
+strict_responses: bool = False
 
 __all__ = [
     "ApiError",
@@ -101,6 +103,7 @@ __all__ = [
     "PayloadTooLargeError",
     "Personalization",
     "QueuedSendResponse",
+    "ResponseValidationError",
     "RequestsClient",
     "SendParams",
     "SendResponse",
@@ -122,6 +125,7 @@ __all__ = [
     "default_async_http_client",
     "default_http_client",
     "get_version",
+    "strict_responses",
     "parse_signature_input",
     "signature_is_fresh",
     "signature_key_id",

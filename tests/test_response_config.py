@@ -8,6 +8,7 @@ from conftest import FakeRequestsClient
 import mailchannels
 from mailchannels.client import Client
 from mailchannels.response import SDKResponse
+from mailchannels.usage import UsageStats
 
 
 def test_client_reads_environment_configuration(
@@ -58,6 +59,72 @@ def test_response_supports_headers_and_attribute_access() -> None:
     assert result.id == "queued_123"
     assert result["id"] == "queued_123"
     assert result.http_headers["X-Request-ID"] == "req_123"
+
+
+def test_non_strict_responses_keep_dict_ergonomics() -> None:
+    """It keeps dict-like responses by default even when a response model exists."""
+    transport = FakeRequestsClient(SDKResponse(200, {"total_usage": 42}, "{}"))
+    client = Client(api_key="test-key", http_client=transport)
+
+    result = client.usage.retrieve()
+
+    assert isinstance(result, dict)
+    assert result.total_usage == 42
+
+
+def test_strict_responses_return_pydantic_models() -> None:
+    """It returns typed response models when strict response parsing is enabled."""
+    transport = FakeRequestsClient(
+        SDKResponse(
+            200,
+            {"total_usage": 42},
+            "{}",
+            headers={"X-Request-ID": "req_123"},
+        )
+    )
+    client = Client(
+        api_key="test-key",
+        http_client=transport,
+        strict_responses=True,
+    )
+
+    result = client.usage.retrieve()
+
+    assert isinstance(result, UsageStats)
+    assert result.total_usage == 42
+    assert result.http_headers == {"X-Request-ID": "req_123"}
+
+
+def test_strict_responses_raise_validation_errors() -> None:
+    """It raises a structured SDK error when a typed response cannot be parsed."""
+    transport = FakeRequestsClient(SDKResponse(200, {"period_start_date": "x"}, "{}"))
+    client = Client(
+        api_key="test-key",
+        http_client=transport,
+        strict_responses=True,
+    )
+
+    with pytest.raises(mailchannels.ResponseValidationError) as error:
+        client.usage.retrieve()
+
+    assert error.value.code == "ResponseValidationError"
+    assert error.value.error_type == "response_validation_error"
+    assert error.value.response["period_start_date"] == "x"
+
+
+def test_module_level_strict_response_configuration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """It supports strict response models through module-level configuration."""
+    transport = FakeRequestsClient(SDKResponse(200, {"total_usage": 7}, "{}"))
+    monkeypatch.setattr(mailchannels, "api_key", "module-key")
+    monkeypatch.setattr(mailchannels, "default_http_client", transport)
+    monkeypatch.setattr(mailchannels, "strict_responses", True)
+
+    result = mailchannels.Usage.retrieve()
+
+    assert isinstance(result, UsageStats)
+    assert result.total_usage == 7
 
 
 def test_user_agent_uses_exported_version() -> None:

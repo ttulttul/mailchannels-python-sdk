@@ -8,7 +8,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from ..exceptions import MailChannelsError
-from .types import CheckDomainParams, DkimSetting
+from .types import CheckDomainParams, CheckDomainResult, DkimSetting
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,12 @@ class DomainChecksResource:
             dkim_settings=dkim_settings,
         )
         logger.info("Checking MailChannels domain configuration domain=%s", domain)
-        return self._client.request("POST", "/check-domain", json=payload)
+        return self._client.request(
+            "POST",
+            "/check-domain",
+            json=payload,
+            response_model=CheckDomainResult,
+        )
 
     async def check_async(
         self,
@@ -53,7 +58,12 @@ class DomainChecksResource:
             "Checking MailChannels domain configuration using async HTTP domain=%s",
             domain,
         )
-        return await self._client.request_async("POST", "/check-domain", json=payload)
+        return await self._client.request_async(
+            "POST",
+            "/check-domain",
+            json=payload,
+            response_model=CheckDomainResult,
+        )
 
 
 class DomainChecks:

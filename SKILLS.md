@@ -411,6 +411,16 @@ client = mailchannels.Client(
 Module-level clients can use `mailchannels.default_http_client` and
 `mailchannels.default_async_http_client` with any protocol-compatible transport.
 
+## Response Models
+
+The default SDK response remains dict-like and supports attribute access. When
+callers set `strict_responses=True` on `Client` or set
+`mailchannels.strict_responses = True` for module-level helpers, modeled
+endpoints return Pydantic response objects and raise `ResponseValidationError`
+when the API response does not match the expected model. When adding a stable
+endpoint response, pass its model to `client.request(..., response_model=...)`
+and add strict-mode tests.
+
 ## Examples
 
 The `examples/` directory has tested examples for async sending, attachments,

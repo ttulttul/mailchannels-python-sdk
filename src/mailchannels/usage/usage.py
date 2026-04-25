@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from .types import UsageStats
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,12 +20,16 @@ class UsageResource:
     def retrieve(self) -> dict[str, Any]:
         """Retrieve parent-account usage for the current billing period."""
         logger.info("Retrieving MailChannels account usage")
-        return self._client.request("GET", "/usage")
+        return self._client.request("GET", "/usage", response_model=UsageStats)
 
     async def retrieve_async(self) -> dict[str, Any]:
         """Retrieve parent-account usage using async HTTP."""
         logger.info("Retrieving MailChannels account usage using async HTTP")
-        return await self._client.request_async("GET", "/usage")
+        return await self._client.request_async(
+            "GET",
+            "/usage",
+            response_model=UsageStats,
+        )
 
 
 class Usage:

@@ -11,7 +11,13 @@ from builtins import list as list_type
 from typing import Any
 
 from ..query import compact_query, pagination_query
-from .types import SignatureParameters, WebhookBatchStatus
+from .types import (
+    SignatureParameters,
+    WebhookBatchResult,
+    WebhookBatchStatus,
+    WebhookPublicKey,
+    WebhookValidationResults,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +100,7 @@ class WebhooksResource:
                 webhook=webhook,
             )
             or None,
+            response_model=WebhookBatchResult,
         )
 
     async def batches_async(
@@ -120,6 +127,7 @@ class WebhooksResource:
                 webhook=webhook,
             )
             or None,
+            response_model=WebhookBatchResult,
         )
 
     def resend_batch(self, batch_id: int, *, customer_handle: str) -> dict[str, Any]:
@@ -164,6 +172,7 @@ class WebhooksResource:
             "/webhook/public-key",
             params={"id": key_id},
             require_api_key=False,
+            response_model=WebhookPublicKey,
         )
 
     async def public_key_async(self, key_id: str) -> dict[str, Any]:
@@ -177,6 +186,7 @@ class WebhooksResource:
             "/webhook/public-key",
             params={"id": key_id},
             require_api_key=False,
+            response_model=WebhookPublicKey,
         )
 
     def validate(self, *, request_id: str | None = None) -> dict[str, Any]:
@@ -186,6 +196,7 @@ class WebhooksResource:
             "POST",
             "/webhook/validate",
             json=compact_query({"request_id": request_id}) or None,
+            response_model=WebhookValidationResults,
         )
 
     async def validate_async(self, *, request_id: str | None = None) -> dict[str, Any]:
@@ -198,6 +209,7 @@ class WebhooksResource:
             "POST",
             "/webhook/validate",
             json=compact_query({"request_id": request_id}) or None,
+            response_model=WebhookValidationResults,
         )
 
 

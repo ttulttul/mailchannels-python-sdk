@@ -209,3 +209,10 @@ path. Keep the README organized around quickstart, core concepts, sending
 recipes, account/domain operations, and production operations. Put MailChannels'
 multi-tenant isolation story in the introduction because it is a core product
 distinction, not an advanced footnote.
+
+## 2026-04-25: Strict responses should be opt-in
+
+Typed response models improve trust and catch API drift, but returning Pydantic
+models by default would break the SDK's existing dict-like ergonomics. Keep the
+default response shape stable and expose `strict_responses=True` for callers who
+want end-to-end response validation and typed model returns.

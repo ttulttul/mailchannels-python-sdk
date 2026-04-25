@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeVar
+
+from pydantic import BaseModel, ValidationError
 
 from .exceptions import (
     ApiError,
@@ -13,9 +15,11 @@ from .exceptions import (
     ConflictError,
     ForbiddenError,
     PayloadTooLargeError,
+    ResponseValidationError,
 )
 
 logger = logging.getLogger(__name__)
+ResponseModel = TypeVar("ResponseModel", bound=BaseModel)
 
 
 @dataclass(frozen=True)
@@ -51,6 +55,30 @@ def response_data(response: SDKResponse) -> MailChannelsResponse:
     if isinstance(response.data, list):
         return MailChannelsResponse({"data": response.data, "http_headers": headers})
     return MailChannelsResponse({"http_headers": headers})
+
+
+def response_model_data(
+    response: SDKResponse,
+    response_model: type[ResponseModel],
+) -> ResponseModel:
+    """Convert an SDK response into a typed Pydantic response model."""
+    data = response_data(response)
+    try:
+        parsed = response_model.model_validate(data)
+    except ValidationError as error:
+        logger.error(
+            "MailChannels response validation failed model=%s error=%s",
+            response_model.__name__,
+            error,
+        )
+        raise ResponseValidationError(
+            "MailChannels API response did not match the expected model.",
+            code="ResponseValidationError",
+            response=data,
+            headers=dict(response.headers or {}),
+        ) from error
+    logger.debug("Validated MailChannels response model=%s", response_model.__name__)
+    return parsed
 
 
 def raise_for_status(response: SDKResponse) -> None:

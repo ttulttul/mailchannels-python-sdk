@@ -12,7 +12,12 @@ from .exceptions import ConfigurationError
 from .http_client import RequestsClient
 from .http_client_async import HTTPXClient
 from .http_protocols import AsyncHTTPClient, SyncHTTPClient
-from .response import raise_for_status, response_data
+from .response import (
+    ResponseModel,
+    raise_for_status,
+    response_data,
+    response_model_data,
+)
 from .version import user_agent
 
 logger = logging.getLogger(__name__)
@@ -30,12 +35,14 @@ class Client:
         base_url: str | None = None,
         http_client: SyncHTTPClient | None = None,
         async_http_client: AsyncHTTPClient | None = None,
+        strict_responses: bool = False,
     ) -> None:
         """Create a MailChannels API client."""
         self.api_key = api_key
         self.base_url = (base_url or _configured_base_url()).rstrip("/")
         self.http_client = http_client or RequestsClient()
         self.async_http_client = async_http_client or HTTPXClient()
+        self.strict_responses = strict_responses
 
         from .dkim import DkimResource
         from .domain_checks import DomainChecksResource
@@ -65,7 +72,8 @@ class Client:
         params: dict[str, Any] | None = None,
         extra_headers: dict[str, str] | None = None,
         require_api_key: bool = True,
-    ) -> dict[str, Any]:
+        response_model: type[ResponseModel] | None = None,
+    ) -> Any:
         """Send a synchronous API request."""
         response = self.http_client.request(
             method,
@@ -78,6 +86,8 @@ class Client:
             params=params,
         )
         raise_for_status(response)
+        if self.strict_responses and response_model is not None:
+            return response_model_data(response, response_model)
         return response_data(response)
 
     async def request_async(
@@ -89,7 +99,8 @@ class Client:
         params: dict[str, Any] | None = None,
         extra_headers: dict[str, str] | None = None,
         require_api_key: bool = True,
-    ) -> dict[str, Any]:
+        response_model: type[ResponseModel] | None = None,
+    ) -> Any:
         """Send an asynchronous API request."""
         response = await self.async_http_client.request(
             method,
@@ -102,6 +113,8 @@ class Client:
             params=params,
         )
         raise_for_status(response)
+        if self.strict_responses and response_model is not None:
+            return response_model_data(response, response_model)
         return response_data(response)
 
     def _headers(
@@ -150,6 +163,7 @@ def get_default_client() -> Client:
         async_http_client=(
             module_async_http_client if _has_request(module_async_http_client) else None
         ),
+        strict_responses=bool(_module_attr("strict_responses")),
     )
 
 

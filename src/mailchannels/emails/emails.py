@@ -8,7 +8,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from ..exceptions import MailChannelsError
-from .types import EmailAddress, EmailParams
+from .types import EmailAddress, EmailParams, QueuedSendResponse, SendResponse
 from .types import SendParams as SendParamsType
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,13 @@ class EmailsResource:
         payload = normalize_email_params(params)
         query = {"dry-run": "true"} if dry_run else None
         logger.info("Sending email through MailChannels dry_run=%s", dry_run)
-        return self._client.request("POST", "/send", json=payload, params=query)
+        return self._client.request(
+            "POST",
+            "/send",
+            json=payload,
+            params=query,
+            response_model=SendResponse,
+        )
 
     async def send_async(
         self,
@@ -48,19 +54,30 @@ class EmailsResource:
             "/send",
             json=payload,
             params=query,
+            response_model=SendResponse,
         )
 
     def queue(self, params: SendParamsType | EmailParams) -> dict[str, Any]:
         """Queue an email through the MailChannels `/send-async` endpoint."""
         payload = normalize_email_params(params)
         logger.info("Queueing email through MailChannels /send-async")
-        return self._client.request("POST", "/send-async", json=payload)
+        return self._client.request(
+            "POST",
+            "/send-async",
+            json=payload,
+            response_model=QueuedSendResponse,
+        )
 
     async def queue_async(self, params: SendParamsType | EmailParams) -> dict[str, Any]:
         """Queue an email through `/send-async` using async HTTP."""
         payload = normalize_email_params(params)
         logger.info("Queueing email through MailChannels /send-async using async HTTP")
-        return await self._client.request_async("POST", "/send-async", json=payload)
+        return await self._client.request_async(
+            "POST",
+            "/send-async",
+            json=payload,
+            response_model=QueuedSendResponse,
+        )
 
 
 class Emails:

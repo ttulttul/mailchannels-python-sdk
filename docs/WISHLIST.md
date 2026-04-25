@@ -70,10 +70,45 @@ operations return dict-like response wrappers. Introduce strongly typed response
 objects where the API has stable response shapes, while preserving ergonomic
 dict-style and attribute-style access for callers who prefer lightweight usage.
 
+Status: implemented. The client now accepts `strict_responses=True`, endpoint
+resources pass response models for stable API shapes, and strict mode returns
+validated Pydantic response objects while the default mode keeps dict-like
+responses.
+Priority: high.
+
+## 7. Generate OpenAPI Coverage Reports
+
+Generate `docs/API_COVERAGE.md` from the official OpenAPI spec and the SDK route
+registry. The first report should expose endpoint coverage. Later iterations
+should add request-field and response-field coverage as request and response
+models become more complete.
+
+Status: pending.
+Priority: high.
+
+## 8. Refine Error Taxonomy
+
+The SDK already preserves structured error metadata, request IDs, retry hints,
+headers, parsed responses, and common typed exceptions. Add narrower exception
+classes for rate limits, invalid requests, server errors, and strict response
+validation so callers can handle these cases without inspecting `error_type`.
+
+Status: partial. `ResponseValidationError` is implemented for strict response
+model failures; rate-limit and generic invalid/server errors still need explicit
+subclasses.
+Priority: high.
+
+## 9. Add API Spec Compatibility Guarantees
+
+Tie SDK releases to the MailChannels OpenAPI document they were checked
+against. Expose the OpenAPI source URL, spec hash, and checked date in generated
+documentation or package metadata so users can see which API contract a release
+targets.
+
 Status: pending.
 Priority: medium.
 
-## 7. Explore OpenAPI Generation
+## 10. Explore OpenAPI Generation
 
 Investigate generating core route declarations, response models, or request
 models from the MailChannels OpenAPI spec. A full generated SDK may not be the
@@ -84,7 +119,7 @@ to use.
 Status: pending.
 Priority: medium.
 
-## 8. Add an OpenAPI Coverage Matrix
+## 11. Add an OpenAPI Coverage Matrix
 
 Create a documentation matrix that maps MailChannels OpenAPI endpoints to SDK
 support. Each row should include method, path, SDK resource/method, sync support,
@@ -94,7 +129,7 @@ such as supported, partial, pending, or intentionally omitted.
 Status: pending.
 Priority: medium.
 
-## 9. Generate an API Reference
+## 12. Generate an API Reference
 
 The README is strong as a guide and tutorial, but the project also needs a
 formal generated API reference that lists public classes, methods, parameters,
@@ -104,7 +139,7 @@ tool that reads type hints and docstrings from `src/mailchannels`.
 Status: pending.
 Priority: medium.
 
-## 10. Complete Focused Example Coverage
+## 13. Complete Focused Example Coverage
 
 The repository has tested examples for async sending, attachments,
 suppressions, webhooks, usage, custom HTTP clients, and structured error
@@ -114,7 +149,7 @@ headers, DKIM, Cloudflare DKIM publication, sub-accounts, and metrics.
 Status: pending.
 Priority: medium.
 
-## 11. Request Options
+## 14. Request Options
 
 If MailChannels exposes per-request option headers such as idempotency keys,
 model them as an `options` argument rather than forcing those controls into

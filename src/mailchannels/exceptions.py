@@ -83,6 +83,10 @@ class BadGatewayError(MailChannelsError):
     """Raised when MailChannels returns a bad gateway response."""
 
 
+class ResponseValidationError(MailChannelsError):
+    """Raised when strict response validation fails."""
+
+
 class ApiError(MailChannelsError):
     """Raised for generic MailChannels API failures."""
 
@@ -110,6 +114,8 @@ def _request_id(headers: dict[str, str]) -> str | None:
 
 def _error_type(code: str | None, status_code: int | None) -> str | None:
     """Return a stable error type for diagnostics."""
+    if code == "ResponseValidationError":
+        return "response_validation_error"
     if code:
         return code
     if status_code is None:
@@ -143,6 +149,8 @@ def _suggested_action(code: str | None, status_code: int | None) -> str | None:
         return "Use the existing resource or retry with a unique identifier."
     if status_code == 413:
         return "Reduce message size or attachment payload before retrying."
+    if code == "ResponseValidationError":
+        return "Inspect the API response shape and SDK response model."
     if status_code == 429:
         return "Back off before retrying; inspect Retry-After if present."
     if status_code is not None and 500 <= status_code:

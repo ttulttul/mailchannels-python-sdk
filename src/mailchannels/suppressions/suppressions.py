@@ -10,6 +10,7 @@ from ..query import compact_query, pagination_query
 from .types import (
     SuppressionDeleteSource,
     SuppressionEntryParams,
+    SuppressionListResponse,
     SuppressionSource,
 )
 
@@ -47,6 +48,7 @@ class SuppressionsResource:
                 created_after=created_after,
             )
             or None,
+            response_model=SuppressionListResponse,
         )
 
     async def list_async(
@@ -73,6 +75,7 @@ class SuppressionsResource:
                 created_after=created_after,
             )
             or None,
+            response_model=SuppressionListResponse,
         )
 
     def create(
