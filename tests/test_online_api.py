@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 import pytest
+import requests
 
 import mailchannels
 
@@ -28,6 +29,9 @@ def test_online_usage_retrieve() -> None:
     except mailchannels.ApiError as error:
         _xfail_live_server_error(error)
         raise
+    except requests.RequestException as error:
+        _xfail_live_transport_error(error)
+        raise
 
     assert "http_headers" in result
     assert isinstance(result.http_headers, dict)
@@ -40,6 +44,9 @@ async def test_online_usage_retrieve_async() -> None:
         result = await _client().usage.retrieve_async()
     except mailchannels.ApiError as error:
         _xfail_live_server_error(error)
+        raise
+    except _httpx_http_error() as error:
+        _xfail_live_transport_error(error)
         raise
 
     assert "http_headers" in result
@@ -70,6 +77,9 @@ def test_online_send_dry_run() -> None:
     except mailchannels.ApiError as error:
         _xfail_live_server_error(error)
         raise
+    except requests.RequestException as error:
+        _xfail_live_transport_error(error)
+        raise
 
     assert "http_headers" in result
     assert isinstance(result.http_headers, dict)
@@ -99,6 +109,9 @@ def test_online_send_real_email() -> None:
     except mailchannels.ApiError as error:
         _xfail_live_server_error(error)
         raise
+    except requests.RequestException as error:
+        _xfail_live_transport_error(error)
+        raise
 
     assert "http_headers" in result
     assert isinstance(result.http_headers, dict)
@@ -110,6 +123,9 @@ def test_online_metrics_volume() -> None:
         result = _client().metrics.volume(interval="day")
     except mailchannels.ApiError as error:
         _xfail_live_server_error(error)
+        raise
+    except requests.RequestException as error:
+        _xfail_live_transport_error(error)
         raise
 
     assert "http_headers" in result
@@ -123,6 +139,9 @@ def test_online_sub_accounts_list() -> None:
     except mailchannels.ApiError as error:
         _xfail_live_server_error(error)
         raise
+    except requests.RequestException as error:
+        _xfail_live_transport_error(error)
+        raise
 
     assert "http_headers" in result
     assert isinstance(result.http_headers, dict)
@@ -135,6 +154,9 @@ def test_online_suppression_list() -> None:
     except mailchannels.ApiError as error:
         _xfail_live_server_error(error)
         raise
+    except requests.RequestException as error:
+        _xfail_live_transport_error(error)
+        raise
 
     assert "http_headers" in result
     assert isinstance(result.http_headers, dict)
@@ -146,6 +168,9 @@ def test_online_webhooks_list() -> None:
         result = _client().webhooks.list()
     except mailchannels.ApiError as error:
         _xfail_live_server_error(error)
+        raise
+    except requests.RequestException as error:
+        _xfail_live_transport_error(error)
         raise
 
     assert "http_headers" in result
@@ -162,6 +187,9 @@ def test_online_dkim_list_for_domain() -> None:
         result = _client().dkim.list(domain, limit=1)
     except mailchannels.ApiError as error:
         _xfail_live_server_error(error)
+        raise
+    except requests.RequestException as error:
+        _xfail_live_transport_error(error)
         raise
 
     assert "http_headers" in result
@@ -191,3 +219,15 @@ def _xfail_live_server_error(error: mailchannels.ApiError) -> None:
             "Live MailChannels API returned a server error: "
             f"status={error.status_code} request_id={error.request_id}"
         )
+
+
+def _xfail_live_transport_error(error: BaseException) -> None:
+    """Mark live network or timeout failures as external test conditions."""
+    pytest.xfail(f"Live MailChannels API transport failed: {error}")
+
+
+def _httpx_http_error() -> type[BaseException]:
+    """Return the base httpx transport exception type."""
+    import httpx
+
+    return httpx.HTTPError

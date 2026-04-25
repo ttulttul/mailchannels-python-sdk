@@ -115,6 +115,8 @@ The live `/usage` endpoint can return HTTP 500 with a JSON `null` body. Online
 tests now report live MailChannels 5xx responses as `xfail`, while preserving
 normal failures for 4xx/auth/validation issues. The SDK also avoids surfacing
 `null` as an exception message and falls back to a status-based message instead.
+Live endpoint timeouts are also external service conditions for online tests,
+so they are reported as `xfail` rather than SDK regressions.
 
 ## 2026-04-25: Real-send online tests need a second explicit opt-in
 

@@ -420,9 +420,9 @@ when needed:
 uv run pytest tests/test_online_api.py::test_online_send_real_email --online
 ```
 
-Online tests may mark live MailChannels 5xx responses as `xfail`; 4xx
-authentication, authorization, validation, or SDK behavior errors should still
-fail normally.
+Online tests may mark live MailChannels 5xx responses, timeouts, and transport
+failures as `xfail`; 4xx authentication, authorization, validation, or SDK
+behavior errors should still fail normally.
 
 ## Repository Maintenance
 
