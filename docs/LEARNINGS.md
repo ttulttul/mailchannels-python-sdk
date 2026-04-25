@@ -147,3 +147,10 @@ After adding mypy, the local archive used for SmolVM verification ballooned when
 it included `.mypy_cache` and other tool caches, which made VM extraction noisy
 and slow. Build SmolVM tarballs with `COPYFILE_DISABLE=1` and exclude `.venv`,
 `.git`, `dist`, `.mypy_cache`, `.ruff_cache`, and `.pytest_cache`.
+
+## 2026-04-25: GitHub Actions should use Node 24-ready actions
+
+GitHub CI warned that Node.js 20 actions are deprecated. The workflows now use
+`actions/checkout@v6`, `actions/setup-python@v6`, and
+`astral-sh/setup-uv@v8.1.0`, which declare the Node 24 runtime and avoid the
+deprecation warning without adding a temporary compatibility environment flag.

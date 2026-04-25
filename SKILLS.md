@@ -441,6 +441,9 @@ When adding or changing SDK behavior:
 - Keep `.github/workflows/ci.yml` aligned with the local quality gates when the
   required checks change. Keep online API tests in the manual-only workflow so
   live sends and production API calls require explicit operator intent.
+- Prefer Node 24-ready GitHub Actions versions in workflows, such as
+  `actions/checkout@v6`, `actions/setup-python@v6`, and
+  `astral-sh/setup-uv@v8.1.0` or newer.
 - When preparing the SmolVM archive on macOS, use `COPYFILE_DISABLE=1` and
   exclude `.venv`, `.git`, `dist`, `.mypy_cache`, `.ruff_cache`, and
   `.pytest_cache` so cache files and extended metadata do not make extraction
