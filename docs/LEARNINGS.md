@@ -131,4 +131,5 @@ online test runs do not deliver mail accidentally.
 The live `/metrics/volume?interval=day` query can time out when no time range is
 provided. The online volume metrics test now sends an explicit recent 24-hour
 UTC `start_time` and `end_time` range so it still exercises the endpoint without
-depending on the service to infer an unbounded query window.
+depending on the service to infer an unbounded query window. MailChannels bug
+`CLOUD-5801` tracks the timeout issue in the metrics API.
