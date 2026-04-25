@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urlparse
 
 import pytest
-from conftest import FakeRequestsClient
+from conftest import FakeHTTPXClient, FakeRequestsClient
 
 from mailchannels.client import Client
 from mailchannels.routes import sdk_route_keys
@@ -24,6 +24,7 @@ class OperationContract:
     method: str
     path_template: str
     call: Callable[[Client], None]
+    async_call: Callable[[Client], Awaitable[Any]]
     path: str | None = None
     json_required: frozenset[str] = field(default_factory=frozenset)
     json_allowed: frozenset[str] = field(default_factory=frozenset)
@@ -68,6 +69,11 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
             sender_id="sender-123",
             dkim_settings=[{"dkim_selector": "mcdkim"}],
         ),
+        lambda client: client.check_domain.check_async(
+            "example.com",
+            sender_id="sender-123",
+            dkim_settings=[{"dkim_selector": "mcdkim"}],
+        ),
         json_required=frozenset({"domain"}),
         json_allowed=frozenset({"domain", "sender_id", "dkim_settings"}),
     ),
@@ -75,6 +81,7 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
         "POST",
         "/send",
         lambda client: client.emails.send(_sample_email(), dry_run=True),
+        lambda client: client.emails.send_async(_sample_email(), dry_run=True),
         json_required=frozenset({"from", "personalizations", "subject", "content"}),
         json_allowed=frozenset({"from", "personalizations", "subject", "content"}),
         query_required=frozenset({"dry-run"}),
@@ -84,6 +91,7 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
         "POST",
         "/send-async",
         lambda client: client.emails.queue(_sample_email()),
+        lambda client: client.emails.queue_async(_sample_email()),
         json_required=frozenset({"from", "personalizations", "subject", "content"}),
         json_allowed=frozenset({"from", "personalizations", "subject", "content"}),
     ),
@@ -91,6 +99,12 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
         "POST",
         "/domains/{domain}/dkim-keys",
         lambda client: client.dkim.create(
+            "example.com",
+            selector="mcdkim",
+            algorithm="rsa",
+            key_length=2048,
+        ),
+        lambda client: client.dkim.create_async(
             "example.com",
             selector="mcdkim",
             algorithm="rsa",
@@ -104,6 +118,14 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
         "GET",
         "/domains/{domain}/dkim-keys",
         lambda client: client.dkim.list(
+            "example.com",
+            selector="mcdkim",
+            status="active",
+            limit=10,
+            offset=0,
+            include_dns_record=True,
+        ),
+        lambda client: client.dkim.list_async(
             "example.com",
             selector="mcdkim",
             status="active",
@@ -127,6 +149,11 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
             "mcdkim",
             status="inactive",
         ),
+        lambda client: client.dkim.update_status_async(
+            "example.com",
+            "mcdkim",
+            status="inactive",
+        ),
         path="/domains/example.com/dkim-keys/mcdkim",
         json_required=frozenset({"status"}),
         json_allowed=frozenset({"status"}),
@@ -139,6 +166,11 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
             "mcdkim",
             new_selector="mcdkim2",
         ),
+        lambda client: client.dkim.rotate_async(
+            "example.com",
+            "mcdkim",
+            new_selector="mcdkim2",
+        ),
         path="/domains/example.com/dkim-keys/mcdkim/rotate",
         json_required=frozenset({"new_key"}),
         json_allowed=frozenset({"new_key"}),
@@ -147,6 +179,12 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
         "GET",
         "/metrics/engagement",
         lambda client: client.metrics.engagement(
+            start_time="2026-04-01",
+            end_time="2026-04-24",
+            campaign_id="newsletter",
+            interval="day",
+        ),
+        lambda client: client.metrics.engagement_async(
             start_time="2026-04-01",
             end_time="2026-04-24",
             campaign_id="newsletter",
@@ -168,6 +206,12 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
             campaign_id="newsletter",
             interval="day",
         ),
+        lambda client: client.metrics.performance_async(
+            start_time="2026-04-01",
+            end_time="2026-04-24",
+            campaign_id="newsletter",
+            interval="day",
+        ),
         query_required=frozenset(
             {"start_time", "end_time", "campaign_id", "interval"}
         ),
@@ -184,6 +228,12 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
             campaign_id="newsletter",
             interval="day",
         ),
+        lambda client: client.metrics.recipient_behaviour_async(
+            start_time="2026-04-01",
+            end_time="2026-04-24",
+            campaign_id="newsletter",
+            interval="day",
+        ),
         query_required=frozenset(
             {"start_time", "end_time", "campaign_id", "interval"}
         ),
@@ -195,6 +245,12 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
         "GET",
         "/metrics/volume",
         lambda client: client.metrics.volume(
+            start_time="2026-04-01",
+            end_time="2026-04-24",
+            campaign_id="newsletter",
+            interval="day",
+        ),
+        lambda client: client.metrics.volume_async(
             start_time="2026-04-01",
             end_time="2026-04-24",
             campaign_id="newsletter",
@@ -218,6 +274,14 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
             offset=0,
             sort_order="desc",
         ),
+        lambda client: client.metrics.senders_async(
+            "campaigns",
+            start_time="2026-04-01",
+            end_time="2026-04-24",
+            limit=50,
+            offset=0,
+            sort_order="desc",
+        ),
         path="/metrics/senders/campaigns",
         query_required=frozenset(
             {"start_time", "end_time", "limit", "offset", "sort_order"}
@@ -233,6 +297,10 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
             company_name="Client A",
             handle="clienta",
         ),
+        lambda client: client.sub_accounts.create_async(
+            company_name="Client A",
+            handle="clienta",
+        ),
         json_required=frozenset({"company_name", "handle"}),
         json_allowed=frozenset({"company_name", "handle"}),
     ),
@@ -240,6 +308,7 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
         "GET",
         "/sub-account",
         lambda client: client.sub_accounts.list(limit=25, offset=5),
+        lambda client: client.sub_accounts.list_async(limit=25, offset=5),
         query_required=frozenset({"limit", "offset"}),
         query_allowed=frozenset({"limit", "offset"}),
     ),
@@ -247,36 +316,48 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
         "DELETE",
         "/sub-account/{handle}",
         lambda client: client.sub_accounts.delete("clienta"),
+        lambda client: client.sub_accounts.delete_async("clienta"),
         path="/sub-account/clienta",
     ),
     OperationContract(
         "POST",
         "/sub-account/{handle}/activate",
         lambda client: client.sub_accounts.activate("clienta"),
+        lambda client: client.sub_accounts.activate_async("clienta"),
         path="/sub-account/clienta/activate",
     ),
     OperationContract(
         "POST",
         "/sub-account/{handle}/api-key",
         lambda client: client.sub_accounts.api_keys.create("clienta"),
+        lambda client: client.sub_accounts.api_keys.create_async("clienta"),
         path="/sub-account/clienta/api-key",
     ),
     OperationContract(
         "GET",
         "/sub-account/{handle}/api-key",
         lambda client: client.sub_accounts.api_keys.list("clienta"),
+        lambda client: client.sub_accounts.api_keys.list_async("clienta"),
         path="/sub-account/clienta/api-key",
     ),
     OperationContract(
         "DELETE",
         "/sub-account/{handle}/api-key/{id}",
         lambda client: client.sub_accounts.api_keys.delete("clienta", "key_123"),
+        lambda client: client.sub_accounts.api_keys.delete_async(
+            "clienta",
+            "key_123",
+        ),
         path="/sub-account/clienta/api-key/key_123",
     ),
     OperationContract(
         "PUT",
         "/sub-account/{handle}/limit",
         lambda client: client.sub_accounts.limits.set("clienta", sends=100_000),
+        lambda client: client.sub_accounts.limits.set_async(
+            "clienta",
+            sends=100_000,
+        ),
         path="/sub-account/clienta/limit",
         json_required=frozenset({"sends"}),
         json_allowed=frozenset({"sends"}),
@@ -286,24 +367,28 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
         "GET",
         "/sub-account/{handle}/limit",
         lambda client: client.sub_accounts.limits.retrieve("clienta"),
+        lambda client: client.sub_accounts.limits.retrieve_async("clienta"),
         path="/sub-account/clienta/limit",
     ),
     OperationContract(
         "DELETE",
         "/sub-account/{handle}/limit",
         lambda client: client.sub_accounts.limits.delete("clienta"),
+        lambda client: client.sub_accounts.limits.delete_async("clienta"),
         path="/sub-account/clienta/limit",
     ),
     OperationContract(
         "POST",
         "/sub-account/{handle}/smtp-password",
         lambda client: client.sub_accounts.smtp_passwords.create("clienta"),
+        lambda client: client.sub_accounts.smtp_passwords.create_async("clienta"),
         path="/sub-account/clienta/smtp-password",
     ),
     OperationContract(
         "GET",
         "/sub-account/{handle}/smtp-password",
         lambda client: client.sub_accounts.smtp_passwords.list("clienta"),
+        lambda client: client.sub_accounts.smtp_passwords.list_async("clienta"),
         path="/sub-account/clienta/smtp-password",
     ),
     OperationContract(
@@ -313,24 +398,34 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
             "clienta",
             "smtp_123",
         ),
+        lambda client: client.sub_accounts.smtp_passwords.delete_async(
+            "clienta",
+            "smtp_123",
+        ),
         path="/sub-account/clienta/smtp-password/smtp_123",
     ),
     OperationContract(
         "POST",
         "/sub-account/{handle}/suspend",
         lambda client: client.sub_accounts.suspend("clienta"),
+        lambda client: client.sub_accounts.suspend_async("clienta"),
         path="/sub-account/clienta/suspend",
     ),
     OperationContract(
         "GET",
         "/sub-account/{handle}/usage",
         lambda client: client.sub_accounts.retrieve_usage("clienta"),
+        lambda client: client.sub_accounts.retrieve_usage_async("clienta"),
         path="/sub-account/clienta/usage",
     ),
     OperationContract(
         "POST",
         "/suppression-list",
         lambda client: client.suppressions.create(
+            [_suppression_entry()],
+            add_to_sub_accounts=True,
+        ),
+        lambda client: client.suppressions.create_async(
             [_suppression_entry()],
             add_to_sub_accounts=True,
         ),
@@ -341,6 +436,14 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
         "GET",
         "/suppression-list",
         lambda client: client.suppressions.list(
+            recipient="recipient@example.net",
+            source="api",
+            created_before="2026-04-24T00:00:00Z",
+            created_after="2026-04-01T00:00:00Z",
+            limit=100,
+            offset=0,
+        ),
+        lambda client: client.suppressions.list_async(
             recipient="recipient@example.net",
             source="api",
             created_before="2026-04-24T00:00:00Z",
@@ -376,24 +479,54 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
             "recipient@example.net",
             source="api",
         ),
+        lambda client: client.suppressions.delete_async(
+            "recipient@example.net",
+            source="api",
+        ),
         path="/suppression-list/recipients/recipient@example.net",
         query_required=frozenset({"source"}),
         query_allowed=frozenset({"source"}),
     ),
-    OperationContract("GET", "/usage", lambda client: client.usage.retrieve()),
+    OperationContract(
+        "GET",
+        "/usage",
+        lambda client: client.usage.retrieve(),
+        lambda client: client.usage.retrieve_async(),
+    ),
     OperationContract(
         "POST",
         "/webhook",
         lambda client: client.webhooks.create("https://example.com/mailchannels"),
+        lambda client: client.webhooks.create_async(
+            "https://example.com/mailchannels"
+        ),
         query_required=frozenset({"endpoint"}),
         query_allowed=frozenset({"endpoint"}),
     ),
-    OperationContract("GET", "/webhook", lambda client: client.webhooks.list()),
-    OperationContract("DELETE", "/webhook", lambda client: client.webhooks.delete()),
+    OperationContract(
+        "GET",
+        "/webhook",
+        lambda client: client.webhooks.list(),
+        lambda client: client.webhooks.list_async(),
+    ),
+    OperationContract(
+        "DELETE",
+        "/webhook",
+        lambda client: client.webhooks.delete(),
+        lambda client: client.webhooks.delete_async(),
+    ),
     OperationContract(
         "GET",
         "/webhook-batch",
         lambda client: client.webhooks.batches(
+            created_after="2026-04-01T00:00:00Z",
+            created_before="2026-04-24T00:00:00Z",
+            statuses=["4xx", "5xx"],
+            webhook="https://example.com/mailchannels",
+            limit=25,
+            offset=5,
+        ),
+        lambda client: client.webhooks.batches_async(
             created_after="2026-04-01T00:00:00Z",
             created_before="2026-04-24T00:00:00Z",
             statuses=["4xx", "5xx"],
@@ -426,6 +559,10 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
         "POST",
         "/webhook-batch/{batch_id}/resend",
         lambda client: client.webhooks.resend_batch(123, customer_handle="clienta"),
+        lambda client: client.webhooks.resend_batch_async(
+            123,
+            customer_handle="clienta",
+        ),
         path="/webhook-batch/123/resend",
         headers_required=frozenset(
             {"Content-Type", "User-Agent", "X-Customer-Handle"}
@@ -436,6 +573,7 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
         "GET",
         "/webhook/public-key",
         lambda client: client.webhooks.public_key("mckey"),
+        lambda client: client.webhooks.public_key_async("mckey"),
         query_required=frozenset({"id"}),
         query_allowed=frozenset({"id"}),
         headers_required=frozenset({"Content-Type", "User-Agent"}),
@@ -445,6 +583,7 @@ ROUTE_CONTRACTS: tuple[OperationContract, ...] = (
         "POST",
         "/webhook/validate",
         lambda client: client.webhooks.validate(request_id="test_request_1"),
+        lambda client: client.webhooks.validate_async(request_id="test_request_1"),
         json_required=frozenset({"request_id"}),
         json_allowed=frozenset({"request_id"}),
     ),
@@ -477,6 +616,31 @@ def test_sdk_requests_match_openapi_operation_contract(
     _assert_json_contract(call["json"], contract)
     _assert_query_contract(call["params"], contract)
     _assert_header_contract(call["headers"], contract)
+
+
+@pytest.mark.parametrize(
+    "contract",
+    ROUTE_CONTRACTS,
+    ids=lambda item: " ".join(item.key),
+)
+async def test_sync_and_async_sdk_requests_match(
+    contract: OperationContract,
+) -> None:
+    """Async operations should emit the same request shape as sync operations."""
+    sync_transport = FakeRequestsClient()
+    async_transport = FakeHTTPXClient()
+    client = Client(
+        api_key="test-key",
+        http_client=sync_transport,
+        async_http_client=async_transport,
+    )
+
+    contract.call(client)
+    await contract.async_call(client)
+
+    assert len(sync_transport.calls) == 1
+    assert len(async_transport.calls) == 1
+    assert async_transport.calls[0] == sync_transport.calls[0]
 
 
 def _request_path(url: str) -> str:

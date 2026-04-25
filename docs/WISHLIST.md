@@ -261,6 +261,8 @@ The next step is systematic parity: for every sync method with an async counterp
 
 This is especially useful for SDKs because async methods often drift when features are added quickly.
 
+Status: implemented. `tests/test_openapi_request_contract.py` stores sync and async calls in the same operation contract rows and asserts their fake-transport request dictionaries match exactly.
+
 ### 5. HTTP transport tests, not just fake transport tests
 
 Most current tests use fake transports, which is good for unit tests. But the real sync and async transports deserve direct tests too. `RequestsClient` wraps `requests.request`, handles JSON decoding failure, returns `SDKResponse`, and preserves response headers. `HTTPXClient` imports `httpx` lazily, opens an `AsyncClient`, handles JSON decode errors, and raises `AsyncClientNotConfigured` when async dependencies are missing. ([GitHub][7])
@@ -423,17 +425,25 @@ The package supports Python `>=3.9`; current CI tests Python 3.9 and 3.13. ([Git
 
 You already test example files directly, which is excellent. ([GitHub][17]) The next level is extracting fenced Python snippets from `README.md` and smoke-testing them after replacing credentials/transports. That prevents the README from drifting away from executable SDK behavior.
 
+### 16. Automate PyPI publishing via GitHub Actions
+
+Next up, add a release workflow that builds the package, verifies the wheel,
+and publishes to PyPI from GitHub Actions. Prefer PyPI trusted publishing via
+OpenID Connect over long-lived API tokens, and gate publication on tags or
+manual `workflow_dispatch` so routine pushes to `main` keep running tests
+without publishing a release.
+
+Status: pending.
+Priority: high.
+
 ## My recommended order
 
-1. **Bidirectional OpenAPI drift detection**
-2. **OpenAPI request-shape validation**
-3. **Every-route executable request matrix**
-4. **Sync/async parity matrix**
-5. **Transport and error edge-case tests**
-6. **Webhook negative tests**
-7. **Online CRUD lifecycle tests under a separate marker**
-8. **Consumer typing and wheel-install smoke tests**
-9. **Coverage threshold and fuller Python matrix**
+1. **Automate PyPI publishing via GitHub Actions**
+2. **Transport and error edge-case tests**
+3. **Webhook negative tests**
+4. **Online CRUD lifecycle tests under a separate marker**
+5. **Consumer typing and wheel-install smoke tests**
+6. **Coverage threshold and fuller Python matrix**
 
 This would make MailChannels stronger than Resend not only in SDK design and docs, but also in API-conformance discipline. Resend still has broader raw unit-test volume, especially paired async coverage, but you can leapfrog it by making OpenAPI conformance and route/request parity the backbone of the suite.
 

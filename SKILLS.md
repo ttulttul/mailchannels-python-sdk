@@ -481,7 +481,8 @@ When adding or changing SDK behavior:
   `src/mailchannels/routes.py`. Every SDK route needs an executable contract row
   that calls the public SDK method and validates method, path, JSON/query keys,
   required headers, forbidden headers, and legacy payload keys such as
-  `monthly_limit`.
+  `monthly_limit`. Each row also needs an async call so the suite can assert
+  sync/async request parity for method, URL, headers, JSON, and query params.
 - Prefer Node 24-ready GitHub Actions versions in workflows, such as
   `actions/checkout@v6`, `actions/setup-python@v6`, and
   `astral-sh/setup-uv@v8.1.0` or newer.

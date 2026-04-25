@@ -232,3 +232,10 @@ surface through a fake transport and validates the generated method, concrete
 path, JSON keys, query keys, and operation-specific headers. This catches
 subtle regressions such as legacy payload names or auth headers on public
 webhook-key operations.
+
+## 2026-04-25: Sync and async operations should share contract rows
+
+Async methods can drift from sync methods even when route-level coverage passes.
+Keep sync and async calls in the same operation contract row and compare the
+captured fake-transport requests directly. This keeps parity checks tied to the
+same concrete inputs used for OpenAPI request-shape validation.
