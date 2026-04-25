@@ -122,7 +122,7 @@ mailchannels.SubAccounts.SmtpPasswords.create("clienta")
 mailchannels.SubAccounts.SmtpPasswords.list("clienta")
 mailchannels.SubAccounts.SmtpPasswords.delete("clienta", password_id)
 
-mailchannels.SubAccounts.Limits.set("clienta", monthly_limit=100_000)
+mailchannels.SubAccounts.Limits.set("clienta", sends=100_000)
 mailchannels.SubAccounts.Limits.retrieve("clienta")
 mailchannels.SubAccounts.Limits.delete("clienta")
 ```

@@ -258,10 +258,28 @@ mailchannels.SubAccounts.SmtpPasswords.create("clienta")
 Document rate limits and usage stats when touching sub-account flows:
 
 ```python
-mailchannels.SubAccounts.Limits.set("clienta", monthly_limit=100_000)
+mailchannels.SubAccounts.Limits.set("clienta", sends=100_000)
 mailchannels.SubAccounts.Limits.retrieve("clienta")
 mailchannels.SubAccounts.retrieve_usage("clienta")
 mailchannels.Usage.retrieve()
+```
+
+Sub-account limit endpoints must use singular `/sub-account/{handle}/limit`.
+Setting a limit must send `PUT` with a `sends` payload. The SDK still accepts
+`monthly_limit` as a compatibility alias, but examples and docs should prefer
+`sends`.
+
+## Domain Checks
+
+Use `mailchannels.DomainChecks` or `client.domain_checks` for `/check-domain`.
+This endpoint checks DKIM, SPF, sender-domain DNS, and Domain Lockdown status:
+
+```python
+mailchannels.DomainChecks.check("example.com")
+mailchannels.DomainChecks.check(
+    "example.com",
+    dkim_settings=[mailchannels.DkimSetting(dkim_selector="mcdkim")],
+)
 ```
 
 When sending with a sub-account API key, create a separate `Client`:

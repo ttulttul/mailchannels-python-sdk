@@ -38,6 +38,7 @@ class Client:
         self.async_http_client = async_http_client or HTTPXClient()
 
         from .dkim import DkimResource
+        from .domain_checks import DomainChecksResource
         from .emails import EmailsResource
         from .metrics import MetricsResource
         from .sub_accounts import SubAccountsResource
@@ -46,6 +47,7 @@ class Client:
         from .webhooks import WebhooksResource
 
         self.dkim = DkimResource(self)
+        self.domain_checks = DomainChecksResource(self)
         self.emails = EmailsResource(self)
         self.metrics = MetricsResource(self)
         self.suppressions = SuppressionsResource(self)

@@ -164,3 +164,18 @@ conformance. The highest-priority work is correcting sub-account limit routes,
 adding `/check-domain`, and introducing OpenAPI-backed contract tests and drift
 detection so hand-written SDK routes cannot silently diverge from the official
 specification.
+
+## 2026-04-25: Sub-account limits use singular `/limit`
+
+The official OpenAPI spec defines sub-account limits as
+`/sub-account/{handle}/limit`, with `PUT` for setting limits and a `sends`
+request body. The SDK previously used plural `/limits` and `POST`; it now emits
+the documented route, method, and payload while keeping `monthly_limit` as a
+compatibility alias for existing callers.
+
+## 2026-04-25: `/check-domain` covers authentication setup
+
+MailChannels' `/check-domain` endpoint validates DKIM, SPF, sender-domain DNS,
+and Domain Lockdown status for a sending domain. The SDK models it as
+`DomainChecks` so DKIM key management remains separate from broader domain
+configuration validation.

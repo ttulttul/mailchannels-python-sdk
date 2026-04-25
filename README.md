@@ -562,7 +562,7 @@ overall allocation.
 ```python
 limit = mailchannels.SubAccounts.Limits.set(
     "clienta",
-    monthly_limit=100_000,
+    sends=100_000,
 )
 
 current_limit = mailchannels.SubAccounts.Limits.retrieve("clienta")
@@ -606,6 +606,37 @@ client.emails.queue(
         "subject": "Client message",
         "text": "Hello",
     }
+)
+```
+
+## Domain Checks
+
+Before sending from a domain, you can ask MailChannels to verify the domain's
+authentication posture. `DomainChecks.check()` calls `/check-domain` and returns
+the API's DKIM, SPF, sender-domain DNS, and Domain Lockdown results. This is
+useful in setup flows where you want to tell a user exactly which DNS or DKIM
+step is still missing.
+
+```python
+result = mailchannels.DomainChecks.check("example.com")
+
+print(result.check_results["spf"]["verdict"])
+print(result.references)
+```
+
+If you use MailChannels-hosted DKIM keys, pass the selector you expect the
+domain to use. MailChannels will validate the stored key for that domain and
+selector.
+
+```python
+result = mailchannels.DomainChecks.check(
+    "example.com",
+    dkim_settings=[
+        mailchannels.DkimSetting(
+            dkim_domain="example.com",
+            dkim_selector="mcdkim",
+        )
+    ],
 )
 ```
 
@@ -817,6 +848,8 @@ production tasks:
 
 - `async_email.py` queues a message with the async transport.
 - `attachments.py` sends local, generated, and inline attachments.
+- `domain_checks.py` validates DKIM, SPF, sender-domain DNS, and Domain Lockdown
+  status for a sending domain.
 - `suppressions.py` creates, lists, and deletes suppression entries.
 - `webhooks.py` configures webhooks and verifies local webhook metadata.
 - `usage.py` retrieves parent-account and sub-account usage.

@@ -30,6 +30,7 @@ def _load_example(name: str) -> ModuleType:
 async_email = _load_example("async_email")
 attachments = _load_example("attachments")
 custom_http_client = _load_example("custom_http_client")
+domain_checks = _load_example("domain_checks")
 error_handling = _load_example("error_handling")
 suppressions = _load_example("suppressions")
 usage = _load_example("usage")
@@ -115,6 +116,26 @@ def test_usage_example_retrieves_parent_and_sub_account_usage() -> None:
         "https://api.mailchannels.net/tx/v1/usage",
         "https://api.mailchannels.net/tx/v1/sub-account/clienta/usage",
     ]
+
+
+def test_domain_check_example_checks_configuration() -> None:
+    """It exercises domain check example helpers."""
+    transport = FakeRequestsClient(SDKResponse(200, {"references": []}, "{}"))
+    client = Client(api_key="test-key", http_client=transport)
+
+    domain_checks.check_domain_configuration(client, "example.com")
+    domain_checks.check_domain_with_dkim_selector(client, "example.com", "mcdkim")
+
+    assert [call["url"] for call in transport.calls] == [
+        "https://api.mailchannels.net/tx/v1/check-domain",
+        "https://api.mailchannels.net/tx/v1/check-domain",
+    ]
+    assert transport.calls[1]["json"] == {
+        "domain": "example.com",
+        "dkim_settings": [
+            {"dkim_domain": "example.com", "dkim_selector": "mcdkim"}
+        ],
+    }
 
 
 def test_custom_http_client_example_wraps_delegate_transport() -> None:

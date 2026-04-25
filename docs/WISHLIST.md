@@ -7,13 +7,15 @@ typing, and formal documentation coverage.
 
 ## 1. Fix Sub-Account Limit API Conformance
 
-The SDK currently models sub-account limits with `/sub-account/{handle}/limits`
-and `POST` for setting limits. The official MailChannels documentation specifies
-`PUT /sub-account/:handle/limit` with a singular `limit` path. Existing
-retrieval and deletion paths should also be checked and corrected to the
-documented singular endpoint.
+The SDK previously modeled sub-account limits with
+`/sub-account/{handle}/limits` and `POST` for setting limits. The official
+MailChannels documentation specifies `PUT /sub-account/:handle/limit` with a
+singular `limit` path. Existing retrieval and deletion paths also needed to be
+checked and corrected to the documented singular endpoint.
 
-Status: pending.
+Status: implemented. The SDK now uses `PUT`, `GET`, and `DELETE` against
+`/sub-account/{handle}/limit` and sends the documented `{"sends": ...}` payload
+when setting limits.
 Priority: high.
 
 ## 2. Implement `/check-domain`
@@ -24,7 +26,9 @@ module-level helpers if consistent with the rest of the SDK, typed request
 models where useful, tests, README coverage, and a focused example if the
 endpoint has enough setup nuance.
 
-Status: pending.
+Status: implemented. The SDK exposes `client.domain_checks.check()`,
+`client.domain_checks.check_async()`, `mailchannels.DomainChecks.check()`, and
+`mailchannels.DomainChecks.check_async()` for `/check-domain`.
 Priority: high.
 
 ## 3. Add API-Contract Tests
@@ -34,7 +38,8 @@ official MailChannels OpenAPI specification or an equivalent live sandbox
 contract. This is especially important because the current tests can reinforce
 incorrect SDK behavior when they only assert internal request construction.
 
-Status: pending.
+Status: pending. This should be broader than the focused sub-account unit tests
+and should compare SDK route declarations against the official OpenAPI spec.
 Priority: high.
 
 ## 4. Add OpenAPI Drift CI
@@ -44,7 +49,8 @@ the official MailChannels OpenAPI spec. The goal is not necessarily to generate
 the whole SDK immediately, but to fail fast when a hand-written resource drifts
 from documented API paths, methods, or required parameters.
 
-Status: pending.
+Status: implemented. Sub-account tests now assert singular `/limit`, `PUT` for
+setting limits, and the documented `sends` request payload.
 Priority: high.
 
 ## 5. Rewrite Sub-Account Limit Tests

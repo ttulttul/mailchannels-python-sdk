@@ -6,7 +6,7 @@ import logging
 from typing import Any
 
 from ..query import pagination_query
-from .types import compact_payload
+from .types import compact_payload, limit_payload
 
 logger = logging.getLogger(__name__)
 
@@ -147,37 +147,51 @@ class SubAccountLimitsResource:
         """Create a sub-account limits resource bound to a client."""
         self._client = client
 
-    def set(self, handle: str, *, monthly_limit: int) -> dict[str, Any]:
+    def set(
+        self,
+        handle: str,
+        *,
+        sends: int | None = None,
+        monthly_limit: int | None = None,
+    ) -> dict[str, Any]:
         """Set the monthly sending limit for a sub-account."""
+        payload = limit_payload(sends=sends, monthly_limit=monthly_limit)
         logger.info(
-            "Setting MailChannels sub-account limit handle=%s monthly_limit=%s",
+            "Setting MailChannels sub-account limit handle=%s sends=%s",
             handle,
-            monthly_limit,
+            payload["sends"],
         )
         return self._client.request(
-            "POST",
-            f"/sub-account/{handle}/limits",
-            json={"monthly_limit": monthly_limit},
+            "PUT",
+            f"/sub-account/{handle}/limit",
+            json=payload,
         )
 
-    async def set_async(self, handle: str, *, monthly_limit: int) -> dict[str, Any]:
+    async def set_async(
+        self,
+        handle: str,
+        *,
+        sends: int | None = None,
+        monthly_limit: int | None = None,
+    ) -> dict[str, Any]:
         """Set the monthly sending limit for a sub-account using async HTTP."""
+        payload = limit_payload(sends=sends, monthly_limit=monthly_limit)
         logger.info(
-            "Setting MailChannels sub-account limit using async HTTP handle=%s "
-            "monthly_limit=%s",
+            "Setting MailChannels sub-account limit using async HTTP "
+            "handle=%s sends=%s",
             handle,
-            monthly_limit,
+            payload["sends"],
         )
         return await self._client.request_async(
-            "POST",
-            f"/sub-account/{handle}/limits",
-            json={"monthly_limit": monthly_limit},
+            "PUT",
+            f"/sub-account/{handle}/limit",
+            json=payload,
         )
 
     def retrieve(self, handle: str) -> dict[str, Any]:
         """Retrieve the sending limit for a sub-account."""
         logger.info("Retrieving MailChannels sub-account limit handle=%s", handle)
-        return self._client.request("GET", f"/sub-account/{handle}/limits")
+        return self._client.request("GET", f"/sub-account/{handle}/limit")
 
     async def retrieve_async(self, handle: str) -> dict[str, Any]:
         """Retrieve the sending limit for a sub-account using async HTTP."""
@@ -185,12 +199,12 @@ class SubAccountLimitsResource:
             "Retrieving MailChannels sub-account limit using async HTTP handle=%s",
             handle,
         )
-        return await self._client.request_async("GET", f"/sub-account/{handle}/limits")
+        return await self._client.request_async("GET", f"/sub-account/{handle}/limit")
 
     def delete(self, handle: str) -> dict[str, Any]:
         """Delete the sending limit for a sub-account."""
         logger.info("Deleting MailChannels sub-account limit handle=%s", handle)
-        return self._client.request("DELETE", f"/sub-account/{handle}/limits")
+        return self._client.request("DELETE", f"/sub-account/{handle}/limit")
 
     async def delete_async(self, handle: str) -> dict[str, Any]:
         """Delete the sending limit for a sub-account using async HTTP."""
@@ -200,7 +214,7 @@ class SubAccountLimitsResource:
         )
         return await self._client.request_async(
             "DELETE",
-            f"/sub-account/{handle}/limits",
+            f"/sub-account/{handle}/limit",
         )
 
 
@@ -433,22 +447,36 @@ class _LimitsProxy:
     """Module-level proxy for sub-account limit operations."""
 
     @classmethod
-    def set(cls, handle: str, *, monthly_limit: int) -> dict[str, Any]:
+    def set(
+        cls,
+        handle: str,
+        *,
+        sends: int | None = None,
+        monthly_limit: int | None = None,
+    ) -> dict[str, Any]:
         """Set the monthly sending limit for a sub-account."""
         from ..client import get_default_client
 
         return get_default_client().sub_accounts.limits.set(
             handle,
+            sends=sends,
             monthly_limit=monthly_limit,
         )
 
     @classmethod
-    async def set_async(cls, handle: str, *, monthly_limit: int) -> dict[str, Any]:
+    async def set_async(
+        cls,
+        handle: str,
+        *,
+        sends: int | None = None,
+        monthly_limit: int | None = None,
+    ) -> dict[str, Any]:
         """Set the monthly sending limit for a sub-account using async HTTP."""
         from ..client import get_default_client
 
         return await get_default_client().sub_accounts.limits.set_async(
             handle,
+            sends=sends,
             monthly_limit=monthly_limit,
         )
 
