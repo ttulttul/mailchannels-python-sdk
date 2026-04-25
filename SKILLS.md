@@ -271,12 +271,13 @@ Setting a limit must send `PUT` with a `sends` payload. The SDK still accepts
 
 ## Domain Checks
 
-Use `mailchannels.DomainChecks` or `client.domain_checks` for `/check-domain`.
+Use `mailchannels.CheckDomain` or `client.check_domain` for `/check-domain`.
+`mailchannels.DomainChecks` and `client.domain_checks` remain supported aliases.
 This endpoint checks DKIM, SPF, sender-domain DNS, and Domain Lockdown status:
 
 ```python
-mailchannels.DomainChecks.check("example.com")
-mailchannels.DomainChecks.check(
+mailchannels.CheckDomain.check("example.com")
+mailchannels.CheckDomain.check(
     "example.com",
     dkim_settings=[mailchannels.DkimSetting(dkim_selector="mcdkim")],
 )

@@ -6,6 +6,7 @@ import pytest
 from conftest import FakeHTTPXClient, FakeRequestsClient
 
 import mailchannels
+from mailchannels.check_domain import CheckDomain
 from mailchannels.client import Client
 from mailchannels.domain_checks import DkimSetting
 from mailchannels.response import SDKResponse
@@ -46,6 +47,21 @@ def test_domain_check_posts_expected_payload() -> None:
     }
 
 
+def test_check_domain_alias_posts_expected_payload() -> None:
+    """It exposes `/check-domain` through the documented endpoint name."""
+    transport = FakeRequestsClient(SDKResponse(200, {"references": []}, "{}"))
+    client = Client(api_key="test-key", http_client=transport)
+
+    client.check_domain.check("example.com")
+
+    assert client.check_domain is client.domain_checks
+    assert transport.calls[0]["method"] == "POST"
+    assert transport.calls[0]["url"] == (
+        "https://api.mailchannels.net/tx/v1/check-domain"
+    )
+    assert transport.calls[0]["json"] == {"domain": "example.com"}
+
+
 async def test_domain_check_async_uses_async_transport() -> None:
     """It checks a domain using async HTTP."""
     transport = FakeHTTPXClient(SDKResponse(200, {"references": []}, "{}"))
@@ -71,6 +87,21 @@ def test_domain_check_module_level_proxy_uses_default_client(monkeypatch) -> Non
     assert transport.calls[0]["url"] == (
         "https://api.mailchannels.net/tx/v1/check-domain"
     )
+
+
+def test_check_domain_module_alias_uses_default_client(monkeypatch) -> None:
+    """It exposes a top-level CheckDomain alias for discoverability."""
+    transport = FakeRequestsClient(SDKResponse(200, {"references": []}, "{}"))
+    monkeypatch.setattr(mailchannels, "api_key", "test-key")
+    monkeypatch.setattr(mailchannels, "default_http_client", transport)
+
+    mailchannels.CheckDomain.check("example.com")
+    CheckDomain.check("example.net")
+
+    assert [call["json"] for call in transport.calls] == [
+        {"domain": "example.com"},
+        {"domain": "example.net"},
+    ]
 
 
 def test_domain_check_rejects_more_than_ten_dkim_settings() -> None:

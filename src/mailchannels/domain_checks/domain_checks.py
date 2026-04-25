@@ -94,6 +94,10 @@ class DomainChecks:
         )
 
 
+CheckDomainResource = DomainChecksResource
+CheckDomain = DomainChecks
+
+
 def _check_domain_payload(
     domain: str,
     *,

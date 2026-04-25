@@ -187,3 +187,10 @@ OpenAPI drift checker compares those method/path pairs with the official
 MailChannels OpenAPI spec and runs in CI as a separate job. This should catch
 future route drift like the earlier sub-account `/limits` versus `/limit`
 mistake before it lands.
+
+## 2026-04-25: `/check-domain` needs a discoverable SDK name
+
+The first implementation exposed `/check-domain` as `DomainChecks`, but users
+reviewing API coverage naturally look for the documented endpoint spelling.
+Expose `CheckDomain` and `client.check_domain` as first-class aliases while
+keeping `DomainChecks` and `client.domain_checks` for compatibility.

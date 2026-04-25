@@ -7,7 +7,9 @@ import os
 from .client import DEFAULT_BASE_URL, Client
 from .dkim import Dkim
 from .domain_checks import (
+    CheckDomain,
     CheckDomainParams,
+    CheckDomainResource,
     CheckDomainResult,
     CheckResults,
     DkimResult,
@@ -78,7 +80,9 @@ __all__ = [
     "ConflictError",
     "Content",
     "CheckDomainParams",
+    "CheckDomain",
     "CheckDomainResult",
+    "CheckDomainResource",
     "CheckResults",
     "Dkim",
     "DkimResult",

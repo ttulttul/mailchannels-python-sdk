@@ -48,6 +48,7 @@ class Client:
 
         self.dkim = DkimResource(self)
         self.domain_checks = DomainChecksResource(self)
+        self.check_domain = self.domain_checks
         self.emails = EmailsResource(self)
         self.metrics = MetricsResource(self)
         self.suppressions = SuppressionsResource(self)

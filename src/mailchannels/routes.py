@@ -22,7 +22,7 @@ class SDKRoute:
 
 
 SDK_ROUTES: tuple[SDKRoute, ...] = (
-    SDKRoute("POST", "/check-domain", "DomainChecks", "check"),
+    SDKRoute("POST", "/check-domain", "CheckDomain", "check"),
     SDKRoute("POST", "/send", "Emails", "send"),
     SDKRoute("POST", "/send-async", "Emails", "queue"),
     SDKRoute("POST", "/domains/{domain}/dkim-keys", "Dkim", "create"),

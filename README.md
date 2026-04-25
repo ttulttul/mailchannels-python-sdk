@@ -9,8 +9,8 @@
 `mailchannels` is a typed Python SDK for the MailChannels Email API. It is
 designed to make the first send small and obvious while still exposing the parts
 of MailChannels that matter in production: queued sending through `/send-async`,
-sub-account management, templates, unsubscribe behavior, custom headers, and
-metrics.
+sub-account management, templates, unsubscribe behavior, custom headers, domain
+validation through `/check-domain`, and metrics.
 
 The SDK accepts familiar dictionary payloads for quick scripts and Pydantic
 models for codebases that prefer explicit runtime validation.
@@ -612,13 +612,15 @@ client.emails.queue(
 ## Domain Checks
 
 Before sending from a domain, you can ask MailChannels to verify the domain's
-authentication posture. `DomainChecks.check()` calls `/check-domain` and returns
-the API's DKIM, SPF, sender-domain DNS, and Domain Lockdown results. This is
-useful in setup flows where you want to tell a user exactly which DNS or DKIM
-step is still missing.
+authentication posture. `CheckDomain.check()` and `DomainChecks.check()` both
+call `/check-domain` and return the API's DKIM, SPF, sender-domain DNS, and
+Domain Lockdown results. This is useful in setup flows where you want to tell a
+user exactly which DNS or DKIM step is still missing. Client instances expose
+the same operation as `client.check_domain.check(...)`; `client.domain_checks`
+is kept as a plural alias for consistency with the result set.
 
 ```python
-result = mailchannels.DomainChecks.check("example.com")
+result = mailchannels.CheckDomain.check("example.com")
 
 print(result.check_results["spf"]["verdict"])
 print(result.references)
@@ -629,7 +631,7 @@ domain to use. MailChannels will validate the stored key for that domain and
 selector.
 
 ```python
-result = mailchannels.DomainChecks.check(
+result = mailchannels.CheckDomain.check(
     "example.com",
     dkim_settings=[
         mailchannels.DkimSetting(
@@ -891,12 +893,12 @@ uv run pytest -m online --online
 ```
 
 The online suite includes parent-account usage, async usage, volume metrics,
-sub-account listing, suppression listing, webhook listing, and optional DKIM
-listing. The volume metrics test sends an explicit 24-hour `start_time` and
-`end_time` window so the live service does not need to infer an unbounded range.
-It can also validate the send endpoint with a MailChannels dry run, which does
-not deliver a message. Set sender and recipient addresses to enable that dry-run
-test:
+sub-account listing, suppression listing, webhook listing, and optional domain
+checks and DKIM listing. The volume metrics test sends an explicit 24-hour
+`start_time` and `end_time` window so the live service does not need to infer an
+unbounded range. It can also validate the send endpoint with a MailChannels dry
+run, which does not deliver a message. Set sender and recipient addresses to
+enable that dry-run test:
 
 ```bash
 export MAILCHANNELS_ONLINE_FROM="sender@example.com"
@@ -904,8 +906,8 @@ export MAILCHANNELS_ONLINE_TO="recipient@example.net"
 uv run pytest -m online --online
 ```
 
-To run the optional DKIM listing test, provide a domain that belongs to the
-account:
+To run the optional `/check-domain` and DKIM listing tests, provide a domain
+that belongs to the account:
 
 ```bash
 export MAILCHANNELS_ONLINE_DOMAIN="example.com"

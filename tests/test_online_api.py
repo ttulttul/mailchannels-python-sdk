@@ -201,6 +201,26 @@ def test_online_dkim_list_for_domain() -> None:
     assert isinstance(result.http_headers, dict)
 
 
+def test_online_check_domain() -> None:
+    """Check live DKIM, SPF, and Domain Lockdown status for a configured domain."""
+    domain = os.environ.get("MAILCHANNELS_ONLINE_DOMAIN")
+    if not domain:
+        pytest.skip("set MAILCHANNELS_ONLINE_DOMAIN to run live domain checks")
+
+    try:
+        result = _client().check_domain.check(domain)
+    except mailchannels.ApiError as error:
+        _xfail_live_server_error(error)
+        raise
+    except requests.RequestException as error:
+        _xfail_live_transport_error(error)
+        raise
+
+    assert "http_headers" in result
+    assert isinstance(result.http_headers, dict)
+    assert "check_results" in result
+
+
 def _send_payload(
     from_address: str,
     to_address: str,
