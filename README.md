@@ -31,9 +31,10 @@ most often:
 
 Route coverage is guarded in two places. The normal test tree includes
 `tests/test_openapi_contract.py`, which checks SDK route declarations against a
-local OpenAPI route snapshot. CI also runs `scripts/check_openapi_drift.py`
-against the official MailChannels OpenAPI document to catch upstream route drift
-before it lands on `main`.
+local OpenAPI route snapshot. CI also runs `scripts/check_openapi_drift.py`,
+which parses and validates the official MailChannels OpenAPI document with
+`openapi-spec-validator` before comparing its routes with the SDK route
+registry. That catches upstream route drift before it lands on `main`.
 
 ## Install
 

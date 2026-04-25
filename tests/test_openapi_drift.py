@@ -39,6 +39,17 @@ def test_spec_route_keys_extracts_methods() -> None:
     assert drift._spec_route_keys(spec) == {("POST", "/send"), ("GET", "/usage")}
 
 
+def test_validate_openapi_spec_accepts_minimal_spec() -> None:
+    """It validates the loaded document as OpenAPI before route comparison."""
+    drift._validate_openapi_spec(
+        {
+            "openapi": "3.0.0",
+            "info": {"title": "MailChannels Email API", "version": "1.0.0"},
+            "paths": {"/send": {"post": {"responses": {"200": {"description": "OK"}}}}},
+        }
+    )
+
+
 def test_missing_routes_reports_absent_sdk_routes(monkeypatch: MonkeyPatch) -> None:
     """It reports SDK routes not present in the supplied OpenAPI routes."""
     monkeypatch.setattr(

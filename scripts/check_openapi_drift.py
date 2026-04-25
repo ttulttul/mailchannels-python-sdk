@@ -5,11 +5,13 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+from collections.abc import Hashable, Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from urllib.request import urlopen
 
 import yaml
+from openapi_spec_validator import validate
 
 from mailchannels.routes import SDK_ROUTES, SDKRoute
 
@@ -22,6 +24,7 @@ def main() -> int:
     """Run the OpenAPI drift check."""
     args = _parser().parse_args()
     spec = _load_spec(url=args.spec_url, path=args.spec_path)
+    _validate_openapi_spec(spec)
     spec_routes = _spec_route_keys(spec)
     missing = _missing_routes(spec_routes)
     if missing:
@@ -75,6 +78,12 @@ def _spec_route_keys(spec: dict[str, Any]) -> set[tuple[str, str]]:
             if isinstance(method, str) and method.lower() in HTTP_METHODS:
                 routes.add((method.upper(), path))
     return routes
+
+
+def _validate_openapi_spec(spec: dict[str, Any]) -> None:
+    """Validate that the loaded document is structurally valid OpenAPI."""
+    logger.info("Validating OpenAPI document before comparing SDK routes.")
+    validate(cast(Mapping[Hashable, Any], spec))
 
 
 def _missing_routes(spec_routes: set[tuple[str, str]]) -> list[SDKRoute]:
