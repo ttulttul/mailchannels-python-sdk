@@ -11,7 +11,9 @@ from urllib.parse import urljoin
 from .exceptions import ConfigurationError
 from .http_client import RequestsClient
 from .http_client_async import HTTPXClient
+from .http_protocols import AsyncHTTPClient, SyncHTTPClient
 from .response import raise_for_status, response_data
+from .version import user_agent
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +28,8 @@ class Client:
         *,
         api_key: str | None = None,
         base_url: str | None = None,
-        http_client: RequestsClient | None = None,
-        async_http_client: HTTPXClient | None = None,
+        http_client: SyncHTTPClient | None = None,
+        async_http_client: AsyncHTTPClient | None = None,
     ) -> None:
         """Create a MailChannels API client."""
         self.api_key = api_key
@@ -118,7 +120,7 @@ class Client:
             )
         headers = {
             "Content-Type": "application/json",
-            "User-Agent": "mailchannels-python/0.1.0",
+            "User-Agent": user_agent(),
         }
         if require_api_key and api_key:
             headers["X-Api-Key"] = str(api_key)
@@ -141,15 +143,9 @@ def get_default_client() -> Client:
     return Client(
         api_key=_module_attr("api_key") or os.environ.get("MAILCHANNELS_API_KEY"),
         base_url=str(_module_attr("base_url") or _configured_base_url()),
-        http_client=(
-            module_http_client
-            if isinstance(module_http_client, RequestsClient)
-            else None
-        ),
+        http_client=module_http_client if _has_request(module_http_client) else None,
         async_http_client=(
-            module_async_http_client
-            if isinstance(module_async_http_client, HTTPXClient)
-            else None
+            module_async_http_client if _has_request(module_async_http_client) else None
         ),
     )
 
@@ -165,3 +161,8 @@ def _module_attr(name: str) -> Any:
 def _configured_base_url() -> str:
     """Return the configured MailChannels API base URL."""
     return os.environ.get("MAILCHANNELS_API_URL", DEFAULT_BASE_URL)
+
+
+def _has_request(value: Any) -> bool:
+    """Return whether a value has the request method required by transports."""
+    return value is not None and callable(getattr(value, "request", None))

@@ -105,7 +105,8 @@ Priority: high.
 Resend exposes `__version__` and `get_version()`. MailChannels should expose the
 same kind of version metadata and use it in the User-Agent.
 
-Status: pending.
+Status: implemented. The SDK exports `mailchannels.__version__`,
+`mailchannels.get_version()`, and uses the exported value in the User-Agent.
 Priority: medium.
 
 ## 11. Formal Custom HTTP Client Contract
@@ -114,7 +115,9 @@ Resend defines HTTP client interfaces and tests custom-client behavior. The
 MailChannels SDK accepts transport-like objects but does not expose a formal
 `Protocol` or ABC for sync and async clients.
 
-Status: pending.
+Status: implemented. The SDK exports `SyncHTTPClient` and `AsyncHTTPClient`
+protocols and accepts protocol-compatible custom transports both on explicit
+clients and through module-level default client configuration.
 Priority: medium.
 
 ## 12. Better Exception Metadata

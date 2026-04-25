@@ -368,6 +368,26 @@ except mailchannels.ForbiddenError:
     raise
 ```
 
+## Version And Custom HTTP Clients
+
+The SDK exports `mailchannels.__version__` and `mailchannels.get_version()`.
+The User-Agent is derived from this value.
+
+For custom transports, implement `mailchannels.SyncHTTPClient` or
+`mailchannels.AsyncHTTPClient`. The `request()` method must accept `method`,
+`url`, `headers`, optional `json`, optional `params`, and return
+`mailchannels.SDKResponse`.
+
+```python
+client = mailchannels.Client(
+    api_key="YOUR-API-KEY",
+    http_client=my_transport,
+)
+```
+
+Module-level clients can use `mailchannels.default_http_client` and
+`mailchannels.default_async_http_client` with any protocol-compatible transport.
+
 ## Repository Maintenance
 
 When adding or changing SDK behavior:

@@ -9,6 +9,7 @@ from conftest import FakeHTTPXClient, FakeRequestsClient
 
 from mailchannels.client import Client
 from mailchannels.response import SDKResponse
+from mailchannels.version import user_agent
 from mailchannels.webhooks import (
     parse_signature_input,
     signature_is_fresh,
@@ -69,7 +70,7 @@ def test_webhook_batches_public_key_and_resend() -> None:
     assert transport.calls[1]["params"] == {"id": "mckey"}
     assert transport.calls[2]["headers"] == {
         "Content-Type": "application/json",
-        "User-Agent": "mailchannels-python/0.1.0",
+        "User-Agent": user_agent(),
         "X-Customer-Handle": "customer_123",
     }
 

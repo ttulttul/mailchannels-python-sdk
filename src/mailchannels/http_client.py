@@ -13,7 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 class RequestsClient:
-    """Synchronous HTTP client backed by requests."""
+    """Synchronous HTTP client backed by requests.
+
+    Custom synchronous transports should implement the same `request()` method
+    described by `mailchannels.SyncHTTPClient`.
+    """
 
     def __init__(self, *, timeout: float = 30.0) -> None:
         """Create a requests-backed HTTP client."""

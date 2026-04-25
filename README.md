@@ -738,6 +738,59 @@ except mailchannels.ForbiddenError:
 
 All SDK exceptions inherit from `MailChannelsError`.
 
+## Version And Custom Transports
+
+The package exports its version so applications can log it at startup or include
+it in diagnostics. The SDK uses the same value in its `User-Agent` header.
+
+```python
+import mailchannels
+
+print(mailchannels.__version__)
+print(mailchannels.get_version())
+```
+
+The default synchronous transport uses `requests`, and the default async
+transport uses `httpx`. If your application needs custom retry behavior,
+instrumentation, test isolation, or a framework-specific HTTP stack, pass a
+transport object that implements the `SyncHTTPClient` or `AsyncHTTPClient`
+protocol. The method must return `mailchannels.SDKResponse`.
+
+```python
+from typing import Any
+
+import mailchannels
+
+
+class LoggingTransport:
+    """Small example transport that satisfies SyncHTTPClient."""
+
+    def request(
+        self,
+        method: str,
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+    ) -> mailchannels.SDKResponse:
+        """Send a request and return a normalized SDK response."""
+        print(method, url)
+        return mailchannels.RequestsClient().request(
+            method,
+            url,
+            headers=headers,
+            json=json,
+            params=params,
+        )
+
+
+client = mailchannels.Client(
+    api_key="YOUR-API-KEY",
+    http_client=LoggingTransport(),
+)
+```
+
 ## Development
 
 Install all development dependencies and run the local test suite:

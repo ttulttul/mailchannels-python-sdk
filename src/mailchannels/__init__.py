@@ -32,10 +32,13 @@ from .exceptions import (
 )
 from .http_client import RequestsClient
 from .http_client_async import HTTPXClient
+from .http_protocols import AsyncHTTPClient, SyncHTTPClient
 from .metrics import Metrics
+from .response import SDKResponse
 from .sub_accounts import SubAccounts
 from .suppressions import Suppressions
 from .usage import Usage, UsageStats
+from .version import __version__, get_version
 from .webhooks import (
     SignatureParameters,
     WebhookEventPayload,
@@ -53,6 +56,7 @@ default_async_http_client: HTTPXClient | None = None
 
 __all__ = [
     "ApiError",
+    "AsyncHTTPClient",
     "AsyncClientNotConfigured",
     "Attachment",
     "AuthenticationError",
@@ -76,18 +80,22 @@ __all__ = [
     "RequestsClient",
     "SendParams",
     "SendResponse",
+    "SDKResponse",
     "SignatureParameters",
     "SubAccounts",
     "Suppressions",
+    "SyncHTTPClient",
     "UNSUBSCRIBE_URL_PLACEHOLDER",
     "Usage",
     "UsageStats",
     "WebhookEventPayload",
     "Webhooks",
+    "__version__",
     "api_key",
     "base_url",
     "default_async_http_client",
     "default_http_client",
+    "get_version",
     "parse_signature_input",
     "signature_is_fresh",
     "signature_key_id",

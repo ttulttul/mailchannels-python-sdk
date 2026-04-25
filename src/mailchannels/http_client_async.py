@@ -12,7 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 class HTTPXClient:
-    """Asynchronous HTTP client backed by httpx."""
+    """Asynchronous HTTP client backed by httpx.
+
+    Custom asynchronous transports should implement the same async `request()`
+    method described by `mailchannels.AsyncHTTPClient`.
+    """
 
     def __init__(self, *, timeout: float = 30.0) -> None:
         """Create an httpx-backed async HTTP client."""

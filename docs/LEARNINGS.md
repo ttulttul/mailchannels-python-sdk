@@ -77,3 +77,12 @@ make them much easier to construct. `Attachment.from_file()`,
 `Attachment.inline_file()` keep Base64 encoding, remote retrieval, MIME
 inference, inline disposition, and `content_id` handling close to the attachment
 model without adding an API resource that MailChannels does not have.
+
+## 2026-04-24: Version and transports are now explicit SDK contracts
+
+The SDK exports `__version__` and `get_version()` and derives the User-Agent
+from that version value, so future releases only need one version source.
+Custom HTTP clients are modeled as `SyncHTTPClient` and `AsyncHTTPClient`
+protocols returning `SDKResponse`; module-level `default_http_client` and
+`default_async_http_client` now accept protocol-compatible transports instead
+of only the built-in requests/httpx wrapper classes.
