@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any, Literal, TypedDict
+from typing import Literal, TypedDict
 
 from pydantic import BaseModel, ConfigDict
 
@@ -102,21 +102,3 @@ class MetricsSenderResponse(BaseModel):
     offset: int
     total: int
     senders: list[MetricsSender]
-
-
-def compact_query(values: dict[str, Any]) -> dict[str, Any]:
-    """Remove unset query values and serialize dates for HTTP requests."""
-    return {
-        key: _query_value(value)
-        for key, value in values.items()
-        if value is not None
-    }
-
-
-def _query_value(value: Any) -> Any:
-    """Serialize a metrics query value."""
-    if isinstance(value, datetime):
-        return value.isoformat()
-    if isinstance(value, date):
-        return value.isoformat()
-    return value

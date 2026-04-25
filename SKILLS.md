@@ -226,6 +226,7 @@ senders.
 
 ```python
 mailchannels.SubAccounts.create(company_name="Client A", handle="clienta")
+mailchannels.SubAccounts.list(limit=100, offset=0)
 mailchannels.SubAccounts.ApiKeys.create("clienta")
 mailchannels.SubAccounts.SmtpPasswords.create("clienta")
 ```
@@ -236,6 +237,7 @@ Document rate limits and usage stats when touching sub-account flows:
 mailchannels.SubAccounts.Limits.set("clienta", monthly_limit=100_000)
 mailchannels.SubAccounts.Limits.retrieve("clienta")
 mailchannels.SubAccounts.retrieve_usage("clienta")
+mailchannels.Usage.retrieve()
 ```
 
 When sending with a sub-account API key, create a separate `Client`:
@@ -264,6 +266,17 @@ Available methods are `engagement()`, `performance()`,
 `recipient_behaviour()`, `recipient_behavior()`, `volume()`, and `senders()`.
 Use `senders("campaigns")` or `senders("sub-accounts")` for grouped sender
 metrics.
+
+## Usage
+
+Use `mailchannels.Usage.retrieve()` or `client.usage.retrieve()` for
+parent-account usage during the current billing period. Use
+`SubAccounts.retrieve_usage(handle)` only when asking about one sub-account.
+
+```python
+usage = mailchannels.Usage.retrieve()
+print(usage.total_usage)
+```
 
 ## Suppressions
 

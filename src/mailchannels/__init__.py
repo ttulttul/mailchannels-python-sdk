@@ -35,6 +35,7 @@ from .http_client_async import HTTPXClient
 from .metrics import Metrics
 from .sub_accounts import SubAccounts
 from .suppressions import Suppressions
+from .usage import Usage, UsageStats
 from .webhooks import (
     SignatureParameters,
     WebhookEventPayload,
@@ -79,6 +80,8 @@ __all__ = [
     "SubAccounts",
     "Suppressions",
     "UNSUBSCRIBE_URL_PLACEHOLDER",
+    "Usage",
+    "UsageStats",
     "WebhookEventPayload",
     "Webhooks",
     "api_key",

@@ -9,6 +9,7 @@ import re
 import time
 from typing import Any
 
+from ..query import compact_query, pagination_query
 from .types import SignatureParameters, WebhookBatchStatus
 
 logger = logging.getLogger(__name__)
@@ -83,15 +84,13 @@ class WebhooksResource:
         return self._client.request(
             "GET",
             "/webhook-batch",
-            params=_compact(
-                {
-                    "created_after": created_after,
-                    "created_before": created_before,
-                    "statuses": _statuses(statuses),
-                    "webhook": webhook,
-                    "limit": limit,
-                    "offset": offset,
-                }
+            params=pagination_query(
+                limit=limit,
+                offset=offset,
+                created_after=created_after,
+                created_before=created_before,
+                statuses=statuses,
+                webhook=webhook,
             )
             or None,
         )
@@ -111,15 +110,13 @@ class WebhooksResource:
         return await self._client.request_async(
             "GET",
             "/webhook-batch",
-            params=_compact(
-                {
-                    "created_after": created_after,
-                    "created_before": created_before,
-                    "statuses": _statuses(statuses),
-                    "webhook": webhook,
-                    "limit": limit,
-                    "offset": offset,
-                }
+            params=pagination_query(
+                limit=limit,
+                offset=offset,
+                created_after=created_after,
+                created_before=created_before,
+                statuses=statuses,
+                webhook=webhook,
             )
             or None,
         )
@@ -187,7 +184,7 @@ class WebhooksResource:
         return self._client.request(
             "POST",
             "/webhook/validate",
-            json=_compact({"request_id": request_id}) or None,
+            json=compact_query({"request_id": request_id}) or None,
         )
 
     async def validate_async(self, *, request_id: str | None = None) -> dict[str, Any]:
@@ -199,7 +196,7 @@ class WebhooksResource:
         return await self._client.request_async(
             "POST",
             "/webhook/validate",
-            json=_compact({"request_id": request_id}) or None,
+            json=compact_query({"request_id": request_id}) or None,
         )
 
 
@@ -455,18 +452,6 @@ def _header(headers: dict[str, str], name: str) -> str | None:
         if key.lower() == lowered:
             return value
     return None
-
-
-def _statuses(statuses: list[WebhookBatchStatus] | None) -> str | None:
-    """Serialize webhook batch statuses for the query string."""
-    if statuses is None:
-        return None
-    return ",".join(statuses)
-
-
-def _compact(values: dict[str, Any]) -> dict[str, Any]:
-    """Remove unset request values."""
-    return {key: value for key, value in values.items() if value is not None}
 
 
 def _unquote(value: str) -> str:

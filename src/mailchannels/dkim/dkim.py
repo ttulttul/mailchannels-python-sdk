@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from ..query import pagination_query
 from .types import DkimAlgorithm, DkimKeyStatus, DkimUpdateStatus
 
 logger = logging.getLogger(__name__)
@@ -84,14 +85,12 @@ class DkimResource:
     ) -> dict[str, Any]:
         """Retrieve MailChannels-hosted DKIM keys for a domain."""
         logger.info("Listing MailChannels DKIM keys domain=%s", domain)
-        params = _compact(
-            {
-                "selector": selector,
-                "status": status,
-                "offset": offset,
-                "limit": limit,
-                "include_dns_record": include_dns_record,
-            }
+        params = pagination_query(
+            limit=limit,
+            offset=offset,
+            selector=selector,
+            status=status,
+            include_dns_record=include_dns_record,
         )
         return self._client.request(
             "GET",
@@ -111,14 +110,12 @@ class DkimResource:
     ) -> dict[str, Any]:
         """Retrieve MailChannels-hosted DKIM keys using async HTTP."""
         logger.info("Listing MailChannels DKIM keys using async HTTP domain=%s", domain)
-        params = _compact(
-            {
-                "selector": selector,
-                "status": status,
-                "offset": offset,
-                "limit": limit,
-                "include_dns_record": include_dns_record,
-            }
+        params = pagination_query(
+            limit=limit,
+            offset=offset,
+            selector=selector,
+            status=status,
+            include_dns_record=include_dns_record,
         )
         return await self._client.request_async(
             "GET",

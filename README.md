@@ -497,6 +497,7 @@ sub_account = mailchannels.SubAccounts.create(
     handle="clienta",
 )
 
+sub_accounts = mailchannels.SubAccounts.list(limit=100, offset=0)
 api_key = mailchannels.SubAccounts.ApiKeys.create("clienta")
 ```
 
@@ -520,6 +521,17 @@ from the parent account.
 
 ```python
 usage = mailchannels.SubAccounts.retrieve_usage("clienta")
+```
+
+The parent account also has its own top-level usage endpoint. Use it when you
+need the current billing-period total for the account represented by the API key
+rather than for one specific sub-account.
+
+```python
+usage = mailchannels.Usage.retrieve()
+
+print(usage.total_usage)
+print(usage.period_start_date, usage.period_end_date)
 ```
 
 If you want the sub-account to inherit the parent account's remaining capacity

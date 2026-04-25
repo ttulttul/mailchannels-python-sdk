@@ -40,6 +40,7 @@ class Client:
         from .metrics import MetricsResource
         from .sub_accounts import SubAccountsResource
         from .suppressions import SuppressionsResource
+        from .usage import UsageResource
         from .webhooks import WebhooksResource
 
         self.dkim = DkimResource(self)
@@ -47,6 +48,7 @@ class Client:
         self.metrics = MetricsResource(self)
         self.suppressions = SuppressionsResource(self)
         self.sub_accounts = SubAccountsResource(self)
+        self.usage = UsageResource(self)
         self.webhooks = WebhooksResource(self)
 
     def request(

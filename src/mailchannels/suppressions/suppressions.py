@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from ..query import compact_query, pagination_query
 from .types import (
     SuppressionDeleteSource,
     SuppressionEntryParams,
@@ -36,15 +37,13 @@ class SuppressionsResource:
         return self._client.request(
             "GET",
             "/suppression-list",
-            params=_compact(
-                {
-                    "recipient": recipient,
-                    "source": source,
-                    "created_before": created_before,
-                    "created_after": created_after,
-                    "limit": limit,
-                    "offset": offset,
-                }
+            params=pagination_query(
+                limit=limit,
+                offset=offset,
+                recipient=recipient,
+                source=source,
+                created_before=created_before,
+                created_after=created_after,
             )
             or None,
         )
@@ -64,15 +63,13 @@ class SuppressionsResource:
         return await self._client.request_async(
             "GET",
             "/suppression-list",
-            params=_compact(
-                {
-                    "recipient": recipient,
-                    "source": source,
-                    "created_before": created_before,
-                    "created_after": created_after,
-                    "limit": limit,
-                    "offset": offset,
-                }
+            params=pagination_query(
+                limit=limit,
+                offset=offset,
+                recipient=recipient,
+                source=source,
+                created_before=created_before,
+                created_after=created_after,
             )
             or None,
         )
@@ -129,7 +126,7 @@ class SuppressionsResource:
         return self._client.request(
             "DELETE",
             f"/suppression-list/recipients/{recipient}",
-            params=_compact({"source": source}) or None,
+            params=compact_query({"source": source}) or None,
         )
 
     async def delete_async(
@@ -146,7 +143,7 @@ class SuppressionsResource:
         return await self._client.request_async(
             "DELETE",
             f"/suppression-list/recipients/{recipient}",
-            params=_compact({"source": source}) or None,
+            params=compact_query({"source": source}) or None,
         )
 
 

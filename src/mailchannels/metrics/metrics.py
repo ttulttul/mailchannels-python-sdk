@@ -5,12 +5,12 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from ..query import compact_query
 from .types import (
     MetricsInterval,
     MetricsSenderType,
     MetricsSortOrder,
     MetricsTime,
-    compact_query,
 )
 
 logger = logging.getLogger(__name__)

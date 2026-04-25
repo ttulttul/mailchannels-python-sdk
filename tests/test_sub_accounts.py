@@ -29,18 +29,21 @@ def test_sub_account_nested_resources_use_expected_paths() -> None:
     transport = FakeRequestsClient()
     client = Client(api_key="test-key", http_client=transport)
 
+    client.sub_accounts.list(limit=25, offset=5)
     client.sub_accounts.api_keys.create("clienta")
     client.sub_accounts.smtp_passwords.create("clienta")
     client.sub_accounts.limits.set("clienta", monthly_limit=100_000)
     client.sub_accounts.retrieve_usage("clienta")
 
     assert [call["url"] for call in transport.calls] == [
+        "https://api.mailchannels.net/tx/v1/sub-account",
         "https://api.mailchannels.net/tx/v1/sub-account/clienta/api-key",
         "https://api.mailchannels.net/tx/v1/sub-account/clienta/smtp-password",
         "https://api.mailchannels.net/tx/v1/sub-account/clienta/limits",
         "https://api.mailchannels.net/tx/v1/sub-account/clienta/usage",
     ]
-    assert transport.calls[2]["json"] == {"monthly_limit": 100_000}
+    assert transport.calls[0]["params"] == {"limit": 25, "offset": 5}
+    assert transport.calls[3]["json"] == {"monthly_limit": 100_000}
 
 
 async def test_sub_account_async_methods_use_async_transport() -> None:
@@ -48,10 +51,11 @@ async def test_sub_account_async_methods_use_async_transport() -> None:
     transport = FakeHTTPXClient(SDKResponse(200, {"sub_accounts": []}, "{}"))
     client = Client(api_key="test-key", async_http_client=transport)
 
-    await client.sub_accounts.list_async()
+    await client.sub_accounts.list_async(limit=25, offset=5)
     await client.sub_accounts.limits.retrieve_async("clienta")
 
     assert [call["url"] for call in transport.calls] == [
         "https://api.mailchannels.net/tx/v1/sub-account",
         "https://api.mailchannels.net/tx/v1/sub-account/clienta/limits",
     ]
+    assert transport.calls[0]["params"] == {"limit": 25, "offset": 5}

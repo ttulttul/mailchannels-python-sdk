@@ -59,3 +59,12 @@ suppression-list resources are all valuable alignment points. MailChannels
 webhooks are signed with `Content-Digest`, `Signature-Input`, and `Signature`;
 the SDK can safely provide digest and metadata helpers while leaving final
 RFC 9421 Ed25519 verification to a dedicated HTTP-signature library.
+
+## 2026-04-24: Parent usage and pagination share common query helpers
+
+MailChannels exposes both parent-account `/usage` and sub-account
+`/sub-account/{handle}/usage`; the SDK now models the parent endpoint as
+`Usage` while keeping sub-account usage under `SubAccounts`. Paginated endpoints
+share `compact_query()` and `pagination_query()` so date serialization,
+comma-separated list serialization, and `limit`/`offset` handling do not drift
+between resources.

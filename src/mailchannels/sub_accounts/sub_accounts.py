@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from ..query import pagination_query
 from .types import compact_payload
 
 logger = logging.getLogger(__name__)
@@ -238,15 +239,33 @@ class SubAccountsResource:
         payload = compact_payload({"company_name": company_name, "handle": handle})
         return await self._client.request_async("POST", "/sub-account", json=payload)
 
-    def list(self) -> dict[str, Any]:
+    def list(
+        self,
+        *,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> dict[str, Any]:
         """Retrieve sub-accounts for the parent account."""
         logger.info("Listing MailChannels sub-accounts")
-        return self._client.request("GET", "/sub-account")
+        return self._client.request(
+            "GET",
+            "/sub-account",
+            params=pagination_query(limit=limit, offset=offset) or None,
+        )
 
-    async def list_async(self) -> dict[str, Any]:
+    async def list_async(
+        self,
+        *,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> dict[str, Any]:
         """Retrieve sub-accounts for the parent account using async HTTP."""
         logger.info("Listing MailChannels sub-accounts using async HTTP")
-        return await self._client.request_async("GET", "/sub-account")
+        return await self._client.request_async(
+            "GET",
+            "/sub-account",
+            params=pagination_query(limit=limit, offset=offset) or None,
+        )
 
     def retrieve_usage(self, handle: str) -> dict[str, Any]:
         """Retrieve usage statistics for a sub-account."""
@@ -500,18 +519,31 @@ class SubAccounts:
         )
 
     @classmethod
-    def list(cls) -> dict[str, Any]:
+    def list(
+        cls,
+        *,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> dict[str, Any]:
         """Retrieve sub-accounts for the parent account."""
         from ..client import get_default_client
 
-        return get_default_client().sub_accounts.list()
+        return get_default_client().sub_accounts.list(limit=limit, offset=offset)
 
     @classmethod
-    async def list_async(cls) -> dict[str, Any]:
+    async def list_async(
+        cls,
+        *,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> dict[str, Any]:
         """Retrieve sub-accounts for the parent account using async HTTP."""
         from ..client import get_default_client
 
-        return await get_default_client().sub_accounts.list_async()
+        return await get_default_client().sub_accounts.list_async(
+            limit=limit,
+            offset=offset,
+        )
 
     @classmethod
     def retrieve_usage(cls, handle: str) -> dict[str, Any]:

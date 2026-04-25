@@ -65,7 +65,9 @@ Status: implemented.
 The SDK supports sub-account usage, but not parent-account `/usage`. Add a
 top-level `Usage` resource or `Client.usage.retrieve()`.
 
-Status: pending.
+Status: implemented. The SDK exposes `client.usage.retrieve()`,
+`client.usage.retrieve_async()`, `mailchannels.Usage.retrieve()`, and
+`mailchannels.Usage.retrieve_async()` for `/usage`.
 
 ## 8. Pagination Helper
 
@@ -73,7 +75,9 @@ Resend has a shared pagination/query helper. MailChannels currently builds query
 parameters resource by resource. Add a small shared query helper for list
 endpoints and date serialization.
 
-Status: pending.
+Status: implemented. The SDK has shared `compact_query()` and
+`pagination_query()` helpers used by paginated DKIM, sub-account, suppression,
+webhook, and metrics query builders.
 
 ## 9. Attachment Ergonomics
 
