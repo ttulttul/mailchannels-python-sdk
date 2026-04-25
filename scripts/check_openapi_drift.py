@@ -27,10 +27,15 @@ def main() -> int:
     _validate_openapi_spec(spec)
     spec_routes = _spec_route_keys(spec)
     missing = _missing_routes(spec_routes)
-    if missing:
+    unsupported = _unsupported_spec_routes(spec_routes)
+    if missing or unsupported:
         _print_missing_routes(missing)
+        _print_unsupported_spec_routes(unsupported)
         return 1
-    print(f"OpenAPI drift check passed for {len(SDK_ROUTES)} SDK routes.")
+    print(
+        "OpenAPI drift check passed for "
+        f"{len(SDK_ROUTES)} SDK routes and {len(spec_routes)} OpenAPI routes."
+    )
     return 0
 
 
@@ -97,8 +102,23 @@ def _missing_routes(spec_routes: set[tuple[str, str]]) -> list[SDKRoute]:
     return missing
 
 
+def _unsupported_spec_routes(
+    spec_routes: set[tuple[str, str]],
+) -> list[tuple[str, str]]:
+    """Return OpenAPI routes that are not declared by the SDK."""
+    sdk_routes = {(route.method, route.path) for route in SDK_ROUTES}
+    unsupported = sorted(spec_routes - sdk_routes)
+    logger.debug(
+        "Found %s OpenAPI routes missing from the SDK registry.",
+        len(unsupported),
+    )
+    return unsupported
+
+
 def _print_missing_routes(missing: list[SDKRoute]) -> None:
     """Print a readable missing-route report."""
+    if not missing:
+        return
     logger.error("OpenAPI drift detected for %s SDK routes.", len(missing))
     print("OpenAPI drift detected. SDK routes missing from the spec:", file=sys.stderr)
     for route in missing:
@@ -107,6 +127,16 @@ def _print_missing_routes(missing: list[SDKRoute]) -> None:
             f"({route.resource}.{route.operation})",
             file=sys.stderr,
         )
+
+
+def _print_unsupported_spec_routes(routes: list[tuple[str, str]]) -> None:
+    """Print OpenAPI routes that need SDK route declarations."""
+    if not routes:
+        return
+    logger.error("OpenAPI drift detected for %s unsupported spec routes.", len(routes))
+    print("OpenAPI drift detected. Spec routes missing from the SDK:", file=sys.stderr)
+    for method, path in routes:
+        print(f"- {method} {path}", file=sys.stderr)
 
 
 if __name__ == "__main__":

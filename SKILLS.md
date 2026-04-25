@@ -472,9 +472,11 @@ When adding or changing SDK behavior:
   live sends and production API calls require explicit operator intent.
 - Keep `src/mailchannels/routes.py` updated whenever adding, removing, or
   correcting an API endpoint. Run `uv run python scripts/check_openapi_drift.py`
-  when route declarations change.
+  when route declarations change; it fails if SDK routes are missing from the
+  OpenAPI spec or if the OpenAPI spec has endpoints not declared by the SDK.
 - Keep `tests/test_openapi_contract.py` aligned with the route registry so API
-  coverage remains visible in the public test tree.
+  coverage remains visible in the public test tree. The snapshot should match
+  `sdk_route_keys()` exactly.
 - Prefer Node 24-ready GitHub Actions versions in workflows, such as
   `actions/checkout@v6`, `actions/setup-python@v6`, and
   `astral-sh/setup-uv@v8.1.0` or newer.

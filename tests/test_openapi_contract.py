@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from mailchannels.routes import SDK_ROUTES, sdk_route_keys
+from mailchannels.routes import sdk_route_keys
 
 OPENAPI_ROUTE_SNAPSHOT: set[tuple[str, str]] = {
     ("DELETE", "/sub-account/{handle}"),
@@ -47,13 +47,8 @@ OPENAPI_ROUTE_SNAPSHOT: set[tuple[str, str]] = {
 
 
 def test_sdk_routes_match_openapi_route_snapshot() -> None:
-    """Every SDK route should appear in the OpenAPI route snapshot."""
-    assert sdk_route_keys() <= OPENAPI_ROUTE_SNAPSHOT
-
-
-def test_openapi_route_snapshot_covers_every_declared_sdk_route() -> None:
-    """The route snapshot should stay aligned with the SDK route registry."""
-    assert len(OPENAPI_ROUTE_SNAPSHOT) == len(SDK_ROUTES)
+    """SDK route declarations should exactly match the OpenAPI snapshot."""
+    assert sdk_route_keys() == OPENAPI_ROUTE_SNAPSHOT
 
 
 def test_contract_includes_domain_check_endpoint() -> None:

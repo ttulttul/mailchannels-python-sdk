@@ -64,3 +64,20 @@ def test_missing_routes_reports_absent_sdk_routes(monkeypatch: MonkeyPatch) -> N
     missing = drift._missing_routes({("POST", "/send")})
 
     assert missing == [SDKRoute("POST", "/missing", "Missing", "missing")]
+
+
+def test_unsupported_spec_routes_reports_openapi_routes_missing_from_sdk(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """It reports OpenAPI routes that do not have SDK route declarations."""
+    monkeypatch.setattr(
+        drift,
+        "SDK_ROUTES",
+        (SDKRoute("POST", "/send", "Emails", "send"),),
+    )
+
+    unsupported = drift._unsupported_spec_routes(
+        {("POST", "/new-endpoint"), ("POST", "/send")}
+    )
+
+    assert unsupported == [("POST", "/new-endpoint")]

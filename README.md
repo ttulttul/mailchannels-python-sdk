@@ -176,11 +176,12 @@ most often:
 | Receive delivery events | `/webhook*` | `mailchannels.Webhooks` |
 
 Route coverage is guarded in two places. The normal test tree includes
-`tests/test_openapi_contract.py`, which checks SDK route declarations against a
-local OpenAPI route snapshot. CI also runs `scripts/check_openapi_drift.py`,
-which parses and validates the official MailChannels OpenAPI document with
-`openapi-spec-validator` before comparing its routes with the SDK route
-registry. That catches upstream route drift before it lands on `main`.
+`tests/test_openapi_contract.py`, which checks exact agreement between SDK
+route declarations and a local OpenAPI route snapshot. CI also runs
+`scripts/check_openapi_drift.py`, which parses and validates the official
+MailChannels OpenAPI document with `openapi-spec-validator` before comparing
+its routes with the SDK route registry in both directions. That catches both
+stale SDK routes and newly documented endpoints before drift lands on `main`.
 
 ### Choosing The Right Entry Point
 
