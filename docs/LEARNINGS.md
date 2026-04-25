@@ -201,3 +201,11 @@ Even when route support exists, reviewers scan the README introduction and test
 filenames first. Keep API coverage summarized near the top of README and keep a
 plainly named `tests/test_openapi_contract.py` alongside the live OpenAPI drift
 script so contract coverage is visible from the repository tree.
+
+## 2026-04-25: README organization should follow reader intent
+
+For SDK documentation, a long feature list is harder to absorb than a reader
+path. Keep the README organized around quickstart, core concepts, sending
+recipes, account/domain operations, and production operations. Put MailChannels'
+multi-tenant isolation story in the introduction because it is a core product
+distinction, not an advanced footnote.
