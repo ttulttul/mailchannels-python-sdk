@@ -7,6 +7,7 @@
 - When you make a big discovery or change, note this in docs/LEARNINGS.md, even if user does not ask you to.
 - Update README.md with each major commit.
 - Don't use README.md as a change log. It's user documentation; they don't go there to look for changes.
+- Update SKILLS.md with each change to this repo so future LLMs know how to use the MailChannels Python API correctly.
 
 ## Dev rules
 - Use Python logging liberally to insert judicious debug, info, warning, and error messages in the code.
@@ -26,4 +27,3 @@
 - Add or update tests for the code you change, even if nobody asked.
 - Use pytest and create a harness so the user can just type "uv pytest".
 - Always run the full test suite before every commit. Never commit if the test suite fails to pass.
-
