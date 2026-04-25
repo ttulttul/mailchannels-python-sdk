@@ -126,7 +126,8 @@ Resend exceptions include code, error type, suggested action, and headers.
 MailChannels exceptions include status, code, and response. Add headers and
 possibly suggested actions for common failures.
 
-Status: pending.
+Status: implemented. SDK exceptions include response headers, request ID,
+retry-after, error type, suggested action, and `to_dict()` metadata for logging.
 Priority: medium.
 
 ## 13. Example Coverage
@@ -135,7 +136,9 @@ Resend has many focused examples. MailChannels should add examples for async,
 templates, unsubscribe, custom headers, DKIM, Cloudflare DNS publication,
 sub-accounts, metrics, webhooks, suppressions, custom HTTP clients, and errors.
 
-Status: pending.
+Status: implemented. The repository includes tested examples for async sending,
+attachments, suppressions, webhooks, usage, custom HTTP clients, and structured
+error handling.
 Priority: medium.
 
 ## 14. Request Options

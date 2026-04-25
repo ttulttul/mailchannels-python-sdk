@@ -738,6 +738,19 @@ except mailchannels.ForbiddenError:
 
 All SDK exceptions inherit from `MailChannelsError`.
 
+Each exception carries structured metadata for logs and support workflows:
+`status_code`, `code`, `error_type`, `headers`, `request_id`, `retry_after`,
+`suggested_action`, and the parsed API `response`. Use `to_dict()` when you want
+to send consistent error metadata to your logger.
+
+```python
+try:
+    mailchannels.Emails.queue(message)
+except mailchannels.MailChannelsError as error:
+    logger.error("MailChannels request failed", extra=error.to_dict())
+    raise
+```
+
 ## Version And Custom Transports
 
 The package exports its version so applications can log it at startup or include
@@ -790,6 +803,19 @@ client = mailchannels.Client(
     http_client=LoggingTransport(),
 )
 ```
+
+## Examples
+
+The `examples/` directory contains tested, focused examples for common
+production tasks:
+
+- `async_email.py` queues a message with the async transport.
+- `attachments.py` sends local, generated, and inline attachments.
+- `suppressions.py` creates, lists, and deletes suppression entries.
+- `webhooks.py` configures webhooks and verifies local webhook metadata.
+- `usage.py` retrieves parent-account and sub-account usage.
+- `custom_http_client.py` wraps a custom transport.
+- `error_handling.py` logs structured SDK exception metadata.
 
 ## Development
 

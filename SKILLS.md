@@ -368,6 +368,10 @@ except mailchannels.ForbiddenError:
     raise
 ```
 
+Exceptions expose `headers`, `request_id`, `retry_after`, `error_type`,
+`suggested_action`, `response`, and `to_dict()`. Prefer logging `to_dict()` when
+building examples or support-facing error paths.
+
 ## Version And Custom HTTP Clients
 
 The SDK exports `mailchannels.__version__` and `mailchannels.get_version()`.
@@ -387,6 +391,13 @@ client = mailchannels.Client(
 
 Module-level clients can use `mailchannels.default_http_client` and
 `mailchannels.default_async_http_client` with any protocol-compatible transport.
+
+## Examples
+
+The `examples/` directory has tested examples for async sending, attachments,
+suppressions, webhooks, usage, custom HTTP clients, and structured error
+handling. Keep examples importable and avoid doing network work at import time;
+tests should exercise example functions with fake transports.
 
 ## Repository Maintenance
 

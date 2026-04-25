@@ -75,32 +75,42 @@ def raise_for_status(response: SDKResponse) -> None:
                 message,
                 status_code=response.status_code,
                 response=response.data,
+                headers=response.headers,
             )
         raise ForbiddenError(
             message,
             status_code=response.status_code,
             response=response.data,
+            headers=response.headers,
         )
     if response.status_code == 409:
         raise ConflictError(
             message,
             status_code=response.status_code,
             response=response.data,
+            headers=response.headers,
         )
     if response.status_code == 413:
         raise PayloadTooLargeError(
             message,
             status_code=response.status_code,
             response=response.data,
+            headers=response.headers,
         )
     if response.status_code == 502:
         raise BadGatewayError(
             message,
             status_code=response.status_code,
             response=response.data,
+            headers=response.headers,
         )
 
-    raise ApiError(message, status_code=response.status_code, response=response.data)
+    raise ApiError(
+        message,
+        status_code=response.status_code,
+        response=response.data,
+        headers=response.headers,
+    )
 
 
 def _error_message(response: SDKResponse) -> str:

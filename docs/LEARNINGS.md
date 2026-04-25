@@ -86,3 +86,17 @@ Custom HTTP clients are modeled as `SyncHTTPClient` and `AsyncHTTPClient`
 protocols returning `SDKResponse`; module-level `default_http_client` and
 `default_async_http_client` now accept protocol-compatible transports instead
 of only the built-in requests/httpx wrapper classes.
+
+## 2026-04-24: Examples should be importable and tested
+
+The SDK examples now expose small functions for async sending, attachments,
+suppressions, webhooks, usage, custom HTTP clients, and structured error
+handling. This keeps examples useful as documentation while allowing tests to
+exercise them with fake transports and no real network calls.
+
+## 2026-04-24: Exceptions carry support-ready metadata
+
+MailChannels errors now preserve response headers and derive request IDs,
+retry-after hints, error types, suggested actions, and `to_dict()` metadata.
+This makes example error handling and production logging more useful without
+forcing callers to parse raw HTTP responses.
