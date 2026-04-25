@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime, timezone
 from typing import Any
 
 import pytest
@@ -56,22 +57,130 @@ def test_online_send_dry_run() -> None:
             "dry-run send"
         )
 
-    result = _client().emails.send(
-        _dry_run_payload(from_address, to_address),
-        dry_run=True,
-    )
+    try:
+        result = _client().emails.send(
+            _send_payload(
+                from_address,
+                to_address,
+                subject="MailChannels SDK online dry-run test",
+                body="This dry-run validates SDK online testing without delivery.",
+            ),
+            dry_run=True,
+        )
+    except mailchannels.ApiError as error:
+        _xfail_live_server_error(error)
+        raise
 
     assert "http_headers" in result
     assert isinstance(result.http_headers, dict)
 
 
-def _dry_run_payload(from_address: str, to_address: str) -> dict[str, Any]:
-    """Build a live dry-run send payload."""
+def test_online_send_real_email() -> None:
+    """Send a real email through the live API when explicitly enabled."""
+    if os.environ.get("MAILCHANNELS_ONLINE_SEND_REAL") != "1":
+        pytest.skip("set MAILCHANNELS_ONLINE_SEND_REAL=1 to send a real email")
+    from_address = os.environ.get("MAILCHANNELS_ONLINE_FROM")
+    to_address = os.environ.get("MAILCHANNELS_ONLINE_TO")
+    if not from_address or not to_address:
+        pytest.skip(
+            "set MAILCHANNELS_ONLINE_FROM and MAILCHANNELS_ONLINE_TO to send "
+            "a real email"
+        )
+
+    subject = "MailChannels SDK real online send test"
+    body = (
+        "This is a real email sent by the MailChannels Python SDK online test at "
+        f"{datetime.now(timezone.utc).isoformat()}."
+    )
+    try:
+        result = _client().emails.send(
+            _send_payload(from_address, to_address, subject=subject, body=body),
+        )
+    except mailchannels.ApiError as error:
+        _xfail_live_server_error(error)
+        raise
+
+    assert "http_headers" in result
+    assert isinstance(result.http_headers, dict)
+
+
+def test_online_metrics_volume() -> None:
+    """Retrieve live volume metrics with a narrow default query."""
+    try:
+        result = _client().metrics.volume(interval="day")
+    except mailchannels.ApiError as error:
+        _xfail_live_server_error(error)
+        raise
+
+    assert "http_headers" in result
+    assert isinstance(result.http_headers, dict)
+
+
+def test_online_sub_accounts_list() -> None:
+    """Retrieve a small page of live sub-accounts."""
+    try:
+        result = _client().sub_accounts.list(limit=1, offset=0)
+    except mailchannels.ApiError as error:
+        _xfail_live_server_error(error)
+        raise
+
+    assert "http_headers" in result
+    assert isinstance(result.http_headers, dict)
+
+
+def test_online_suppression_list() -> None:
+    """Retrieve a small page of live suppression entries."""
+    try:
+        result = _client().suppressions.list(limit=1, offset=0)
+    except mailchannels.ApiError as error:
+        _xfail_live_server_error(error)
+        raise
+
+    assert "http_headers" in result
+    assert isinstance(result.http_headers, dict)
+
+
+def test_online_webhooks_list() -> None:
+    """Retrieve live configured webhooks without modifying them."""
+    try:
+        result = _client().webhooks.list()
+    except mailchannels.ApiError as error:
+        _xfail_live_server_error(error)
+        raise
+
+    assert "http_headers" in result
+    assert isinstance(result.http_headers, dict)
+
+
+def test_online_dkim_list_for_domain() -> None:
+    """Retrieve live DKIM keys for an explicitly configured test domain."""
+    domain = os.environ.get("MAILCHANNELS_ONLINE_DOMAIN")
+    if not domain:
+        pytest.skip("set MAILCHANNELS_ONLINE_DOMAIN to list live DKIM keys")
+
+    try:
+        result = _client().dkim.list(domain, limit=1)
+    except mailchannels.ApiError as error:
+        _xfail_live_server_error(error)
+        raise
+
+    assert "http_headers" in result
+    assert isinstance(result.http_headers, dict)
+
+
+def _send_payload(
+    from_address: str,
+    to_address: str,
+    *,
+    subject: str,
+    body: str,
+) -> dict[str, Any]:
+    """Build a live send payload."""
     return {
         "from": {"email": from_address},
         "to": [{"email": to_address}],
-        "subject": "MailChannels SDK online dry-run test",
-        "text": "This dry-run validates SDK online testing without delivery.",
+        "subject": subject,
+        "text": body,
     }
 
 

@@ -840,8 +840,9 @@ export MAILCHANNELS_API_KEY="your_real_mailchannels_api_key"
 uv run pytest -m online --online
 ```
 
-The online suite includes a safe parent-account usage request and an async usage
-request. It can also validate the send endpoint with a MailChannels dry run,
+The online suite includes parent-account usage, async usage, volume metrics,
+sub-account listing, suppression listing, webhook listing, and optional DKIM
+listing. It can also validate the send endpoint with a MailChannels dry run,
 which does not deliver a message. Set sender and recipient addresses to enable
 that dry-run test:
 
@@ -849,6 +850,24 @@ that dry-run test:
 export MAILCHANNELS_ONLINE_FROM="sender@example.com"
 export MAILCHANNELS_ONLINE_TO="recipient@example.net"
 uv run pytest -m online --online
+```
+
+To run the optional DKIM listing test, provide a domain that belongs to the
+account:
+
+```bash
+export MAILCHANNELS_ONLINE_DOMAIN="example.com"
+uv run pytest -m online --online
+```
+
+The suite also includes a test that sends a real email through `/send`. It is
+disabled unless you explicitly opt in with `MAILCHANNELS_ONLINE_SEND_REAL=1`:
+
+```bash
+export MAILCHANNELS_ONLINE_FROM="sender@example.com"
+export MAILCHANNELS_ONLINE_TO="recipient@example.net"
+export MAILCHANNELS_ONLINE_SEND_REAL=1
+uv run pytest tests/test_online_api.py::test_online_send_real_email --online
 ```
 
 Use `MAILCHANNELS_API_URL` if you need to point the online tests at a non-default

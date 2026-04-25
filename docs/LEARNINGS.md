@@ -115,3 +115,11 @@ The live `/usage` endpoint can return HTTP 500 with a JSON `null` body. Online
 tests now report live MailChannels 5xx responses as `xfail`, while preserving
 normal failures for 4xx/auth/validation issues. The SDK also avoids surfacing
 `null` as an exception message and falls back to a status-based message instead.
+
+## 2026-04-25: Real-send online tests need a second explicit opt-in
+
+Online tests now cover more live read-only endpoints plus dry-run sending. The
+test that actually sends an email is intentionally gated behind
+`MAILCHANNELS_ONLINE_SEND_REAL=1`, in addition to `MAILCHANNELS_API_KEY`,
+`MAILCHANNELS_ONLINE_FROM`, `MAILCHANNELS_ONLINE_TO`, and `--online`, so broad
+online test runs do not deliver mail accidentally.

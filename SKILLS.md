@@ -409,8 +409,16 @@ uv run pytest -m online --online
 ```
 
 The dry-run send test additionally needs `MAILCHANNELS_ONLINE_FROM` and
-`MAILCHANNELS_ONLINE_TO`. Do not make online tests deliver messages by default;
-use MailChannels dry-run behavior for send validation.
+`MAILCHANNELS_ONLINE_TO`. Optional DKIM listing needs
+`MAILCHANNELS_ONLINE_DOMAIN`.
+
+Do not make online tests deliver messages by default. The real send test must
+stay gated behind `MAILCHANNELS_ONLINE_SEND_REAL=1` and should be run directly
+when needed:
+
+```bash
+uv run pytest tests/test_online_api.py::test_online_send_real_email --online
+```
 
 Online tests may mark live MailChannels 5xx responses as `xfail`; 4xx
 authentication, authorization, validation, or SDK behavior errors should still
