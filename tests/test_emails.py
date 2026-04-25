@@ -264,7 +264,7 @@ def test_queue_uses_send_async_endpoint() -> None:
         }
     )
 
-    assert result == {"id": "queued_123"}
+    assert result.id == "queued_123"
     call = transport.calls[0]
     assert call["method"] == "POST"
     assert call["url"] == "https://api.mailchannels.net/tx/v1/send-async"
@@ -306,7 +306,7 @@ async def test_queue_async_uses_async_transport() -> None:
         }
     )
 
-    assert result == {"id": "queued_123"}
+    assert result.id == "queued_123"
     assert transport.calls[0]["url"] == "https://api.mailchannels.net/tx/v1/send-async"
 
 

@@ -26,6 +26,10 @@ import mailchannels
 mailchannels.api_key = "YOUR-API-KEY"
 ```
 
+The SDK also reads `MAILCHANNELS_API_KEY` and `MAILCHANNELS_API_URL` from the
+environment. Prefer environment variables in deployment examples unless the code
+needs multiple clients with different credentials.
+
 For multi-tenant applications, parent accounts, or sub-account sends, prefer
 explicit clients so credentials do not get mixed:
 
@@ -66,7 +70,13 @@ mailchannels.Emails.queue(
 ```
 
 Use `send_async()` and `queue_async()` in asyncio applications. Do not call sync
-methods from an event loop unless blocking is acceptable.
+methods from an event loop unless blocking is acceptable. Resource async methods
+use the `_async` suffix consistently across emails, DKIM, metrics,
+sub-accounts, suppressions, and webhooks.
+
+Responses are dict-like objects with attribute access. It is valid to read
+`response["id"]` or `response.id`. HTTP headers are available on
+`response.http_headers`.
 
 ## Payload Shapes
 
@@ -254,6 +264,58 @@ Available methods are `engagement()`, `performance()`,
 `recipient_behaviour()`, `recipient_behavior()`, `volume()`, and `senders()`.
 Use `senders("campaigns")` or `senders("sub-accounts")` for grouped sender
 metrics.
+
+## Suppressions
+
+Use `mailchannels.Suppressions` or `client.suppressions` to list, create, and
+delete suppression-list entries.
+
+```python
+mailchannels.Suppressions.create(
+    [
+        {
+            "recipient": "recipient@example.net",
+            "suppression_types": ["non-transactional"],
+            "notes": "Preference-center opt-out",
+        }
+    ],
+    add_to_sub_accounts=True,
+)
+
+mailchannels.Suppressions.list(source="api", limit=100)
+mailchannels.Suppressions.delete("recipient@example.net", source="all")
+```
+
+Use `add_to_sub_accounts=True` when a parent-account suppression should be
+copied to sub-accounts.
+
+## Webhooks
+
+Use `mailchannels.Webhooks` or `client.webhooks` to create, list, delete,
+validate, inspect, and resend webhook deliveries.
+
+```python
+mailchannels.Webhooks.create("https://example.com/mailchannels/events")
+mailchannels.Webhooks.validate(request_id="test_request_1")
+mailchannels.Webhooks.batches(statuses=["4xx", "5xx"], limit=50)
+mailchannels.Webhooks.resend_batch(12345, customer_handle="customer_123")
+```
+
+For webhook receivers, use helpers for local checks before processing events:
+
+```python
+if not mailchannels.verify_content_digest(headers, raw_body):
+    raise ValueError("Invalid MailChannels webhook digest")
+
+key_id = mailchannels.signature_key_id(headers)
+parameters = mailchannels.parse_signature_input(headers["Signature-Input"])
+if not mailchannels.signature_is_fresh(parameters):
+    raise ValueError("Stale MailChannels webhook signature")
+```
+
+Fetch unknown public signing keys with `mailchannels.Webhooks.public_key(key_id)`.
+Use a dedicated RFC 9421/Ed25519 HTTP-signature verification library for the
+final cryptographic signature check.
 
 ## Error Handling
 

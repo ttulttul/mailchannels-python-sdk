@@ -36,6 +36,15 @@ import mailchannels
 mailchannels.api_key = "YOUR-API-KEY"
 ```
 
+The SDK also reads `MAILCHANNELS_API_KEY` and `MAILCHANNELS_API_URL` from the
+environment. Environment variables are the cleanest option for deployed
+services because the same code can run in development, staging, and production
+without committing credentials or hostnames.
+
+```bash
+export MAILCHANNELS_API_KEY="YOUR-API-KEY"
+```
+
 For services that send on behalf of multiple accounts, create explicit clients.
 Each client carries its own API key, which is useful when parent-account and
 sub-account credentials are both active in the same process.
@@ -110,6 +119,21 @@ queued = mailchannels.Emails.queue(
 
 This is usually the better default for high-throughput web applications, job
 workers, or any path where email should not slow down the user-facing request.
+
+## Read Responses
+
+SDK responses behave like ordinary dictionaries, but they also support
+attribute access for the common case where you want to read one or two fields.
+HTTP response headers are preserved under `http_headers` for diagnostics,
+request IDs, and future rate-limit metadata.
+
+```python
+queued = mailchannels.Emails.queue(message)
+
+print(queued["id"])
+print(queued.id)
+print(queued.http_headers)
+```
 
 ## Use Typed Models
 
@@ -550,6 +574,91 @@ senders = mailchannels.Metrics.senders(
 
 Available metrics methods are `engagement()`, `performance()`,
 `recipient_behaviour()`, `recipient_behavior()`, `volume()`, and `senders()`.
+
+## Suppression Lists
+
+Suppression lists are the MailChannels-native way to keep known unwanted
+recipients out of future sends. The SDK exposes list, create, and delete
+operations. Use them when you need to import suppressions from your own product,
+inspect automatically generated hard-bounce or complaint suppressions, or remove
+an address after a user explicitly opts back in.
+
+```python
+mailchannels.Suppressions.create(
+    [
+        {
+            "recipient": "recipient@example.net",
+            "suppression_types": ["non-transactional"],
+            "notes": "Imported from billing system preference center.",
+        }
+    ],
+    add_to_sub_accounts=True,
+)
+
+entries = mailchannels.Suppressions.list(
+    source="api",
+    limit=100,
+)
+
+mailchannels.Suppressions.delete("recipient@example.net", source="all")
+```
+
+`add_to_sub_accounts=True` is useful for parent-account workflows where one
+suppression should be copied across the tenant accounts beneath it.
+
+## Webhooks
+
+MailChannels can send delivery events to your application for accepted,
+delivered, bounced, opened, clicked, complained, and unsubscribed messages. The
+SDK exposes webhook enrollment, validation, batch inspection, batch resend, and
+public signing-key retrieval.
+
+```python
+mailchannels.Webhooks.create("https://example.com/mailchannels/events")
+
+validation = mailchannels.Webhooks.validate(request_id="test_request_1")
+batches = mailchannels.Webhooks.batches(statuses=["4xx", "5xx"], limit=50)
+
+mailchannels.Webhooks.resend_batch(
+    12345,
+    customer_handle="customer_123",
+)
+```
+
+Webhook receivers should verify the `customer_handle` in each event and check
+the signature headers MailChannels sends with the request. The SDK includes
+small helpers for the local pieces that can be done without extra crypto
+dependencies: parsing `Signature-Input`, extracting the key ID, checking replay
+age, and verifying the `Content-Digest` against the raw request body.
+
+```python
+from mailchannels import (
+    parse_signature_input,
+    signature_is_fresh,
+    signature_key_id,
+    verify_content_digest,
+)
+
+
+def receive_webhook(headers: dict[str, str], body: bytes) -> None:
+    """Validate local webhook metadata before processing events."""
+    if not verify_content_digest(headers, body):
+        raise ValueError("Invalid MailChannels webhook digest")
+
+    key_id = signature_key_id(headers)
+    public_key = mailchannels.Webhooks.public_key(key_id) if key_id else None
+
+    parameters = parse_signature_input(headers["Signature-Input"])
+    if not signature_is_fresh(parameters, tolerance_seconds=300):
+        raise ValueError("Stale MailChannels webhook signature")
+
+    # Use `public_key["key"]` with an RFC 9421/Ed25519 verification library.
+```
+
+MailChannels signs webhooks with Ed25519 and documents the signing flow in terms
+of RFC 9421. This SDK intentionally leaves the final cryptographic verification
+step to a dedicated HTTP-signature library so application code can choose the
+verification package that fits its web framework.
 
 ## Error Handling
 

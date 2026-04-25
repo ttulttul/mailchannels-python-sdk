@@ -49,3 +49,13 @@ MailChannels returns suggested DKIM DNS records from key-management endpoints,
 but the customer must still publish the public DKIM TXT record in their own DNS
 zone because MailChannels does not host public DKIM records for customer
 domains yet.
+
+## 2026-04-24: Resend comparison highlights SDK ergonomics
+
+The local `../resend-python` comparison produced SDK-level improvements rather
+than MailChannels API changes: environment variable configuration, response
+headers, attribute-style responses, async parity, webhook resources, and
+suppression-list resources are all valuable alignment points. MailChannels
+webhooks are signed with `Content-Digest`, `Signature-Input`, and `Signature`;
+the SDK can safely provide digest and metadata helpers while leaving final
+RFC 9421 Ed25519 verification to a dedicated HTTP-signature library.

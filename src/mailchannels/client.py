@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from typing import Any
 from urllib.parse import urljoin
@@ -10,7 +11,7 @@ from urllib.parse import urljoin
 from .exceptions import ConfigurationError
 from .http_client import RequestsClient
 from .http_client_async import HTTPXClient
-from .response import raise_for_status
+from .response import raise_for_status, response_data
 
 logger = logging.getLogger(__name__)
 
@@ -24,13 +25,13 @@ class Client:
         self,
         *,
         api_key: str | None = None,
-        base_url: str = DEFAULT_BASE_URL,
+        base_url: str | None = None,
         http_client: RequestsClient | None = None,
         async_http_client: HTTPXClient | None = None,
     ) -> None:
         """Create a MailChannels API client."""
         self.api_key = api_key
-        self.base_url = base_url.rstrip("/")
+        self.base_url = (base_url or _configured_base_url()).rstrip("/")
         self.http_client = http_client or RequestsClient()
         self.async_http_client = async_http_client or HTTPXClient()
 
@@ -38,11 +39,15 @@ class Client:
         from .emails import EmailsResource
         from .metrics import MetricsResource
         from .sub_accounts import SubAccountsResource
+        from .suppressions import SuppressionsResource
+        from .webhooks import WebhooksResource
 
         self.dkim = DkimResource(self)
         self.emails = EmailsResource(self)
         self.metrics = MetricsResource(self)
+        self.suppressions = SuppressionsResource(self)
         self.sub_accounts = SubAccountsResource(self)
+        self.webhooks = WebhooksResource(self)
 
     def request(
         self,
@@ -51,17 +56,22 @@ class Client:
         *,
         json: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
+        extra_headers: dict[str, str] | None = None,
+        require_api_key: bool = True,
     ) -> dict[str, Any]:
         """Send a synchronous API request."""
         response = self.http_client.request(
             method,
             self._url(path),
-            headers=self._headers(),
+            headers=self._headers(
+                extra_headers=extra_headers,
+                require_api_key=require_api_key,
+            ),
             json=json,
             params=params,
         )
         raise_for_status(response)
-        return response.data if isinstance(response.data, dict) else {}
+        return response_data(response)
 
     async def request_async(
         self,
@@ -70,37 +80,53 @@ class Client:
         *,
         json: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
+        extra_headers: dict[str, str] | None = None,
+        require_api_key: bool = True,
     ) -> dict[str, Any]:
         """Send an asynchronous API request."""
         response = await self.async_http_client.request(
             method,
             self._url(path),
-            headers=self._headers(),
+            headers=self._headers(
+                extra_headers=extra_headers,
+                require_api_key=require_api_key,
+            ),
             json=json,
             params=params,
         )
         raise_for_status(response)
-        return response.data if isinstance(response.data, dict) else {}
+        return response_data(response)
 
-    def _headers(self) -> dict[str, str]:
+    def _headers(
+        self,
+        *,
+        extra_headers: dict[str, str] | None = None,
+        require_api_key: bool = True,
+    ) -> dict[str, str]:
         """Build API request headers."""
-        api_key = self.api_key or _module_attr("api_key")
-        if not api_key:
+        api_key = self.api_key or _module_attr("api_key") or os.environ.get(
+            "MAILCHANNELS_API_KEY"
+        )
+        if require_api_key and not api_key:
             logger.error("MailChannels API key is not configured")
             raise ConfigurationError(
                 "Set `mailchannels.api_key` or pass `api_key` to "
                 "`mailchannels.Client`.",
                 code="MissingApiKey",
             )
-        return {
-            "X-Api-Key": str(api_key),
+        headers = {
             "Content-Type": "application/json",
             "User-Agent": "mailchannels-python/0.1.0",
         }
+        if require_api_key and api_key:
+            headers["X-Api-Key"] = str(api_key)
+        if extra_headers:
+            headers.update(extra_headers)
+        return headers
 
     def _url(self, path: str) -> str:
         """Resolve an API path against this client's base URL."""
-        base_url = str(_module_attr("base_url") or self.base_url).rstrip("/") + "/"
+        base_url = self.base_url.rstrip("/") + "/"
         resolved = urljoin(base_url, path.lstrip("/"))
         logger.debug("Resolved MailChannels URL path=%s url=%s", path, resolved)
         return resolved
@@ -111,8 +137,8 @@ def get_default_client() -> Client:
     module_http_client = _module_attr("default_http_client")
     module_async_http_client = _module_attr("default_async_http_client")
     return Client(
-        api_key=_module_attr("api_key"),
-        base_url=str(_module_attr("base_url") or DEFAULT_BASE_URL),
+        api_key=_module_attr("api_key") or os.environ.get("MAILCHANNELS_API_KEY"),
+        base_url=str(_module_attr("base_url") or _configured_base_url()),
         http_client=(
             module_http_client
             if isinstance(module_http_client, RequestsClient)
@@ -132,3 +158,8 @@ def _module_attr(name: str) -> Any:
     if module is None:
         return None
     return getattr(module, name, None)
+
+
+def _configured_base_url() -> str:
+    """Return the configured MailChannels API base URL."""
+    return os.environ.get("MAILCHANNELS_API_URL", DEFAULT_BASE_URL)

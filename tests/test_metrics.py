@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime, timezone
 
 import pytest
-from conftest import FakeRequestsClient
+from conftest import FakeHTTPXClient, FakeRequestsClient
 
 import mailchannels
 from mailchannels.client import Client
@@ -136,6 +136,20 @@ def test_module_level_metrics_api_uses_global_configuration(
     mailchannels.Metrics.volume(campaign_id="newsletter")
 
     assert transport.calls[0]["headers"]["X-Api-Key"] == "module-key"
+    assert transport.calls[0]["url"] == (
+        "https://api.mailchannels.net/tx/v1/metrics/volume"
+    )
+    assert transport.calls[0]["params"] == {"campaign_id": "newsletter"}
+
+
+async def test_metrics_async_methods_use_async_transport() -> None:
+    """It exposes async metrics operations."""
+    transport = FakeHTTPXClient(SDKResponse(200, {"processed": 1}, "{}"))
+    client = Client(api_key="test-key", async_http_client=transport)
+
+    await client.metrics.volume_async(campaign_id="newsletter")
+
+    assert transport.calls[0]["method"] == "GET"
     assert transport.calls[0]["url"] == (
         "https://api.mailchannels.net/tx/v1/metrics/volume"
     )

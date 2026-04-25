@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from conftest import FakeRequestsClient
+from conftest import FakeHTTPXClient, FakeRequestsClient
 
 import mailchannels
 from mailchannels.client import Client
@@ -115,3 +115,14 @@ def test_module_level_dkim_api_uses_global_configuration(
     assert transport.calls[0]["url"] == (
         "https://api.mailchannels.net/tx/v1/domains/example.com/dkim-keys"
     )
+
+
+async def test_dkim_async_methods_use_async_transport() -> None:
+    """It exposes async DKIM operations."""
+    transport = FakeHTTPXClient(SDKResponse(200, {"keys": []}, "{}"))
+    client = Client(api_key="test-key", async_http_client=transport)
+
+    await client.dkim.list_async("example.com", limit=1)
+
+    assert transport.calls[0]["method"] == "GET"
+    assert transport.calls[0]["params"] == {"limit": 1}

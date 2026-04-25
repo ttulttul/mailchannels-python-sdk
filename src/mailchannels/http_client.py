@@ -50,4 +50,5 @@ class RequestsClient:
             status_code=response.status_code,
             data=data,
             text=response.text,
+            headers=dict(response.headers),
         )

@@ -25,6 +25,32 @@ class SDKResponse:
     status_code: int
     data: Any
     text: str
+    headers: dict[str, str] | None = None
+
+
+class MailChannelsResponse(dict[str, Any]):
+    """Dict response that also supports attribute-style access."""
+
+    def __getattr__(self, name: str) -> Any:
+        """Return a response value as an attribute."""
+        try:
+            return self[name]
+        except KeyError as error:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'"
+            ) from error
+
+
+def response_data(response: SDKResponse) -> MailChannelsResponse:
+    """Convert an SDK response into the public response object."""
+    headers = dict(response.headers or {})
+    if isinstance(response.data, dict):
+        data = MailChannelsResponse(response.data)
+        data["http_headers"] = headers
+        return data
+    if isinstance(response.data, list):
+        return MailChannelsResponse({"data": response.data, "http_headers": headers})
+    return MailChannelsResponse({"http_headers": headers})
 
 
 def raise_for_status(response: SDKResponse) -> None:
