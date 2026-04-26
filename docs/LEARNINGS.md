@@ -322,3 +322,9 @@ Examples for SDK behavior should expose small helper functions that accept a
 as Cloudflare DKIM DNS publication, should accept a minimal protocol-shaped
 client so tests can verify create/update behavior without installing or calling
 the external service.
+
+## 2026-04-26: Keep the wishlist active
+
+The wishlist is more useful when it is an active roadmap, not a changelog. Move
+implemented items into a short completed-foundation summary and keep the
+prioritized list limited to work that still needs a decision or implementation.

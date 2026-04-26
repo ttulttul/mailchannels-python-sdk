@@ -480,6 +480,9 @@ When adding or changing SDK behavior:
 - Update `README.md` with user-facing documentation.
 - Update this `SKILLS.md` when an LLM would need different guidance.
 - Update `docs/LEARNINGS.md` for important discoveries or API semantics.
+- Keep `docs/WISHLIST.md` focused on active roadmap items. Move completed work
+  into its completed-foundation summary instead of leaving implemented items in
+  the prioritized task list.
 - Run `uv run pytest`, ruff, build, and the SmolVM pytest workflow before
   committing.
 - Run `uv run pytest --cov --cov-report=term-missing` when changing tests or
