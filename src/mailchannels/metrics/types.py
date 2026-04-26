@@ -36,6 +36,8 @@ class MetricsSenderQueryParams(TypedDict, total=False):
 class MetricsBucket(BaseModel):
     """One time bucket in a metrics response."""
 
+    model_config = ConfigDict(extra="allow")
+
     count: int
     period_start: str
 
@@ -86,6 +88,8 @@ class MetricsVolume(BaseModel):
 
 class MetricsSender(BaseModel):
     """One sender row in a sender metrics response."""
+
+    model_config = ConfigDict(extra="allow")
 
     name: str
     processed: int

@@ -6,37 +6,13 @@ choosing the next engineering task.
 
 ## Recommended Order
 
-1. Complete strict response model coverage
-2. Add API spec compatibility guarantees
-3. Add email payload negative tests
-4. Generate a formal API reference
-5. Explore OpenAPI-assisted generation
-6. Add request options if the API exposes per-request controls
+1. Add API spec compatibility guarantees
+2. Add email payload negative tests
+3. Generate a formal API reference
+4. Explore OpenAPI-assisted generation
+5. Add request options if the API exposes per-request controls
 
-## 1. Complete Strict Response Model Coverage
-
-Strict response mode is implemented, but coverage should be broadened across
-every response model the SDK exposes. Extend tests beyond the current usage
-coverage to include domain checks, DKIM, metrics, suppressions, webhooks,
-sub-accounts, API keys, SMTP passwords, and email send responses where the API
-shape is stable enough to model.
-
-For each model, cover:
-
-| Case | Expected |
-| --- | --- |
-| Valid minimal API body | Parses to the typed response model. |
-| Extra fields | Preserved or rejected according to model policy. |
-| Missing required fields | Raises `ResponseValidationError`. |
-| Invalid field types | Raises `ResponseValidationError`. |
-| Response headers | Preserved on the typed response where applicable. |
-
-This turns strict response mode into a fully reliable product feature rather
-than a partially tested option.
-
-Priority: high.
-
-## 2. Add API Spec Compatibility Guarantees
+## 1. Add API Spec Compatibility Guarantees
 
 Tie SDK releases to the MailChannels OpenAPI document they were checked against.
 Expose the OpenAPI source URL, spec hash, and checked date in generated
@@ -50,7 +26,7 @@ introspection.
 
 Priority: high.
 
-## 3. Add Email Payload Negative Tests
+## 2. Add Email Payload Negative Tests
 
 Email normalization has broad positive coverage for templates, custom headers,
 DKIM fields, attachments, dry runs, async queueing, and module-level config. Add
@@ -76,7 +52,7 @@ reaches the MailChannels API.
 
 Priority: medium.
 
-## 4. Generate a Formal API Reference
+## 3. Generate a Formal API Reference
 
 The README is strong as a guide and tutorial, but the project also needs a
 formal generated API reference that lists public classes, methods, parameters,
@@ -89,7 +65,7 @@ documentation.
 
 Priority: medium.
 
-## 5. Explore OpenAPI-Assisted Generation
+## 4. Explore OpenAPI-Assisted Generation
 
 Investigate generating selected SDK artifacts from the MailChannels OpenAPI
 spec. A fully generated SDK may not be the right product design, but generated
@@ -102,7 +78,7 @@ the desired generated artifacts obvious.
 
 Priority: medium.
 
-## 6. Add Request Options If Needed
+## 5. Add Request Options If Needed
 
 If MailChannels exposes per-request option headers such as idempotency keys,
 model them as an `options` argument rather than forcing those controls into
@@ -126,6 +102,7 @@ API changes:
 - Exact route-call matrix coverage.
 - Sync/async request parity tests.
 - Strict response mode and initial typed response models.
+- Strict response model coverage across the modeled SDK response surface.
 - Refined API error taxonomy.
 - HTTP transport edge-case tests.
 - Webhook negative helper tests.

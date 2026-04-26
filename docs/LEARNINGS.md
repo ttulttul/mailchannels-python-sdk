@@ -335,3 +335,12 @@ Endpoint coverage is most useful when readers can tell exactly which OpenAPI
 document it targets. Include the OpenAPI source URL, spec version, SHA-256 hash,
 generated timestamp, and SDK version in `docs/API_COVERAGE.md` so drift reports
 and release notes can point to a concrete contract.
+
+## 2026-04-26: Strict response tests need the full modeled surface
+
+Strict response mode is only reliable if the modeled SDK response surface has
+executable coverage. Keep `tests/test_response_config.py` aligned with the
+resource methods and response models: valid API bodies should return the
+expected Pydantic model, headers must survive as `http_headers`, extra API
+fields should remain forward-compatible, and stable required fields or types
+should raise `ResponseValidationError` when the API shape drifts.

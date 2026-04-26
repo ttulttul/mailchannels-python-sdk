@@ -48,4 +48,6 @@ class SuppressionEntry(BaseModel):
 class SuppressionListResponse(BaseModel):
     """Response model for suppression list retrieval."""
 
+    model_config = ConfigDict(extra="allow")
+
     suppression_list: list[SuppressionEntry]

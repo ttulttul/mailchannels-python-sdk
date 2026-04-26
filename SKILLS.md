@@ -78,6 +78,14 @@ Responses are dict-like objects with attribute access. It is valid to read
 `response["id"]` or `response.id`. HTTP headers are available on
 `response.http_headers`.
 
+When adding or changing a resource method with `response_model=`, update
+`tests/test_response_config.py` so the strict response matrix covers the exposed
+response model and any distinct sync operation that exercises a materially
+different SDK path. Include a valid-body case and, where the response shape has
+stable required fields, missing-required and invalid-type cases. Strict response
+models should allow extra API fields so
+`http_headers` and forward-compatible response fields survive validation.
+
 ## Payload Shapes
 
 The SDK accepts compact Resend-style dictionaries and normalizes them into the

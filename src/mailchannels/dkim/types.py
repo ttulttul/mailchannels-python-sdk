@@ -32,6 +32,8 @@ class DkimListParams(TypedDict, total=False):
 class DkimDnsRecord(BaseModel):
     """Suggested DKIM DNS record returned by MailChannels."""
 
+    model_config = ConfigDict(extra="allow")
+
     name: str
     type: str
     value: str
@@ -54,11 +56,15 @@ class DkimKeyInfo(BaseModel):
 class DkimKeyList(BaseModel):
     """Response model for listing MailChannels-hosted DKIM keys."""
 
+    model_config = ConfigDict(extra="allow")
+
     keys: list[DkimKeyInfo]
 
 
 class DkimRotateResponse(BaseModel):
     """Response model for DKIM key rotation."""
+
+    model_config = ConfigDict(extra="allow")
 
     new_key: DkimKeyInfo
     rotated_key: DkimKeyInfo

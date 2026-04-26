@@ -24,11 +24,15 @@ WebhookEvent = Literal[
 class Webhook(BaseModel):
     """A configured MailChannels webhook endpoint."""
 
+    model_config = ConfigDict(extra="allow")
+
     webhook: str
 
 
 class WebhookBatchDuration(BaseModel):
     """Duration metadata for a webhook batch delivery attempt."""
+
+    model_config = ConfigDict(extra="allow")
 
     value: int
     unit: Literal["milliseconds"]
@@ -52,6 +56,8 @@ class WebhookBatch(BaseModel):
 class WebhookBatchResult(BaseModel):
     """Paged webhook batch result."""
 
+    model_config = ConfigDict(extra="allow")
+
     webhook_batches: list[WebhookBatch]
 
 
@@ -64,12 +70,16 @@ class WebhookValidationRequest(TypedDict, total=False):
 class WebhookValidationResponse(BaseModel):
     """HTTP response returned by a validated webhook endpoint."""
 
+    model_config = ConfigDict(extra="allow")
+
     status: int
     body: str | None = None
 
 
 class WebhookValidationResult(BaseModel):
     """Validation result for one webhook endpoint."""
+
+    model_config = ConfigDict(extra="allow")
 
     webhook: str
     result: Literal["passed", "failed"]
@@ -79,12 +89,16 @@ class WebhookValidationResult(BaseModel):
 class WebhookValidationResults(BaseModel):
     """Validation results for enrolled webhook endpoints."""
 
+    model_config = ConfigDict(extra="allow")
+
     all_passed: bool
     results: list[WebhookValidationResult]
 
 
 class WebhookPublicKey(BaseModel):
     """Webhook public signing key returned by MailChannels."""
+
+    model_config = ConfigDict(extra="allow")
 
     id: str
     key: str
@@ -108,6 +122,8 @@ class WebhookEventPayload(BaseModel):
 
 class SignatureParameters(BaseModel):
     """Parsed metadata from a MailChannels Signature-Input header."""
+
+    model_config = ConfigDict(extra="allow")
 
     signature_name: str
     covered_components: list[str]

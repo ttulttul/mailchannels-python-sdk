@@ -221,7 +221,9 @@ Set `strict_responses=True` when you want modeled endpoints to return Pydantic
 response objects instead. Strict mode validates the API response body against
 the SDK's response model and raises `ResponseValidationError` if the response no
 longer matches the expected shape. Endpoints without a stable model still return
-the normal dict-like response.
+the normal dict-like response. The test suite covers every exposed response model
+with valid bodies, missing required fields, invalid field types, response
+headers, and extra API fields so SDK/API shape drift is caught early.
 
 ```python
 client = mailchannels.Client(
@@ -1007,7 +1009,9 @@ the SDK's declared routes with the official MailChannels OpenAPI spec so
 documented endpoint changes are caught early. The unit test suite includes
 direct transport-wrapper tests and explicit API error mapping tests so request
 forwarding, non-JSON responses, headers, timeouts, and exception metadata stay
-stable. It also extracts README Python snippets and executes the safe examples
+stable. It also validates strict response models across the modeled SDK surface so
+typed responses keep preserving `http_headers` while rejecting missing or
+wrongly typed API fields. It also extracts README Python snippets and executes the safe examples
 against fake transports so user documentation cannot quietly drift from the
 SDK. CI type-checks a small external-consumer fixture and installs the built
 wheel into clean environments with and without the `[async]` extra. The separate
