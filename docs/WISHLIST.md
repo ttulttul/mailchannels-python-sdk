@@ -7,10 +7,9 @@ choosing the next engineering task.
 ## Recommended Order
 
 1. Add API spec compatibility guarantees
-2. Add email payload negative tests
-3. Generate a formal API reference
-4. Explore OpenAPI-assisted generation
-5. Add request options if the API exposes per-request controls
+2. Generate a formal API reference
+3. Explore OpenAPI-assisted generation
+4. Add request options if the API exposes per-request controls
 
 ## 1. Add API Spec Compatibility Guarantees
 
@@ -26,33 +25,7 @@ introspection.
 
 Priority: high.
 
-## 2. Add Email Payload Negative Tests
-
-Email normalization has broad positive coverage for templates, custom headers,
-DKIM fields, attachments, dry runs, async queueing, and module-level config. Add
-negative tests for common developer mistakes.
-
-Suggested cases:
-
-| Case | Expected |
-| --- | --- |
-| Missing `from` | Validation error. |
-| Missing recipient | Validation error. |
-| Missing subject if API requires it | Validation error. |
-| No `content`, `text`, or `html` | Validation error. |
-| Invalid email address shape | Validation error if enforceable. |
-| Empty attachments list | Normalized cleanly. |
-| Attachment file missing | Clear exception. |
-| Remote attachment 404 | Clear propagated error. |
-| URL attachment with no filename | Sensible filename fallback. |
-| Conflicting shortcut/native fields | Deterministic documented behavior. |
-
-The goal is to test what developers will actually get wrong before their code
-reaches the MailChannels API.
-
-Priority: medium.
-
-## 3. Generate a Formal API Reference
+## 2. Generate a Formal API Reference
 
 The README is strong as a guide and tutorial, but the project also needs a
 formal generated API reference that lists public classes, methods, parameters,
@@ -65,7 +38,7 @@ documentation.
 
 Priority: medium.
 
-## 4. Explore OpenAPI-Assisted Generation
+## 3. Explore OpenAPI-Assisted Generation
 
 Investigate generating selected SDK artifacts from the MailChannels OpenAPI
 spec. A fully generated SDK may not be the right product design, but generated
@@ -78,7 +51,7 @@ the desired generated artifacts obvious.
 
 Priority: medium.
 
-## 5. Add Request Options If Needed
+## 4. Add Request Options If Needed
 
 If MailChannels exposes per-request option headers such as idempotency keys,
 model them as an `options` argument rather than forcing those controls into
@@ -103,6 +76,8 @@ API changes:
 - Sync/async request parity tests.
 - Strict response mode and initial typed response models.
 - Strict response model coverage across the modeled SDK response surface.
+- Email payload negative tests for local validation, mocked API rejection, and
+  live dry-run API rejection.
 - Refined API error taxonomy.
 - HTTP transport edge-case tests.
 - Webhook negative helper tests.

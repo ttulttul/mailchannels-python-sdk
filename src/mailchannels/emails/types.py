@@ -10,7 +10,7 @@ from typing import Any, Literal, TypedDict
 from urllib.parse import urlparse
 
 import requests
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing_extensions import NotRequired
 
 from ..exceptions import MailChannelsError
@@ -19,6 +19,19 @@ logger = logging.getLogger(__name__)
 
 UNSUBSCRIBE_URL_PLACEHOLDER = "{{mc-unsubscribe-url}}"
 EmailHeaders = dict[str, str]
+RESERVED_EMAIL_HEADERS = frozenset(
+    {
+        "bcc",
+        "cc",
+        "content-type",
+        "dkim-signature",
+        "from",
+        "message-id",
+        "reply-to",
+        "subject",
+        "to",
+    }
+)
 
 
 class EmailAddressDict(TypedDict, total=False):
@@ -97,6 +110,15 @@ class EmailAddress(BaseModel):
     email: str
     name: str | None = None
 
+    @field_validator("email")
+    @classmethod
+    def _validate_email(cls, value: str) -> str:
+        """Validate the basic shape of an email address."""
+        if "@" not in value or value.startswith("@") or value.endswith("@"):
+            logger.error("Invalid email address shape email=%s", value)
+            raise ValueError("email must contain a local part and domain")
+        return value
+
 
 class Content(BaseModel):
     """Email body content part."""
@@ -152,8 +174,20 @@ class Attachment(BaseModel):
         file_path = Path(path)
         attachment_name = filename or file_path.name
         logger.info("Encoding MailChannels attachment from file path=%s", file_path)
+        try:
+            data = file_path.read_bytes()
+        except OSError as error:
+            logger.error(
+                "Unable to read attachment file path=%s error=%s",
+                file_path,
+                error,
+            )
+            raise MailChannelsError(
+                "Unable to read attachment file.",
+                code="AttachmentReadError",
+            ) from error
         return cls.from_bytes(
-            file_path.read_bytes(),
+            data,
             filename=attachment_name,
             content_type=content_type or _guess_content_type(attachment_name),
             disposition=disposition,
@@ -218,7 +252,7 @@ class Personalization(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    to: list[EmailAddress] = Field(default_factory=list)
+    to: list[EmailAddress] = Field(default_factory=list, min_length=1)
     cc: list[EmailAddress] | None = None
     bcc: list[EmailAddress] | None = None
     subject: str | None = None
@@ -231,16 +265,22 @@ class Personalization(BaseModel):
     dkim_private_key: str | None = None
     dkim_selector: str | None = None
 
+    @field_validator("headers")
+    @classmethod
+    def _validate_headers(cls, value: EmailHeaders | None) -> EmailHeaders | None:
+        """Reject custom headers that are controlled by the API payload."""
+        return _validate_custom_headers(value)
+
 
 class EmailParams(BaseModel):
     """Validated MailChannels email send payload."""
 
     model_config = ConfigDict(populate_by_name=True)
 
-    personalizations: list[Personalization]
+    personalizations: list[Personalization] = Field(min_length=1)
     from_: EmailAddress = Field(alias="from")
-    subject: str
-    content: list[Content]
+    subject: str = Field(min_length=1)
+    content: list[Content] = Field(min_length=1)
     reply_to: EmailAddress | None = Field(default=None, alias="reply_to")
     headers: EmailHeaders | None = None
     attachments: list[Attachment] | None = None
@@ -248,6 +288,12 @@ class EmailParams(BaseModel):
     dkim_domain: str | None = None
     dkim_private_key: str | None = None
     dkim_selector: str | None = None
+
+    @field_validator("headers")
+    @classmethod
+    def _validate_headers(cls, value: EmailHeaders | None) -> EmailHeaders | None:
+        """Reject custom headers that are controlled by the API payload."""
+        return _validate_custom_headers(value)
 
     def to_payload(self) -> dict[str, Any]:
         """Convert this email model to a MailChannels API payload."""
@@ -288,3 +334,19 @@ def _content_type_from_header(value: str | None) -> str | None:
     if value is None:
         return None
     return value.split(";", maxsplit=1)[0].strip() or None
+
+
+def _validate_custom_headers(value: EmailHeaders | None) -> EmailHeaders | None:
+    """Validate that custom header names do not duplicate structured fields."""
+    if value is None:
+        return None
+    reserved = sorted(
+        header for header in value if header.lower() in RESERVED_EMAIL_HEADERS
+    )
+    if reserved:
+        logger.error("Reserved email headers are not allowed headers=%s", reserved)
+        raise ValueError(
+            "custom headers cannot include reserved message headers: "
+            + ", ".join(reserved)
+        )
+    return value

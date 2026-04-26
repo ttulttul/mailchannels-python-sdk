@@ -344,3 +344,12 @@ resource methods and response models: valid API bodies should return the
 expected Pydantic model, headers must survive as `http_headers`, extra API
 fields should remain forward-compatible, and stable required fields or types
 should raise `ResponseValidationError` when the API shape drifts.
+
+## 2026-04-26: Email negative tests should cover SDK and API boundaries
+
+Some malformed send payloads should never reach HTTP, while raw API payloads are
+still useful for proving MailChannels rejects invalid shapes consistently. Keep
+local validation tests beside mocked raw-API rejection tests, and mark the live
+dry-run rejection matrix as `online` so maintainers can verify the same
+negative cases against the real `/send?dry-run=true` endpoint without
+delivering mail.

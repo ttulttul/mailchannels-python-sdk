@@ -263,6 +263,9 @@ mailchannels.Emails.send(params)
 
 Use typed models when you are constructing messages across several functions or
 want validation errors to appear close to the code that builds the payload.
+The SDK validates common payload mistakes before transport, including missing
+senders, recipients, subjects, content, invalid email address shape, empty
+recipient/content collections, and reserved message headers in custom headers.
 
 ## Common Sending Recipes
 
@@ -311,7 +314,8 @@ mailchannels.Emails.queue(
 Use `Attachment.from_bytes()` when the file is generated in memory, such as a
 PDF created by your application. Use `Attachment.from_url()` when the attachment
 already lives behind an HTTP URL and you want the SDK to fetch and encode it
-before sending.
+before sending. Missing local files and failed remote attachment fetches raise
+`MailChannelsError` with stable attachment-specific error codes.
 
 ### Preview With Dry Run
 
@@ -1011,7 +1015,9 @@ direct transport-wrapper tests and explicit API error mapping tests so request
 forwarding, non-JSON responses, headers, timeouts, and exception metadata stay
 stable. It also validates strict response models across the modeled SDK surface so
 typed responses keep preserving `http_headers` while rejecting missing or
-wrongly typed API fields. It also extracts README Python snippets and executes the safe examples
+wrongly typed API fields. Email negative tests cover local SDK validation,
+mocked API rejection, and live dry-run API rejection for malformed send
+payloads. It also extracts README Python snippets and executes the safe examples
 against fake transports so user documentation cannot quietly drift from the
 SDK. CI type-checks a small external-consumer fixture and installs the built
 wheel into clean environments with and without the `[async]` extra. The separate
@@ -1038,12 +1044,12 @@ uv run pytest -m online --online
 ```
 
 The online suite includes parent-account usage, async usage, volume metrics,
-sub-account listing, suppression listing, webhook listing, and optional domain
-checks and DKIM listing. The volume metrics test sends an explicit 24-hour
+sub-account listing, suppression listing, webhook listing, optional domain
+checks, DKIM listing, dry-run sending, and dry-run rejection checks for
+malformed raw send payloads. The volume metrics test sends an explicit 24-hour
 `start_time` and `end_time` window so the live service does not need to infer an
-unbounded range. It can also validate the send endpoint with a MailChannels dry
-run, which does not deliver a message. Set sender and recipient addresses to
-enable that dry-run test:
+unbounded range. The send tests use MailChannels dry runs, which do not deliver
+messages. Set sender and recipient addresses to enable those dry-run tests:
 
 ```bash
 export MAILCHANNELS_ONLINE_FROM="sender@example.com"

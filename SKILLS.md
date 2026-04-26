@@ -123,12 +123,24 @@ params = mailchannels.EmailParams(
 Use `dry_run=True` with `Emails.send()` when validating rendering, templates, or
 headers without delivering a message.
 
+Email payload validation should fail before transport for common mistakes:
+missing sender, missing recipient, missing subject, missing content, invalid
+basic email address shape, empty recipient/content collections, and custom
+headers that try to set structured message headers such as `From`, `To`,
+`Subject`, `DKIM-Signature`, `Message-ID`, or `Content-Type`. Keep
+`tests/test_email_payload_negative.py` aligned when changing send normalization.
+That file also contains raw invalid payload cases that run against both a fake
+400 response and the live dry-run API when `--online` is enabled.
+
 ## Attachments
 
 Use `mailchannels.Attachment.from_file()` for local files,
 `Attachment.from_bytes()` for generated content, and `Attachment.from_url()` for
 remote HTTP objects. These helpers Base64 encode the content and infer the MIME
 type from the filename or response headers.
+Missing local attachment files raise `MailChannelsError` with
+`code="AttachmentReadError"`. Remote fetch failures raise `MailChannelsError`
+with `code="AttachmentFetchError"`.
 
 ```python
 mailchannels.Emails.queue(
@@ -454,9 +466,9 @@ Online tests are marked `online` and require both a real
 uv run pytest -m online --online
 ```
 
-The dry-run send test additionally needs `MAILCHANNELS_ONLINE_FROM` and
-`MAILCHANNELS_ONLINE_TO`. Optional DKIM listing needs
-`MAILCHANNELS_ONLINE_DOMAIN`.
+The dry-run send tests, including raw invalid-payload rejection tests,
+additionally need `MAILCHANNELS_ONLINE_FROM` and `MAILCHANNELS_ONLINE_TO`.
+Optional DKIM listing needs `MAILCHANNELS_ONLINE_DOMAIN`.
 
 Keep online metrics tests bounded with explicit `start_time` and `end_time`
 values. The live `/metrics/volume?interval=day` query can time out when the
