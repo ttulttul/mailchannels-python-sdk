@@ -299,3 +299,11 @@ work. Start `coverage.py` enforcement at 85% so CI catches meaningful drops
 without making low-value proxy-method gaps block unrelated work. Ratchet the
 threshold upward after adding tests for the remaining module-level proxies and
 optional branches.
+
+## 2026-04-26: README snippets need executable coverage
+
+README code fences are a public API surface. Extracting and running safe Python
+snippets with fake transports caught a real drift bug where a custom-header
+example put `subject` only inside a personalization, while the SDK requires a
+root-level subject. Keep external-integration snippets compile-only or
+explicitly skipped, but make ordinary SDK examples execute in tests.

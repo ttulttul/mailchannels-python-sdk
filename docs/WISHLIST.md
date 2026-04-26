@@ -456,6 +456,12 @@ Status: implemented. CI now runs pytest on Python 3.9, 3.10, 3.11, 3.12, and
 
 You already test example files directly, which is excellent. ([GitHub][17]) The next level is extracting fenced Python snippets from `README.md` and smoke-testing them after replacing credentials/transports. That prevents the README from drifting away from executable SDK behavior.
 
+Status: implemented. `tests/test_readme_examples.py` extracts every Python code
+fence from `README.md`, compiles all snippets with README line-number IDs, and
+executes safe snippets with fake sync and async transports plus temporary sample
+files. External integration snippets, such as Cloudflare DNS publishing, are
+explicitly skipped for execution while still being syntax-checked.
+
 ### 16. Automate PyPI publishing via GitHub Actions
 
 Next up, add a release workflow that builds the package, verifies the wheel,
@@ -472,7 +478,9 @@ Priority: high.
 
 ## My recommended order
 
-1. **README example extraction tests**
+1. **Generate `docs/API_COVERAGE.md`**
+2. **Strict response model coverage for every typed response**
+3. **Refine error taxonomy**
 
 This would make MailChannels stronger than Resend not only in SDK design and docs, but also in API-conformance discipline. Resend still has broader raw unit-test volume, especially paired async coverage, but you can leapfrog it by making OpenAPI conformance and route/request parity the backbone of the suite.
 

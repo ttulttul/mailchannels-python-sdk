@@ -580,10 +580,10 @@ personalization, MailChannels uses the personalization-level value.
 mailchannels.Emails.send(
     {
         "from": {"email": "sender@example.com"},
+        "subject": "Bananas Are On Sale",
         "personalizations": [
             {
                 "to": [{"email": "banana-lover@example.net"}],
-                "subject": "Bananas Are On Sale",
                 "headers": {
                     "List-Unsubscribe": "<mailto:unsubscribe@bananas.example>",
                     "X-Custom-Header": "BananaFan123",
@@ -955,6 +955,10 @@ production tasks:
 - `custom_http_client.py` wraps a custom transport.
 - `error_handling.py` logs structured SDK exception metadata.
 
+The README's fenced Python snippets are also syntax-checked and smoke-tested
+with fake SDK transports so documentation examples stay aligned with executable
+SDK behavior without calling the live MailChannels API.
+
 ## Development
 
 Install all development dependencies and run the local test suite:
@@ -981,9 +985,11 @@ the SDK's declared routes with the official MailChannels OpenAPI spec so
 documented endpoint changes are caught early. The unit test suite includes
 direct transport-wrapper tests and explicit API error mapping tests so request
 forwarding, non-JSON responses, headers, timeouts, and exception metadata stay
-stable. CI also type-checks a small external-consumer fixture and installs the
-built wheel into clean environments with and without the `[async]` extra. The
-separate online API workflow is manual-only and expects
+stable. It also extracts README Python snippets and executes the safe examples
+against fake transports so user documentation cannot quietly drift from the
+SDK. CI type-checks a small external-consumer fixture and installs the built
+wheel into clean environments with and without the `[async]` extra. The separate
+online API workflow is manual-only and expects
 `MAILCHANNELS_API_KEY` as a GitHub secret plus optional repository or environment
 variables for sender, recipient, DKIM domain, and API URL.
 

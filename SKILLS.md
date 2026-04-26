@@ -475,6 +475,9 @@ When adding or changing SDK behavior:
   committing.
 - Run `uv run pytest --cov --cov-report=term-missing` when changing tests or
   coverage configuration. The current branch coverage threshold starts at 85%.
+- Keep `tests/test_readme_examples.py` aligned with README Python snippets. The
+  test should compile every Python fence and execute safe snippets with fake
+  transports; skip only examples that need external SDKs or real side effects.
 - Run `uv run python scripts/run_consumer_typing.py` after changing public
   exports, type hints, or Pydantic request models.
 - Run `uv run python scripts/smoke_wheel_install.py` after `uv build` when
