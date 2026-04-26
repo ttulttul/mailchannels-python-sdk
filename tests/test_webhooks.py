@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import hashlib
 
+import pytest
 from conftest import FakeHTTPXClient, FakeRequestsClient
 
 from mailchannels.client import Client
@@ -107,3 +108,92 @@ def test_webhook_signature_helpers() -> None:
     assert signature_key_id(headers) == "mckey"
     assert signature_is_fresh(parameters, now=1738868400)
     assert verify_content_digest(headers, body)
+
+
+def test_webhook_content_digest_missing_header_returns_false() -> None:
+    """It rejects webhook requests without a Content-Digest header."""
+    assert not verify_content_digest({}, b"{}")
+
+
+def test_webhook_content_digest_wrong_digest_returns_false() -> None:
+    """It rejects webhook bodies that do not match the supplied digest."""
+    digest = base64.b64encode(hashlib.sha256(b"expected").digest()).decode("ascii")
+
+    assert not verify_content_digest({"Content-Digest": f"sha-256=:{digest}:"}, b"bad")
+
+
+@pytest.mark.parametrize(
+    "digest_header",
+    [
+        "sha-512=:abc:",
+        "sha-256=abc",
+        "not-a-digest",
+    ],
+)
+def test_webhook_content_digest_malformed_header_returns_false(
+    digest_header: str,
+) -> None:
+    """It rejects malformed Content-Digest headers without crashing."""
+    assert not verify_content_digest({"Content-Digest": digest_header}, b"{}")
+
+
+def test_webhook_content_digest_non_base64_returns_false() -> None:
+    """It rejects invalid base64 digest values without crashing."""
+    assert not verify_content_digest({"Content-Digest": "sha-256=:%%%%:"}, b"{}")
+
+
+def test_webhook_content_digest_header_lookup_is_case_insensitive() -> None:
+    """It accepts case variations in webhook digest headers."""
+    body = b'{"event":"delivered"}'
+    digest = base64.b64encode(hashlib.sha256(body).digest()).decode("ascii")
+
+    assert verify_content_digest({"content-digest": f"sha-256=:{digest}:"}, body)
+
+
+def test_webhook_signature_key_id_missing_header_returns_none() -> None:
+    """It returns None when Signature-Input is absent."""
+    assert signature_key_id({}) is None
+
+
+def test_webhook_signature_key_id_header_lookup_is_case_insensitive() -> None:
+    """It accepts case variations in webhook signature headers."""
+    headers = {
+        "signature-input": (
+            'sig=("content-digest");created=1738868393;'
+            'alg="ed25519";keyid="mckey"'
+        )
+    }
+
+    assert signature_key_id(headers) == "mckey"
+
+
+def test_webhook_signature_key_id_malformed_header_raises_value_error() -> None:
+    """It raises ValueError for malformed Signature-Input headers."""
+    with pytest.raises(ValueError):
+        signature_key_id({"Signature-Input": "not a structured signature input"})
+
+
+def test_webhook_signature_missing_created_is_not_fresh() -> None:
+    """It treats signatures without created timestamps as stale."""
+    parameters = parse_signature_input('sig=("content-digest");keyid="mckey"')
+
+    assert parameters.created is None
+    assert not signature_is_fresh(parameters, now=1738868400)
+
+
+def test_webhook_signature_created_outside_tolerance_is_not_fresh() -> None:
+    """It rejects signatures older than the allowed tolerance."""
+    parameters = parse_signature_input(
+        'sig=("content-digest");created=1738860000;keyid="mckey"'
+    )
+
+    assert not signature_is_fresh(parameters, now=1738868400, tolerance_seconds=300)
+
+
+def test_webhook_signature_future_created_outside_tolerance_is_not_fresh() -> None:
+    """It rejects signatures created too far in the future."""
+    parameters = parse_signature_input(
+        'sig=("content-digest");created=1738872000;keyid="mckey"'
+    )
+
+    assert not signature_is_fresh(parameters, now=1738868400, tolerance_seconds=300)

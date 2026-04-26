@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import binascii
 import hashlib
 import logging
 import re
@@ -451,7 +452,11 @@ def verify_content_digest(headers: dict[str, str], body: bytes | str) -> bool:
         logger.warning("Webhook Content-Digest header is not sha-256 encoded")
         return False
     raw_body = body.encode("utf-8") if isinstance(body, str) else body
-    expected = base64.b64decode(match.group("digest"))
+    try:
+        expected = base64.b64decode(match.group("digest"), validate=True)
+    except binascii.Error:
+        logger.warning("Webhook Content-Digest header is not valid base64")
+        return False
     actual = hashlib.sha256(raw_body).digest()
     verified = expected == actual
     logger.debug("Webhook content digest verified=%s", verified)

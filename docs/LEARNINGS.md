@@ -261,3 +261,18 @@ Status-to-exception tests should verify more than exception class names. Keep
 coverage for stable `error_type`, message extraction from structured fields and
 plain text, empty-body fallback messages, retry headers, and common request ID
 header variants.
+
+## 2026-04-25: Destructive online tests need a separate opt-in
+
+Live CRUD tests are useful but must not run with the normal read-only online
+suite. Gate destructive tests behind the `online_destructive` marker, the
+`--online-destructive` pytest option, and `MAILCHANNELS_ONLINE_DESTRUCTIVE=1`.
+Run them only against a dedicated test account because webhook cleanup uses the
+API's delete-all webhook endpoint.
+
+## 2026-04-25: Webhook verification should fail closed
+
+Webhook helper tests should cover malformed and missing signature metadata, not
+only valid examples. Invalid or non-base64 `Content-Digest` values should return
+`False` without raising, header lookup should be case-insensitive, and missing
+or stale signature timestamps should not be treated as fresh.

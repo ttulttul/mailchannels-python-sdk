@@ -1039,6 +1039,18 @@ connection for an online endpoint, that test is reported as `xfail` because the
 failure is outside the local SDK behavior being tested. Authentication and
 authorization errors still fail the test normally.
 
+Destructive online CRUD tests are marked `online_destructive` and stay disabled
+unless you pass both `--online` and `--online-destructive` and set
+`MAILCHANNELS_ONLINE_DESTRUCTIVE=1`. Run these only against a dedicated test
+account because they create and delete suppressions, sub-accounts, credentials,
+limits, and webhook configuration. The MailChannels webhook delete endpoint
+removes all configured webhooks.
+
+```bash
+export MAILCHANNELS_ONLINE_DESTRUCTIVE=1
+uv run pytest -m online_destructive --online --online-destructive
+```
+
 Run the suite in SmolVM before committing. In this macOS sandbox, copying a tar
 archive into the VM is more reliable than a direct bind mount:
 

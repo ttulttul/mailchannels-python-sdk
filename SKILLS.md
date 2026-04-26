@@ -457,6 +457,12 @@ Online tests may mark live MailChannels 5xx responses, timeouts, and transport
 failures as `xfail`; 4xx authentication, authorization, validation, or SDK
 behavior errors should still fail normally.
 
+Destructive online CRUD tests are marked `online_destructive` and require
+`--online`, `--online-destructive`, and `MAILCHANNELS_ONLINE_DESTRUCTIVE=1`.
+Keep them manual-only and run them only against a dedicated test account. The
+webhook lifecycle test calls `DELETE /webhook`, which removes all configured
+webhooks for the account.
+
 ## Repository Maintenance
 
 When adding or changing SDK behavior:

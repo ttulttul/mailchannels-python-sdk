@@ -301,6 +301,10 @@ Webhook helper tests currently cover a happy-path parse/digest/freshness case. (
 
 These are high-value because webhook verification code usually fails in edge cases, not in the happy path.
 
+Status: implemented. `tests/test_webhooks.py` now covers missing, wrong,
+malformed, and non-base64 digests, case-insensitive header lookup, missing and
+malformed signature input, missing timestamps, and stale or future timestamps.
+
 ### 7. More complete error mapping tests
 
 Current error tests cover 403, 409, 413, 429 metadata, and null-body fallback. ([GitHub][9]) Add the missing direct mappings:
@@ -378,6 +382,11 @@ Add a separate `online_destructive` or `online_crud` marker for isolated create/
 
 Use `try/finally` cleanup and unique names like `sdk-test-{timestamp}`. Keep these separate from routine CI to avoid accidental production mutation.
 
+Status: implemented. `tests/test_online_crud.py` adds destructive lifecycle
+tests for suppressions, sub-accounts plus API keys/SMTP passwords/limits, and
+webhooks. They are gated behind `online_destructive`,
+`--online-destructive`, and `MAILCHANNELS_ONLINE_DESTRUCTIVE=1`.
+
 ### 11. Consumer typing tests
 
 The package presents itself as typed, and `pyproject.toml` runs mypy only on `src/mailchannels` and `scripts`. ([GitHub][14]) Add a small `typing_tests/` or `tests/typing/` fixture that simulates a user project:
@@ -449,10 +458,8 @@ Priority: high.
 
 ## My recommended order
 
-1. **Webhook negative tests**
-2. **Online CRUD lifecycle tests under a separate marker**
-3. **Consumer typing and wheel-install smoke tests**
-4. **Coverage threshold and fuller Python matrix**
+1. **Consumer typing and wheel-install smoke tests**
+2. **Coverage threshold and fuller Python matrix**
 
 This would make MailChannels stronger than Resend not only in SDK design and docs, but also in API-conformance discipline. Resend still has broader raw unit-test volume, especially paired async coverage, but you can leapfrog it by making OpenAPI conformance and route/request parity the backbone of the suite.
 

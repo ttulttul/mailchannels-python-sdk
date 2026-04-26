@@ -11,6 +11,14 @@ on:
         options:
           - "false"
           - "true"
+      run_destructive:
+        description: "Set to true to run isolated CRUD tests that mutate live resources."
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 jobs:
   online:
@@ -42,5 +50,12 @@ jobs:
           MAILCHANNELS_ONLINE_FROM: ${{ vars.MAILCHANNELS_ONLINE_FROM }}
           MAILCHANNELS_ONLINE_TO: ${{ vars.MAILCHANNELS_ONLINE_TO }}
           MAILCHANNELS_ONLINE_DOMAIN: ${{ vars.MAILCHANNELS_ONLINE_DOMAIN }}
+          MAILCHANNELS_ONLINE_WEBHOOK_ENDPOINT: ${{ vars.MAILCHANNELS_ONLINE_WEBHOOK_ENDPOINT }}
           MAILCHANNELS_ONLINE_SEND_REAL: ${{ github.event.inputs.send_real_email == 'true' && '1' || '0' }}
-        run: uv run pytest -m online --online
+          MAILCHANNELS_ONLINE_DESTRUCTIVE: ${{ github.event.inputs.run_destructive == 'true' && '1' || '0' }}
+        run: |
+          args=""
+          if [ "${MAILCHANNELS_ONLINE_DESTRUCTIVE}" = "1" ]; then
+            args="--online-destructive"
+          fi
+          uv run pytest -m online --online ${args}

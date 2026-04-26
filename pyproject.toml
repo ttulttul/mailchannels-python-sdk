@@ -39,6 +39,7 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 markers = [
     "online: tests that call the live MailChannels Email API",
+    "online_destructive: live tests that create, update, or delete API resources",
 ]
 
 [tool.ruff]

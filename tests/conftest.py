@@ -20,6 +20,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=False,
         help="Run tests that call the live MailChannels Email API.",
     )
+    parser.addoption(
+        "--online-destructive",
+        action="store_true",
+        default=False,
+        help="Run live tests that create, update, or delete API resources.",
+    )
 
 
 def pytest_collection_modifyitems(
@@ -27,16 +33,33 @@ def pytest_collection_modifyitems(
     items: list[pytest.Item],
 ) -> None:
     """Skip online tests unless explicitly enabled and configured."""
-    if config.getoption("--online") and os.environ.get("MAILCHANNELS_API_KEY"):
+    online_enabled = config.getoption("--online") and os.environ.get(
+        "MAILCHANNELS_API_KEY"
+    )
+    if not online_enabled:
+        reason = (
+            "set MAILCHANNELS_API_KEY and pass --online to run live "
+            "MailChannels API tests"
+        )
+        skip_online = pytest.mark.skip(reason=reason)
+        for item in items:
+            if "online" in item.keywords:
+                item.add_marker(skip_online)
+        return
+
+    if config.getoption("--online-destructive") and os.environ.get(
+        "MAILCHANNELS_ONLINE_DESTRUCTIVE"
+    ) == "1":
         return
 
     reason = (
-        "set MAILCHANNELS_API_KEY and pass --online to run live MailChannels API tests"
+        "set MAILCHANNELS_ONLINE_DESTRUCTIVE=1 and pass --online-destructive "
+        "to run destructive live API tests"
     )
-    skip_online = pytest.mark.skip(reason=reason)
+    skip_destructive = pytest.mark.skip(reason=reason)
     for item in items:
-        if "online" in item.keywords:
-            item.add_marker(skip_online)
+        if "online_destructive" in item.keywords:
+            item.add_marker(skip_destructive)
 
 
 class FakeRequestsClient(RequestsClient):
