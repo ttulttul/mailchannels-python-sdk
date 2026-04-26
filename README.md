@@ -974,7 +974,10 @@ Current uv releases do not expose `uv pytest` as a native subcommand; use
 The GitHub Actions CI workflow runs the same checks on pushes to `main`, pull
 requests, and manual dispatches. It also compares the SDK's declared routes with
 the official MailChannels OpenAPI spec so documented endpoint changes are caught
-early. The separate online API workflow is manual-only and expects
+early. The unit test suite includes direct transport-wrapper tests and explicit
+API error mapping tests so request forwarding, non-JSON responses, headers,
+timeouts, and exception metadata stay stable. The separate online API workflow
+is manual-only and expects
 `MAILCHANNELS_API_KEY` as a GitHub secret plus optional repository or environment
 variables for sender, recipient, DKIM domain, and API URL.
 

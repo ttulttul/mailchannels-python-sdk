@@ -487,6 +487,11 @@ When adding or changing SDK behavior:
   required headers, forbidden headers, and legacy payload keys such as
   `monthly_limit`. Each row also needs an async call so the suite can assert
   sync/async request parity for method, URL, headers, JSON, and query params.
+- Keep `tests/test_http_clients.py` covering the real sync and async transport
+  wrappers whenever transport signatures or dependency behavior changes.
+- Keep `tests/test_errors.py` covering status-to-exception mappings, error
+  message extraction, retry metadata, and request ID header variants whenever
+  exception behavior changes.
 - Prefer Node 24-ready GitHub Actions versions in workflows, such as
   `actions/checkout@v6`, `actions/setup-python@v6`, and
   `astral-sh/setup-uv@v8.1.0` or newer.

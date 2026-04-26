@@ -246,3 +246,18 @@ Release automation should not depend on long-lived PyPI API tokens. Use a
 separate GitHub Actions workflow with a build-and-verify job and a narrowly
 permissioned publish job that grants `id-token: write` only when uploading to
 PyPI through the `pypi` environment.
+
+## 2026-04-25: Fake transports are not enough transport coverage
+
+Resource tests use fake transports well, but the real `RequestsClient` and
+`HTTPXClient` wrappers still need direct tests. Lock down argument forwarding,
+configured timeouts, non-JSON response handling, header preservation, and the
+missing-`httpx` configuration error so production transport regressions are not
+hidden by fake-client tests.
+
+## 2026-04-25: Error mapping tests should cover metadata extraction
+
+Status-to-exception tests should verify more than exception class names. Keep
+coverage for stable `error_type`, message extraction from structured fields and
+plain text, empty-body fallback messages, retry headers, and common request ID
+header variants.

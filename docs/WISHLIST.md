@@ -278,6 +278,10 @@ Add tests for:
 | Async transport with mocked `httpx.AsyncClient`                    | catches async request construction bugs      |
 | Async import failure                                               | verifies the optional `[async]` extra UX     |
 
+Status: implemented. `tests/test_http_clients.py` now covers real sync and
+async transport argument forwarding, configured timeouts, non-JSON response
+normalization, header preservation, and missing-`httpx` configuration errors.
+
 ### 6. Negative webhook helper tests
 
 Webhook helper tests currently cover a happy-path parse/digest/freshness case. ([GitHub][8]) Add the ugly cases:
@@ -317,6 +321,10 @@ Current error tests cover 403, 409, 413, 429 metadata, and null-body fallback. (
 | request ID header variants | all recognized                                  |
 
 The exception class already supports request IDs from multiple header names and stable diagnostic fields, so tests should lock that behavior down. ([GitHub][10])
+
+Status: implemented. `tests/test_errors.py` now covers direct mappings for 400,
+401, 404, 422, 500, and 502 responses, structured and plain-text message
+extraction, empty-body fallback messages, and request ID header variants.
 
 ## Medium-priority additions
 
@@ -441,11 +449,10 @@ Priority: high.
 
 ## My recommended order
 
-1. **Transport and error edge-case tests**
-2. **Webhook negative tests**
-3. **Online CRUD lifecycle tests under a separate marker**
-4. **Consumer typing and wheel-install smoke tests**
-5. **Coverage threshold and fuller Python matrix**
+1. **Webhook negative tests**
+2. **Online CRUD lifecycle tests under a separate marker**
+3. **Consumer typing and wheel-install smoke tests**
+4. **Coverage threshold and fuller Python matrix**
 
 This would make MailChannels stronger than Resend not only in SDK design and docs, but also in API-conformance discipline. Resend still has broader raw unit-test volume, especially paired async coverage, but you can leapfrog it by making OpenAPI conformance and route/request parity the backbone of the suite.
 

@@ -8,11 +8,14 @@ from conftest import FakeRequestsClient
 from mailchannels.client import Client
 from mailchannels.exceptions import (
     ApiError,
+    AuthenticationError,
+    BadGatewayError,
     ConflictError,
     ForbiddenError,
+    MailChannelsError,
     PayloadTooLargeError,
 )
-from mailchannels.response import SDKResponse
+from mailchannels.response import SDKResponse, raise_for_status
 
 
 def test_forbidden_response_raises_forbidden_error() -> None:
@@ -109,3 +112,81 @@ def test_null_error_body_uses_status_fallback_message() -> None:
         client.usage.retrieve()
 
     assert str(error.value) == "MailChannels API request failed with status 500."
+
+
+@pytest.mark.parametrize(
+    ("status_code", "error_class", "error_type"),
+    [
+        (400, ApiError, "invalid_request_error"),
+        (401, AuthenticationError, "authentication_error"),
+        (404, ApiError, "invalid_request_error"),
+        (422, ApiError, "invalid_request_error"),
+        (500, ApiError, "server_error"),
+        (502, BadGatewayError, "server_error"),
+    ],
+)
+def test_error_status_code_mappings(
+    status_code: int,
+    error_class: type[MailChannelsError],
+    error_type: str,
+) -> None:
+    """It maps common HTTP status codes to stable SDK error metadata."""
+    response = SDKResponse(
+        status_code,
+        {"message": f"status {status_code} failed"},
+        f"status {status_code} failed",
+    )
+
+    with pytest.raises(error_class) as error:
+        raise_for_status(response)
+
+    assert error.value.status_code == status_code
+    assert error.value.error_type == error_type
+    assert str(error.value) == f"status {status_code} failed"
+
+
+@pytest.mark.parametrize(
+    ("body", "text", "message"),
+    [
+        ({"error": "error field"}, "", "error field"),
+        ({"detail": "detail field"}, "", "detail field"),
+        ({"title": "title field"}, "", "title field"),
+        ({}, "plain text fallback", "plain text fallback"),
+        ({}, "", "MailChannels API request failed with status 400."),
+    ],
+)
+def test_error_message_extraction(
+    body: dict[str, str],
+    text: str,
+    message: str,
+) -> None:
+    """It extracts the most useful message from API error responses."""
+    with pytest.raises(ApiError) as error:
+        raise_for_status(SDKResponse(400, body, text))
+
+    assert str(error.value) == message
+
+
+@pytest.mark.parametrize(
+    "header_name",
+    [
+        "X-Request-ID",
+        "X-Request-Id",
+        "Request-ID",
+        "X-Correlation-ID",
+        "X-Amzn-Trace-Id",
+    ],
+)
+def test_request_id_header_variants(header_name: str) -> None:
+    """It recognizes common request ID response headers."""
+    with pytest.raises(ApiError) as error:
+        raise_for_status(
+            SDKResponse(
+                500,
+                {"message": "Server failed"},
+                "Server failed",
+                headers={header_name: "req_variant"},
+            )
+        )
+
+    assert error.value.request_id == "req_variant"
