@@ -505,6 +505,9 @@ When adding or changing SDK behavior:
   correcting an API endpoint. Run `uv run python scripts/check_openapi_drift.py`
   when route declarations change; it fails if SDK routes are missing from the
   OpenAPI spec or if the OpenAPI spec has endpoints not declared by the SDK.
+- Run `uv run python scripts/generate_api_coverage.py` after route, contract,
+  online-test, or OpenAPI coverage changes so `docs/API_COVERAGE.md` stays
+  aligned with the SDK registry and official spec hash.
 - Keep `tests/test_openapi_contract.py` aligned with the route registry so API
   coverage remains visible in the public test tree. The snapshot should match
   `sdk_route_keys()` exactly.

@@ -186,7 +186,10 @@ asserts the sync and async variants emit identical requests. CI also runs
 MailChannels OpenAPI document with `openapi-spec-validator` before comparing
 its routes with the SDK route registry in both directions. That catches stale
 SDK routes, newly documented endpoints, async drift, and subtle request-shape
-drift before it lands on `main`.
+drift before it lands on `main`. The generated
+[API coverage report](docs/API_COVERAGE.md) summarizes endpoint coverage, SDK
+surfaces, contract-test coverage, online-test coverage, the OpenAPI spec hash,
+and the SDK version used for the report.
 
 ### Choosing The Right Entry Point
 
@@ -991,6 +994,7 @@ uv run python scripts/run_consumer_typing.py
 uv build
 uv run python scripts/smoke_wheel_install.py
 uv run python scripts/check_openapi_drift.py
+uv run python scripts/generate_api_coverage.py
 ```
 
 Current uv releases do not expose `uv pytest` as a native subcommand; use

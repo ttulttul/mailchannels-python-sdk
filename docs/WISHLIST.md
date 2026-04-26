@@ -6,37 +6,14 @@ choosing the next engineering task.
 
 ## Recommended Order
 
-1. Generate `docs/API_COVERAGE.md`
-2. Complete strict response model coverage
-3. Add API spec compatibility guarantees
-4. Add email payload negative tests
-5. Generate a formal API reference
-6. Explore OpenAPI-assisted generation
-7. Add request options if the API exposes per-request controls
+1. Complete strict response model coverage
+2. Add API spec compatibility guarantees
+3. Add email payload negative tests
+4. Generate a formal API reference
+5. Explore OpenAPI-assisted generation
+6. Add request options if the API exposes per-request controls
 
-## 1. Generate `docs/API_COVERAGE.md`
-
-Generate a checked-in OpenAPI coverage report from the official MailChannels
-OpenAPI spec and the SDK route registry.
-
-The first version should include an endpoint matrix with:
-
-| Column | Purpose |
-| --- | --- |
-| Method and path | The OpenAPI operation identifier. |
-| SDK surface | Resource and method that implement the operation. |
-| Sync support | Whether a sync SDK call exists. |
-| Async support | Whether an async SDK call exists. |
-| Contract test | Whether request construction is covered. |
-| Online test | Whether the operation has manual live coverage. |
-| Status | Supported, partial, pending, or intentionally omitted. |
-
-Later iterations can add request-field and response-field coverage as request
-and response models become more complete.
-
-Priority: high.
-
-## 2. Complete Strict Response Model Coverage
+## 1. Complete Strict Response Model Coverage
 
 Strict response mode is implemented, but coverage should be broadened across
 every response model the SDK exposes. Extend tests beyond the current usage
@@ -59,19 +36,21 @@ than a partially tested option.
 
 Priority: high.
 
-## 3. Add API Spec Compatibility Guarantees
+## 2. Add API Spec Compatibility Guarantees
 
 Tie SDK releases to the MailChannels OpenAPI document they were checked against.
 Expose the OpenAPI source URL, spec hash, and checked date in generated
 documentation or package metadata so users can see which API contract a release
 targets.
 
-This pairs naturally with `docs/API_COVERAGE.md`: the coverage report can
-include the spec URL, SHA-256 hash, generated timestamp, and SDK version.
+`docs/API_COVERAGE.md` now includes the spec URL, SHA-256 hash, generated
+timestamp, and SDK version. The next step is deciding whether to expose this
+contract metadata from package metadata or a public module constant for runtime
+introspection.
 
 Priority: high.
 
-## 4. Add Email Payload Negative Tests
+## 3. Add Email Payload Negative Tests
 
 Email normalization has broad positive coverage for templates, custom headers,
 DKIM fields, attachments, dry runs, async queueing, and module-level config. Add
@@ -97,7 +76,7 @@ reaches the MailChannels API.
 
 Priority: medium.
 
-## 5. Generate a Formal API Reference
+## 4. Generate a Formal API Reference
 
 The README is strong as a guide and tutorial, but the project also needs a
 formal generated API reference that lists public classes, methods, parameters,
@@ -110,7 +89,7 @@ documentation.
 
 Priority: medium.
 
-## 6. Explore OpenAPI-Assisted Generation
+## 5. Explore OpenAPI-Assisted Generation
 
 Investigate generating selected SDK artifacts from the MailChannels OpenAPI
 spec. A fully generated SDK may not be the right product design, but generated
@@ -123,7 +102,7 @@ the desired generated artifacts obvious.
 
 Priority: medium.
 
-## 7. Add Request Options If Needed
+## 6. Add Request Options If Needed
 
 If MailChannels exposes per-request option headers such as idempotency keys,
 model them as an `options` argument rather than forcing those controls into
@@ -142,6 +121,7 @@ API changes:
 - Sub-account limit conformance to singular `/sub-account/{handle}/limit`.
 - `/check-domain` support.
 - Route registry and bidirectional OpenAPI drift checks.
+- Generated `docs/API_COVERAGE.md` endpoint coverage report.
 - Operation-level request contract tests.
 - Exact route-call matrix coverage.
 - Sync/async request parity tests.

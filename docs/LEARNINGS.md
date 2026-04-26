@@ -328,3 +328,10 @@ the external service.
 The wishlist is more useful when it is an active roadmap, not a changelog. Move
 implemented items into a short completed-foundation summary and keep the
 prioritized list limited to work that still needs a decision or implementation.
+
+## 2026-04-26: API coverage reports should include provenance
+
+Endpoint coverage is most useful when readers can tell exactly which OpenAPI
+document it targets. Include the OpenAPI source URL, spec version, SHA-256 hash,
+generated timestamp, and SDK version in `docs/API_COVERAGE.md` so drift reports
+and release notes can point to a concrete contract.
