@@ -473,6 +473,10 @@ When adding or changing SDK behavior:
 - Update `docs/LEARNINGS.md` for important discoveries or API semantics.
 - Run `uv run pytest`, ruff, build, and the SmolVM pytest workflow before
   committing.
+- Run `uv run python scripts/run_consumer_typing.py` after changing public
+  exports, type hints, or Pydantic request models.
+- Run `uv run python scripts/smoke_wheel_install.py` after `uv build` when
+  packaging metadata, dependencies, optional extras, or package data changes.
 - Keep `.github/workflows/ci.yml` aligned with the local quality gates when the
   required checks change. Keep online API tests in the manual-only workflow so
   live sends and production API calls require explicit operator intent.
@@ -501,6 +505,8 @@ When adding or changing SDK behavior:
 - Prefer Node 24-ready GitHub Actions versions in workflows, such as
   `actions/checkout@v6`, `actions/setup-python@v6`, and
   `astral-sh/setup-uv@v8.1.0` or newer.
+- Include `typing_tests` in ruff checks so consumer typing fixtures stay
+  formatted with the rest of the repository.
 - Keep `setup-uv` workflow caching disabled unless there is a clear need for it;
   this small test matrix runs quickly and parallel cache saves can create noisy
   GitHub Actions annotations.

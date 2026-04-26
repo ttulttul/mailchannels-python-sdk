@@ -407,6 +407,9 @@ client.emails.queue(params)
 
 Then run mypy against that fixture in CI. This catches issues that internal package typing can miss, especially exported aliases and public model names.
 
+Status: implemented. `typing_tests/consumer_project.py` simulates external SDK
+usage and `scripts/run_consumer_typing.py` runs it through strict mypy in CI.
+
 ### 12. Package installation smoke tests
 
 Add CI jobs that build the wheel, install it into a clean virtual environment, and run import/smoke tests:
@@ -419,6 +422,10 @@ Add CI jobs that build the wheel, install it into a clean virtual environment, a
 | wheel metadata           | version, dependencies, `py.typed` included          |
 
 The current CI builds the package, but I do not see an install-from-wheel smoke test. ([GitHub][15])
+
+Status: implemented. `scripts/smoke_wheel_install.py` installs the built wheel
+into clean environments, verifies imports and `py.typed`, checks the helpful
+missing-async-extra error without `httpx`, and verifies the `[async]` extra.
 
 ## Lower-priority but valuable
 
@@ -458,8 +465,7 @@ Priority: high.
 
 ## My recommended order
 
-1. **Consumer typing and wheel-install smoke tests**
-2. **Coverage threshold and fuller Python matrix**
+1. **Coverage threshold and fuller Python matrix**
 
 This would make MailChannels stronger than Resend not only in SDK design and docs, but also in API-conformance discipline. Resend still has broader raw unit-test volume, especially paired async coverage, but you can leapfrog it by making OpenAPI conformance and route/request parity the backbone of the suite.
 

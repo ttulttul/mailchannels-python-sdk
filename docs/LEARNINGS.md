@@ -276,3 +276,18 @@ Webhook helper tests should cover malformed and missing signature metadata, not
 only valid examples. Invalid or non-base64 `Content-Digest` values should return
 `False` without raising, header lookup should be case-insensitive, and missing
 or stale signature timestamps should not be treated as fresh.
+
+## 2026-04-25: Public typing needs a consumer fixture
+
+Internal mypy checks do not prove that exported SDK names type-check in a user
+project. Keep a small `typing_tests/` fixture that imports public names from the
+installed-style package surface and runs mypy in strict mode so aliasing,
+Pydantic model constructors, and exported helpers do not drift unnoticed.
+
+## 2026-04-25: Build success is not install success
+
+`uv build` verifies that an artifact can be produced, but not that users can
+install and import it. Keep a wheel smoke script that installs the built wheel
+into clean environments, checks `mailchannels/py.typed`, verifies base sync
+imports without the async extra, and verifies the `[async]` extra brings in
+`httpx`.

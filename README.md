@@ -962,9 +962,11 @@ Install all development dependencies and run the local test suite:
 ```bash
 uv sync --extra async --extra dev
 uv run pytest
-uv run ruff check src tests examples scripts
+uv run ruff check src tests examples scripts typing_tests
 uv run mypy
+uv run python scripts/run_consumer_typing.py
 uv build
+uv run python scripts/smoke_wheel_install.py
 uv run python scripts/check_openapi_drift.py
 ```
 
@@ -976,8 +978,10 @@ requests, and manual dispatches. It also compares the SDK's declared routes with
 the official MailChannels OpenAPI spec so documented endpoint changes are caught
 early. The unit test suite includes direct transport-wrapper tests and explicit
 API error mapping tests so request forwarding, non-JSON responses, headers,
-timeouts, and exception metadata stay stable. The separate online API workflow
-is manual-only and expects
+timeouts, and exception metadata stay stable. CI also type-checks a small
+external-consumer fixture and installs the built wheel into clean environments
+with and without the `[async]` extra. The separate online API workflow is
+manual-only and expects
 `MAILCHANNELS_API_KEY` as a GitHub secret plus optional repository or environment
 variables for sender, recipient, DKIM domain, and API URL.
 
