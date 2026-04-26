@@ -107,7 +107,11 @@ against. Expose the OpenAPI source URL, spec hash, and checked date in generated
 documentation or package metadata so users can see which API contract a release
 targets.
 
-Status: pending.
+Status: implemented. The examples directory now includes tested focused modules
+for templates, unsubscribe behavior, custom email headers, MailChannels-hosted
+DKIM, Cloudflare DKIM DNS publication, sub-account operations, and metrics.
+`tests/test_examples.py` exercises these examples with fake MailChannels
+transports and a fake Cloudflare client.
 Priority: medium.
 
 ## 10. Explore OpenAPI Generation

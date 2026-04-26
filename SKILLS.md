@@ -431,9 +431,11 @@ and add strict-mode tests.
 ## Examples
 
 The `examples/` directory has tested examples for async sending, attachments,
-suppressions, webhooks, usage, custom HTTP clients, and structured error
-handling. Keep examples importable and avoid doing network work at import time;
-tests should exercise example functions with fake transports.
+templates, unsubscribe, custom headers, DKIM, Cloudflare DKIM publication,
+sub-accounts, metrics, domain checks, suppressions, webhooks, usage, custom HTTP
+clients, and structured error handling. Keep examples importable and avoid
+doing network work at import time; tests should exercise example functions with
+fake transports and fake external service clients.
 
 ## Online Tests
 

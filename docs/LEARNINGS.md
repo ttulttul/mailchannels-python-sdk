@@ -314,3 +314,11 @@ Narrower API exceptions should inherit from `ApiError`, not just
 `MailChannelsError`. That lets users catch `RateLimitError`,
 `InvalidRequestError`, or `ServerError` directly without breaking existing
 `except ApiError` handlers in online tests and production integrations.
+
+## 2026-04-26: Focused examples should isolate external services
+
+Examples for SDK behavior should expose small helper functions that accept a
+`Client` and avoid network work at import time. External-service examples, such
+as Cloudflare DKIM DNS publication, should accept a minimal protocol-shaped
+client so tests can verify create/update behavior without installing or calling
+the external service.

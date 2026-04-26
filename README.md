@@ -958,6 +958,13 @@ production tasks:
 
 - `async_email.py` queues a message with the async transport.
 - `attachments.py` sends local, generated, and inline attachments.
+- `templates.py` builds and dry-runs mustache template messages.
+- `unsubscribe.py` builds one-click and automatic List-Unsubscribe messages.
+- `custom_headers.py` sends global and per-recipient custom email headers.
+- `dkim.py` creates, lists, and rotates MailChannels-hosted DKIM keys.
+- `cloudflare_dkim.py` publishes MailChannels DKIM TXT records in Cloudflare.
+- `sub_accounts.py` creates sub-accounts, credentials, limits, and usage views.
+- `metrics.py` retrieves engagement and sender metrics.
 - `domain_checks.py` validates DKIM, SPF, sender-domain DNS, and Domain Lockdown
   status for a sending domain.
 - `suppressions.py` creates, lists, and deletes suppression entries.

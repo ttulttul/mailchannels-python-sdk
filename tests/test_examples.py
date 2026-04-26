@@ -6,10 +6,12 @@ import base64
 import hashlib
 import importlib.util
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
+from typing import Any
 
 from conftest import FakeHTTPXClient, FakeRequestsClient
 
+import mailchannels
 from mailchannels.client import Client
 from mailchannels.response import SDKResponse
 
@@ -29,12 +31,56 @@ def _load_example(name: str) -> ModuleType:
 
 async_email = _load_example("async_email")
 attachments = _load_example("attachments")
+cloudflare_dkim = _load_example("cloudflare_dkim")
+custom_headers = _load_example("custom_headers")
 custom_http_client = _load_example("custom_http_client")
+dkim = _load_example("dkim")
 domain_checks = _load_example("domain_checks")
 error_handling = _load_example("error_handling")
+metrics = _load_example("metrics")
+sub_accounts = _load_example("sub_accounts")
 suppressions = _load_example("suppressions")
+templates = _load_example("templates")
+unsubscribe = _load_example("unsubscribe")
 usage = _load_example("usage")
 webhooks = _load_example("webhooks")
+
+
+class FakeCloudflareRecords:
+    """Fake Cloudflare DNS records resource for examples."""
+
+    def __init__(self, existing_record: Any | None = None) -> None:
+        """Create a fake records resource."""
+        self.existing_record = existing_record
+        self.created: list[dict[str, Any]] = []
+        self.updated: list[dict[str, Any]] = []
+
+    def list(self, **kwargs: Any) -> list[Any]:
+        """Return existing DNS records."""
+        self.last_list = kwargs
+        return [] if self.existing_record is None else [self.existing_record]
+
+    def create(self, **kwargs: Any) -> Any:
+        """Record a DNS record creation."""
+        self.created.append(kwargs)
+        return SimpleNamespace(name=kwargs["name"])
+
+    def update(self, record_id: str, **kwargs: Any) -> Any:
+        """Record a DNS record update."""
+        self.updated.append({"record_id": record_id, **kwargs})
+        return SimpleNamespace(name=kwargs["name"])
+
+
+class FakeCloudflare:
+    """Fake Cloudflare client for DKIM publication examples."""
+
+    def __init__(self, existing_record: Any | None = None) -> None:
+        """Create a fake Cloudflare client."""
+        self.zones = SimpleNamespace(
+            list=lambda **_: [SimpleNamespace(id="zone_123")]
+        )
+        self.records = FakeCloudflareRecords(existing_record)
+        self.dns = SimpleNamespace(records=self.records)
 
 
 async def test_async_email_example_queues_message() -> None:
@@ -135,6 +181,196 @@ def test_domain_check_example_checks_configuration() -> None:
         "dkim_settings": [
             {"dkim_domain": "example.com", "dkim_selector": "mcdkim"}
         ],
+    }
+
+
+def test_template_example_builds_dry_run_payload() -> None:
+    """It exercises the template example."""
+    transport = FakeRequestsClient(SDKResponse(202, {"id": "previewed"}, "{}"))
+    client = Client(api_key="test-key", http_client=transport)
+
+    result = templates.preview_template(client)
+
+    assert result.id == "previewed"
+    assert transport.calls[0]["url"] == "https://api.mailchannels.net/tx/v1/send"
+    assert transport.calls[0]["params"] == {"dry-run": "true"}
+    assert transport.calls[0]["json"]["content"][0]["template_type"] == "mustache"
+    assert transport.calls[0]["json"]["personalizations"][0][
+        "dynamic_template_data"
+    ] == {"name": "Jane Doe"}
+
+
+def test_unsubscribe_example_builds_placeholder_and_list_header_payloads() -> None:
+    """It exercises the unsubscribe example."""
+    transport = FakeRequestsClient(SDKResponse(202, {"id": "queued"}, "{}"))
+    client = Client(api_key="test-key", http_client=transport)
+
+    one_click = unsubscribe.build_one_click_unsubscribe_message()
+    list_unsubscribe = unsubscribe.build_list_unsubscribe_message()
+    result = unsubscribe.queue_unsubscribe_message(client)
+
+    assert result.id == "queued"
+    assert mailchannels.UNSUBSCRIBE_URL_PLACEHOLDER in one_click["content"][0]["value"]
+    assert one_click["content"][0]["template_type"] == "mustache"
+    assert list_unsubscribe["transactional"] is False
+    assert list_unsubscribe["personalizations"][0]["dkim_selector"] == "mailchannels"
+
+
+def test_custom_headers_example_preserves_global_and_personalized_headers() -> None:
+    """It exercises the custom-header example."""
+    transport = FakeRequestsClient(SDKResponse(202, {"id": "sent"}, "{}"))
+    client = Client(api_key="test-key", http_client=transport)
+
+    global_message = custom_headers.build_global_headers_message()
+    personalized_message = custom_headers.build_personalized_headers_message()
+    custom_headers.send_with_custom_headers(client)
+
+    assert global_message["headers"]["X-Campaign-ID"] == "newsletter-123"
+    assert personalized_message["personalizations"][0]["headers"] == {
+        "List-Unsubscribe": "<mailto:unsubscribe@bananas.example>",
+        "X-Custom-Header": "BananaFan123",
+    }
+    assert transport.calls[0]["params"] == {"dry-run": "true"}
+    assert transport.calls[0]["json"]["headers"]["X-Campaign-ID"] == "newsletter-123"
+
+
+def test_dkim_example_uses_hosted_dkim_endpoints() -> None:
+    """It exercises the DKIM example."""
+    transport = FakeRequestsClient(
+        SDKResponse(
+            200,
+            {
+                "domain": "example.com",
+                "selector": "mcdkim",
+                "public_key": "public",
+                "status": "active",
+                "algorithm": "rsa",
+                "dkim_dns_records": [],
+            },
+            "{}",
+        )
+    )
+    client = Client(api_key="test-key", http_client=transport)
+
+    dkim.create_hosted_dkim_key(client, "example.com", "mcdkim")
+    dkim.list_hosted_dkim_keys(client, "example.com")
+    dkim.rotate_hosted_dkim_key(client, "example.com", "mcdkim", "mcdkim2")
+
+    assert [call["method"] for call in transport.calls] == ["POST", "GET", "POST"]
+    assert transport.calls[0]["json"] == {
+        "selector": "mcdkim",
+        "algorithm": "rsa",
+        "key_length": 2048,
+    }
+    assert transport.calls[1]["params"] == {"include_dns_record": True}
+    assert transport.calls[2]["url"].endswith(
+        "/domains/example.com/dkim-keys/mcdkim/rotate"
+    )
+    assert transport.calls[2]["json"] == {"new_key": {"selector": "mcdkim2"}}
+
+
+def test_cloudflare_dkim_example_creates_or_updates_txt_record() -> None:
+    """It exercises the Cloudflare DKIM publication example without Cloudflare."""
+    dns_record = {
+        "name": "mcdkim._domainkey.example.com",
+        "type": "TXT",
+        "value": "v=DKIM1; p=public",
+    }
+    transport = FakeRequestsClient(
+        SDKResponse(
+            200,
+            {
+                "domain": "example.com",
+                "selector": "mcdkim",
+                "public_key": "public",
+                "status": "active",
+                "algorithm": "rsa",
+                "dkim_dns_records": [dns_record],
+            },
+            "{}",
+        )
+    )
+    client = Client(api_key="test-key", http_client=transport)
+    cloudflare = FakeCloudflare()
+
+    created_record = cloudflare_dkim.create_and_publish_dkim_record(
+        client,
+        cloudflare,
+        "example.com",
+        "mcdkim",
+    )
+
+    assert created_record.name == "mcdkim._domainkey.example.com"
+    assert cloudflare.records.created[0] == {
+        "zone_id": "zone_123",
+        "type": "TXT",
+        "name": "mcdkim._domainkey.example.com",
+        "content": "v=DKIM1; p=public",
+        "ttl": 1,
+    }
+    assert transport.calls[0]["url"].endswith("/domains/example.com/dkim-keys")
+
+    existing = SimpleNamespace(id="record_123")
+    update_cloudflare = FakeCloudflare(existing)
+    updated_record = cloudflare_dkim.publish_dkim_record(
+        update_cloudflare,
+        "example.com",
+        dns_record,
+    )
+
+    assert updated_record.name == "mcdkim._domainkey.example.com"
+    assert update_cloudflare.records.updated[0]["record_id"] == "record_123"
+
+
+def test_sub_accounts_example_uses_account_lifecycle_endpoints() -> None:
+    """It exercises the sub-account example."""
+    transport = FakeRequestsClient(SDKResponse(200, {"handle": "clienta"}, "{}"))
+    client = Client(api_key="test-key", http_client=transport)
+
+    sub_accounts.create_sub_account(client, "clienta", "Client A")
+    sub_accounts.create_sub_account_api_key(client, "clienta")
+    sub_accounts.set_sub_account_limit(client, "clienta", 100_000)
+    sub_accounts.retrieve_sub_account_usage(client, "clienta")
+
+    assert [call["method"] for call in transport.calls] == [
+        "POST",
+        "POST",
+        "PUT",
+        "GET",
+    ]
+    assert transport.calls[0]["json"] == {
+        "company_name": "Client A",
+        "handle": "clienta",
+    }
+    assert transport.calls[2]["url"].endswith("/sub-account/clienta/limit")
+    assert transport.calls[2]["json"] == {"sends": 100_000}
+
+
+def test_metrics_example_retrieves_time_series_and_sender_metrics() -> None:
+    """It exercises the metrics example."""
+    transport = FakeRequestsClient(SDKResponse(200, {"buckets": {}}, "{}"))
+    client = Client(api_key="test-key", http_client=transport)
+
+    metrics.retrieve_engagement_metrics(
+        client,
+        start_time="2026-04-01",
+        end_time="2026-04-24T00:00:00Z",
+        campaign_id="newsletter",
+    )
+    metrics.retrieve_sender_metrics(client, "sub-accounts")
+
+    assert transport.calls[0]["url"].endswith("/metrics/engagement")
+    assert transport.calls[0]["params"] == {
+        "start_time": "2026-04-01",
+        "end_time": "2026-04-24T00:00:00Z",
+        "campaign_id": "newsletter",
+        "interval": "day",
+    }
+    assert transport.calls[1]["url"].endswith("/metrics/senders/sub-accounts")
+    assert transport.calls[1]["params"] == {
+        "limit": 50,
+        "offset": 0,
+        "sort_order": "desc",
     }
 
 
