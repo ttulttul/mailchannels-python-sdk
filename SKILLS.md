@@ -473,6 +473,8 @@ When adding or changing SDK behavior:
 - Update `docs/LEARNINGS.md` for important discoveries or API semantics.
 - Run `uv run pytest`, ruff, build, and the SmolVM pytest workflow before
   committing.
+- Run `uv run pytest --cov --cov-report=term-missing` when changing tests or
+  coverage configuration. The current branch coverage threshold starts at 85%.
 - Run `uv run python scripts/run_consumer_typing.py` after changing public
   exports, type hints, or Pydantic request models.
 - Run `uv run python scripts/smoke_wheel_install.py` after `uv build` when

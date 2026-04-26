@@ -441,9 +441,16 @@ pytest --cov=mailchannels --cov-branch --cov-report=term-missing --cov-fail-unde
 
 The number can start lower and ratchet up. Branch coverage is especially useful for error handling, optional async imports, and webhook helper negatives.
 
+Status: implemented. The dev dependencies include `pytest-cov`, coverage is
+configured for branch coverage with an 85% fail-under threshold, and CI runs the
+coverage gate on Python 3.13. Current measured branch coverage is 88%.
+
 ### 14. CI Python matrix expansion
 
 The package supports Python `>=3.9`; current CI tests Python 3.9 and 3.13. ([GitHub][14]) I’d add 3.10, 3.11, and 3.12. This is not as urgent as contract tests, but it catches dependency and typing edge cases across the supported range.
+
+Status: implemented. CI now runs pytest on Python 3.9, 3.10, 3.11, 3.12, and
+3.13.
 
 ### 15. README example extraction tests
 
@@ -465,7 +472,7 @@ Priority: high.
 
 ## My recommended order
 
-1. **Coverage threshold and fuller Python matrix**
+1. **README example extraction tests**
 
 This would make MailChannels stronger than Resend not only in SDK design and docs, but also in API-conformance discipline. Resend still has broader raw unit-test volume, especially paired async coverage, but you can leapfrog it by making OpenAPI conformance and route/request parity the backbone of the suite.
 

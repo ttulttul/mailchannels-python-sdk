@@ -291,3 +291,11 @@ install and import it. Keep a wheel smoke script that installs the built wheel
 into clean environments, checks `mailchannels/py.typed`, verifies base sync
 imports without the async extra, and verifies the `[async]` extra brings in
 `httpx`.
+
+## 2026-04-25: Start coverage enforcement below current measured coverage
+
+Branch coverage measured 88% after the current conformance and transport test
+work. Start `coverage.py` enforcement at 85% so CI catches meaningful drops
+without making low-value proxy-method gaps block unrelated work. Ratchet the
+threshold upward after adding tests for the remaining module-level proxies and
+optional branches.
