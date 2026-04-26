@@ -859,7 +859,8 @@ verification package that fits its web framework.
 
 The SDK maps common MailChannels API failures to typed exceptions. Catch the
 specific error when your application can respond differently to authentication,
-authorization, conflicts, or payload size problems.
+authorization, invalid requests, rate limits, conflicts, payload size problems,
+or server-side failures.
 
 ```python
 try:
@@ -870,9 +871,19 @@ except mailchannels.PayloadTooLargeError:
 except mailchannels.ForbiddenError:
     # The API key is valid but cannot perform this operation.
     raise
+except mailchannels.RateLimitError:
+    # Back off before retrying; inspect error.retry_after if present.
+    raise
+except mailchannels.InvalidRequestError:
+    # Fix request parameters or payload shape before retrying.
+    raise
+except mailchannels.ServerError:
+    # Retry later or contact support with error.request_id.
+    raise
 ```
 
-All SDK exceptions inherit from `MailChannelsError`.
+All API response exceptions inherit from `ApiError`, and all SDK exceptions
+inherit from `MailChannelsError`.
 
 Each exception carries structured metadata for logs and support workflows:
 `status_code`, `code`, `error_type`, `headers`, `request_id`, `retry_after`,

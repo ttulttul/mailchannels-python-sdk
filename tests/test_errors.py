@@ -12,8 +12,11 @@ from mailchannels.exceptions import (
     BadGatewayError,
     ConflictError,
     ForbiddenError,
+    InvalidRequestError,
     MailChannelsError,
     PayloadTooLargeError,
+    RateLimitError,
+    ServerError,
 )
 from mailchannels.response import SDKResponse, raise_for_status
 
@@ -88,9 +91,10 @@ def test_api_error_includes_headers_and_request_metadata() -> None:
         ),
     )
 
-    with pytest.raises(ApiError) as error:
+    with pytest.raises(RateLimitError) as error:
         client.metrics.volume()
 
+    assert isinstance(error.value, ApiError)
     assert error.value.status_code == 429
     assert error.value.headers == {"X-Request-ID": "req_123", "Retry-After": "30"}
     assert error.value.request_id == "req_123"
@@ -108,7 +112,7 @@ def test_null_error_body_uses_status_fallback_message() -> None:
         http_client=FakeRequestsClient(SDKResponse(500, None, "null\n")),
     )
 
-    with pytest.raises(ApiError) as error:
+    with pytest.raises(ServerError) as error:
         client.usage.retrieve()
 
     assert str(error.value) == "MailChannels API request failed with status 500."
@@ -117,11 +121,12 @@ def test_null_error_body_uses_status_fallback_message() -> None:
 @pytest.mark.parametrize(
     ("status_code", "error_class", "error_type"),
     [
-        (400, ApiError, "invalid_request_error"),
+        (400, InvalidRequestError, "invalid_request_error"),
         (401, AuthenticationError, "authentication_error"),
-        (404, ApiError, "invalid_request_error"),
-        (422, ApiError, "invalid_request_error"),
-        (500, ApiError, "server_error"),
+        (404, InvalidRequestError, "invalid_request_error"),
+        (422, InvalidRequestError, "invalid_request_error"),
+        (429, RateLimitError, "rate_limit_error"),
+        (500, ServerError, "server_error"),
         (502, BadGatewayError, "server_error"),
     ],
 )
@@ -143,6 +148,7 @@ def test_error_status_code_mappings(
     assert error.value.status_code == status_code
     assert error.value.error_type == error_type
     assert str(error.value) == f"status {status_code} failed"
+    assert isinstance(error.value, ApiError)
 
 
 @pytest.mark.parametrize(
@@ -161,7 +167,7 @@ def test_error_message_extraction(
     message: str,
 ) -> None:
     """It extracts the most useful message from API error responses."""
-    with pytest.raises(ApiError) as error:
+    with pytest.raises(InvalidRequestError) as error:
         raise_for_status(SDKResponse(400, body, text))
 
     assert str(error.value) == message
@@ -179,7 +185,7 @@ def test_error_message_extraction(
 )
 def test_request_id_header_variants(header_name: str) -> None:
     """It recognizes common request ID response headers."""
-    with pytest.raises(ApiError) as error:
+    with pytest.raises(ServerError) as error:
         raise_for_status(
             SDKResponse(
                 500,

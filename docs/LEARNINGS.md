@@ -307,3 +307,10 @@ snippets with fake transports caught a real drift bug where a custom-header
 example put `subject` only inside a personalization, while the SDK requires a
 root-level subject. Keep external-integration snippets compile-only or
 explicitly skipped, but make ordinary SDK examples execute in tests.
+
+## 2026-04-26: Keep API errors catch-compatible
+
+Narrower API exceptions should inherit from `ApiError`, not just
+`MailChannelsError`. That lets users catch `RateLimitError`,
+`InvalidRequestError`, or `ServerError` directly without breaking existing
+`except ApiError` handlers in online tests and production integrations.

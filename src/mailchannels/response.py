@@ -14,8 +14,11 @@ from .exceptions import (
     BadGatewayError,
     ConflictError,
     ForbiddenError,
+    InvalidRequestError,
     PayloadTooLargeError,
+    RateLimitError,
     ResponseValidationError,
+    ServerError,
 )
 
 logger = logging.getLogger(__name__)
@@ -125,8 +128,29 @@ def raise_for_status(response: SDKResponse) -> None:
             response=response.data,
             headers=response.headers,
         )
+    if response.status_code == 429:
+        raise RateLimitError(
+            message,
+            status_code=response.status_code,
+            response=response.data,
+            headers=response.headers,
+        )
     if response.status_code == 502:
         raise BadGatewayError(
+            message,
+            status_code=response.status_code,
+            response=response.data,
+            headers=response.headers,
+        )
+    if 500 <= response.status_code:
+        raise ServerError(
+            message,
+            status_code=response.status_code,
+            response=response.data,
+            headers=response.headers,
+        )
+    if 400 <= response.status_code:
+        raise InvalidRequestError(
             message,
             status_code=response.status_code,
             response=response.data,

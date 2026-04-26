@@ -93,9 +93,11 @@ headers, parsed responses, and common typed exceptions. Add narrower exception
 classes for rate limits, invalid requests, server errors, and strict response
 validation so callers can handle these cases without inspecting `error_type`.
 
-Status: partial. `ResponseValidationError` is implemented for strict response
-model failures; rate-limit and generic invalid/server errors still need explicit
-subclasses.
+Status: implemented. `ResponseValidationError` covers strict response model
+failures, `RateLimitError` covers 429 responses, `InvalidRequestError` covers
+generic 4xx request failures, and `ServerError` covers 5xx failures. These API
+response exceptions inherit from `ApiError` for backward-compatible catch-all
+handling.
 Priority: high.
 
 ## 9. Add API Spec Compatibility Guarantees
@@ -480,7 +482,7 @@ Priority: high.
 
 1. **Generate `docs/API_COVERAGE.md`**
 2. **Strict response model coverage for every typed response**
-3. **Refine error taxonomy**
+3. **Add API spec compatibility guarantees**
 
 This would make MailChannels stronger than Resend not only in SDK design and docs, but also in API-conformance discipline. Resend still has broader raw unit-test volume, especially paired async coverage, but you can leapfrog it by making OpenAPI conformance and route/request parity the backbone of the suite.
 

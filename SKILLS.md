@@ -375,8 +375,9 @@ final cryptographic signature check.
 
 ## Error Handling
 
-Catch specific SDK exceptions when behavior differs by failure type. All SDK
-exceptions inherit from `MailChannelsError`.
+Catch specific SDK exceptions when behavior differs by failure type. API
+response exceptions inherit from `ApiError`; all SDK exceptions inherit from
+`MailChannelsError`.
 
 ```python
 try:
@@ -384,6 +385,12 @@ try:
 except mailchannels.PayloadTooLargeError:
     raise
 except mailchannels.ForbiddenError:
+    raise
+except mailchannels.RateLimitError:
+    raise
+except mailchannels.InvalidRequestError:
+    raise
+except mailchannels.ServerError:
     raise
 ```
 

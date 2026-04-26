@@ -63,32 +63,44 @@ class ConfigurationError(MailChannelsError):
     """Raised when SDK configuration is missing or invalid."""
 
 
-class AuthenticationError(MailChannelsError):
+class ApiError(MailChannelsError):
+    """Raised for MailChannels API failures."""
+
+
+class AuthenticationError(ApiError):
     """Raised when MailChannels rejects authentication."""
 
 
-class ForbiddenError(MailChannelsError):
+class ForbiddenError(ApiError):
     """Raised when an account cannot access a requested feature."""
 
 
-class ConflictError(MailChannelsError):
+class ConflictError(ApiError):
     """Raised when MailChannels reports a resource conflict."""
 
 
-class PayloadTooLargeError(MailChannelsError):
+class PayloadTooLargeError(ApiError):
     """Raised when a request payload exceeds MailChannels limits."""
 
 
-class BadGatewayError(MailChannelsError):
+class RateLimitError(ApiError):
+    """Raised when MailChannels asks the caller to slow down."""
+
+
+class InvalidRequestError(ApiError):
+    """Raised when MailChannels rejects request parameters or payload shape."""
+
+
+class ServerError(ApiError):
+    """Raised when MailChannels returns a server-side failure."""
+
+
+class BadGatewayError(ServerError):
     """Raised when MailChannels returns a bad gateway response."""
 
 
 class ResponseValidationError(MailChannelsError):
     """Raised when strict response validation fails."""
-
-
-class ApiError(MailChannelsError):
-    """Raised for generic MailChannels API failures."""
 
 
 class AsyncClientNotConfigured(ConfigurationError):
