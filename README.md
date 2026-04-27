@@ -190,6 +190,9 @@ drift before it lands on `main`. The generated
 [API coverage report](docs/API_COVERAGE.md) summarizes endpoint coverage, SDK
 surfaces, contract-test coverage, online-test coverage, the OpenAPI spec hash,
 and the SDK version used for the report.
+The generated [API reference](docs/API_REFERENCE.md) lists public exports,
+classes, methods, parameters, return types, model fields, and compact examples
+from the SDK source.
 
 ### Choosing The Right Entry Point
 
@@ -1001,6 +1004,7 @@ uv build
 uv run python scripts/smoke_wheel_install.py
 uv run python scripts/check_openapi_drift.py
 uv run python scripts/generate_api_coverage.py
+uv run python scripts/generate_api_reference.py
 ```
 
 Current uv releases do not expose `uv pytest` as a native subcommand; use

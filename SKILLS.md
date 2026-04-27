@@ -528,6 +528,9 @@ When adding or changing SDK behavior:
 - Run `uv run python scripts/generate_api_coverage.py` after route, contract,
   online-test, or OpenAPI coverage changes so `docs/API_COVERAGE.md` stays
   aligned with the SDK registry and official spec hash.
+- Run `uv run python scripts/generate_api_reference.py` after changing public
+  exports, public method signatures, Pydantic models, TypedDicts, or docstrings
+  so `docs/API_REFERENCE.md` stays aligned with the source.
 - Keep `tests/test_openapi_contract.py` aligned with the route registry so API
   coverage remains visible in the public test tree. The snapshot should match
   `sdk_route_keys()` exactly.

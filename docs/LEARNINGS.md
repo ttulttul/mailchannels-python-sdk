@@ -353,3 +353,11 @@ local validation tests beside mocked raw-API rejection tests, and mark the live
 dry-run rejection matrix as `online` so maintainers can verify the same
 negative cases against the real `/send?dry-run=true` endpoint without
 delivering mail.
+
+## 2026-04-26: API reference generation should be deterministic
+
+Public API reference docs are most useful when they are generated from source
+without timestamps or network access. Keep `docs/API_REFERENCE.md` derived from
+`mailchannels.__all__`, subpackage `__all__` declarations, docstrings, method
+signatures, Pydantic model fields, and TypedDict annotations so review diffs
+show real public surface changes instead of regenerated noise.

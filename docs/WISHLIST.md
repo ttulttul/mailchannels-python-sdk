@@ -7,9 +7,8 @@ choosing the next engineering task.
 ## Recommended Order
 
 1. Add API spec compatibility guarantees
-2. Generate a formal API reference
-3. Explore OpenAPI-assisted generation
-4. Add request options if the API exposes per-request controls
+2. Explore OpenAPI-assisted generation
+3. Add request options if the API exposes per-request controls
 
 ## 1. Add API Spec Compatibility Guarantees
 
@@ -25,20 +24,7 @@ introspection.
 
 Priority: high.
 
-## 2. Generate a Formal API Reference
-
-The README is strong as a guide and tutorial, but the project also needs a
-formal generated API reference that lists public classes, methods, parameters,
-return types, and examples.
-
-A lightweight documentation tool should read type hints and docstrings from
-`src/mailchannels` and generate stable reference pages. The generated reference
-should complement the README rather than turn the README into exhaustive API
-documentation.
-
-Priority: medium.
-
-## 3. Explore OpenAPI-Assisted Generation
+## 2. Explore OpenAPI-Assisted Generation
 
 Investigate generating selected SDK artifacts from the MailChannels OpenAPI
 spec. A fully generated SDK may not be the right product design, but generated
@@ -51,7 +37,7 @@ the desired generated artifacts obvious.
 
 Priority: medium.
 
-## 4. Add Request Options If Needed
+## 3. Add Request Options If Needed
 
 If MailChannels exposes per-request option headers such as idempotency keys,
 model them as an `options` argument rather than forcing those controls into
@@ -71,6 +57,7 @@ API changes:
 - `/check-domain` support.
 - Route registry and bidirectional OpenAPI drift checks.
 - Generated `docs/API_COVERAGE.md` endpoint coverage report.
+- Generated `docs/API_REFERENCE.md` public SDK reference.
 - Operation-level request contract tests.
 - Exact route-call matrix coverage.
 - Sync/async request parity tests.
