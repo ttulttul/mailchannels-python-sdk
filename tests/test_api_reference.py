@@ -6,6 +6,7 @@ import importlib.util
 import sys
 from pathlib import Path
 from types import ModuleType
+from typing import TypedDict
 
 import mailchannels
 
@@ -48,6 +49,21 @@ def test_render_reference_includes_models_methods_and_examples() -> None:
     ) in report
     assert "Example for `send`:" in report
     assert "mailchannels.Emails.send(" in report
+
+
+def test_typed_dict_fields_do_not_evaluate_annotations() -> None:
+    """It renders TypedDict annotations without evaluating version-specific syntax."""
+
+    class FutureTypedDict(TypedDict):
+        """TypedDict with an annotation that must remain unevaluated."""
+
+        payload: str
+
+    FutureTypedDict.__annotations__["payload"] = "list[str] | MissingRuntimeName"
+
+    fields = reference._typed_dict_fields(FutureTypedDict)
+
+    assert "| `payload` | `list[str] \\| MissingRuntimeName` | yes |" in fields
 
 
 def test_api_reference_file_is_current() -> None:

@@ -9,7 +9,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
-from typing import Any, get_type_hints
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -265,7 +265,7 @@ def _pydantic_model_fields(value: type[BaseModel]) -> list[str]:
 
 def _typed_dict_fields(value: type[Any]) -> list[str]:
     """Render TypedDict fields."""
-    hints = get_type_hints(value)
+    hints = getattr(value, "__annotations__", {})
     required = set(getattr(value, "__required_keys__", set()))
     lines = ["", "Fields:", "", "| Field | Type | Required |", "| --- | --- | --- |"]
     for name, annotation in sorted(hints.items()):
@@ -407,6 +407,9 @@ def _format_annotation(value: Any) -> str:
     """Return a readable annotation string."""
     if value is None:
         return "None"
+    forward_arg = getattr(value, "__forward_arg__", None)
+    if isinstance(forward_arg, str):
+        return forward_arg.strip("'\"")
     text = getattr(value, "__name__", None)
     if isinstance(text, str):
         return text

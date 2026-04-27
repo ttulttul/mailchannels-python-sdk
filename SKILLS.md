@@ -531,6 +531,9 @@ When adding or changing SDK behavior:
 - Run `uv run python scripts/generate_api_reference.py` after changing public
   exports, public method signatures, Pydantic models, TypedDicts, or docstrings
   so `docs/API_REFERENCE.md` stays aligned with the source.
+  The generator must not call `typing.get_type_hints()` for TypedDict fields;
+  render raw `__annotations__` so Python 3.9 and 3.10 do not evaluate newer
+  union syntax inside postponed annotations.
 - Keep `tests/test_openapi_contract.py` aligned with the route registry so API
   coverage remains visible in the public test tree. The snapshot should match
   `sdk_route_keys()` exactly.

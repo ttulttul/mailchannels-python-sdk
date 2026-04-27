@@ -361,3 +361,11 @@ without timestamps or network access. Keep `docs/API_REFERENCE.md` derived from
 `mailchannels.__all__`, subpackage `__all__` declarations, docstrings, method
 signatures, Pydantic model fields, and TypedDict annotations so review diffs
 show real public surface changes instead of regenerated noise.
+
+## 2026-04-27: Do not evaluate TypedDict annotations in docs generation
+
+Python 3.9 and 3.10 can fail when `typing.get_type_hints()` evaluates postponed
+annotations that contain newer union syntax mixing built-in generics and
+TypedDicts. The API reference generator should render raw TypedDict
+`__annotations__` instead. Documentation does not need runtime-resolved types,
+and avoiding evaluation keeps generated docs compatible across the CI matrix.

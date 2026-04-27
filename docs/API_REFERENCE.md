@@ -577,10 +577,10 @@ Fields:
 
 | Field | Type | Required |
 | --- | --- | --- |
-| `attachments` | `list` | no |
-| `bcc` | `list[mailchannels.emails.EmailAddressDict] \| mailchannels.emails.EmailAddressDict \| list[str] \| str` | no |
-| `cc` | `list[mailchannels.emails.EmailAddressDict] \| mailchannels.emails.EmailAddressDict \| list[str] \| str` | no |
-| `content` | `list` | no |
+| `attachments` | `list[AttachmentDict \| Attachment]` | no |
+| `bcc` | `list[EmailAddressDict] \| EmailAddressDict \| list[str] \| str` | no |
+| `cc` | `list[EmailAddressDict] \| EmailAddressDict \| list[str] \| str` | no |
+| `content` | `list[ContentDict]` | no |
 | `dkim_domain` | `str` | no |
 | `dkim_private_key` | `str` | no |
 | `dkim_selector` | `str` | no |
@@ -590,13 +590,13 @@ Fields:
 | `from_email` | `EmailAddressDict` | no |
 | `from_field` | `EmailAddressDict` | no |
 | `from_name` | `str` | no |
-| `headers` | `dict` | no |
+| `headers` | `EmailHeaders` | no |
 | `html` | `str` | no |
-| `personalizations` | `list` | no |
-| `reply_to` | `mailchannels.emails.EmailAddressDict \| str` | no |
+| `personalizations` | `list[PersonalizationDict]` | no |
+| `reply_to` | `EmailAddressDict \| str` | no |
 | `subject` | `str` | no |
 | `text` | `str` | no |
-| `to` | `list[mailchannels.emails.EmailAddressDict] \| mailchannels.emails.EmailAddressDict \| list[str] \| str` | no |
+| `to` | `list[EmailAddressDict] \| EmailAddressDict \| list[str] \| str` | no |
 | `transactional` | `bool` | no |
 
 #### `mailchannels.SendResponse`
@@ -941,7 +941,7 @@ Fields:
 
 | Field | Type | Required |
 | --- | --- | --- |
-| `template_type` | `Literal` | no |
+| `template_type` | `Literal['mustache']` | no |
 | `type` | `str` | no |
 | `value` | `str` | no |
 
@@ -1064,18 +1064,18 @@ Fields:
 
 | Field | Type | Required |
 | --- | --- | --- |
-| `bcc` | `list` | no |
-| `cc` | `list` | no |
-| `dkim_domain` | `str` | no |
-| `dkim_private_key` | `str` | no |
-| `dkim_selector` | `str` | no |
-| `dynamic_template_data` | `dict` | no |
-| `from_` | `EmailAddressDict` | no |
-| `headers` | `dict` | no |
-| `reply_to` | `EmailAddressDict` | no |
-| `subject` | `str` | no |
-| `substitutions` | `dict` | no |
-| `to` | `list` | no |
+| `bcc` | `NotRequired[list[EmailAddressDict]]` | no |
+| `cc` | `NotRequired[list[EmailAddressDict]]` | no |
+| `dkim_domain` | `NotRequired[str]` | no |
+| `dkim_private_key` | `NotRequired[str]` | no |
+| `dkim_selector` | `NotRequired[str]` | no |
+| `dynamic_template_data` | `NotRequired[dict[str, Any]]` | no |
+| `from_` | `NotRequired[EmailAddressDict]` | no |
+| `headers` | `NotRequired[EmailHeaders]` | no |
+| `reply_to` | `NotRequired[EmailAddressDict]` | no |
+| `subject` | `NotRequired[str]` | no |
+| `substitutions` | `NotRequired[dict[str, str]]` | no |
+| `to` | `list[EmailAddressDict]` | no |
 
 #### `mailchannels.emails.QueuedSendResponse`
 
@@ -1097,10 +1097,10 @@ Fields:
 
 | Field | Type | Required |
 | --- | --- | --- |
-| `attachments` | `list` | no |
-| `bcc` | `list[mailchannels.emails.EmailAddressDict] \| mailchannels.emails.EmailAddressDict \| list[str] \| str` | no |
-| `cc` | `list[mailchannels.emails.EmailAddressDict] \| mailchannels.emails.EmailAddressDict \| list[str] \| str` | no |
-| `content` | `list` | no |
+| `attachments` | `list[AttachmentDict \| Attachment]` | no |
+| `bcc` | `list[EmailAddressDict] \| EmailAddressDict \| list[str] \| str` | no |
+| `cc` | `list[EmailAddressDict] \| EmailAddressDict \| list[str] \| str` | no |
+| `content` | `list[ContentDict]` | no |
 | `dkim_domain` | `str` | no |
 | `dkim_private_key` | `str` | no |
 | `dkim_selector` | `str` | no |
@@ -1110,13 +1110,13 @@ Fields:
 | `from_email` | `EmailAddressDict` | no |
 | `from_field` | `EmailAddressDict` | no |
 | `from_name` | `str` | no |
-| `headers` | `dict` | no |
+| `headers` | `EmailHeaders` | no |
 | `html` | `str` | no |
-| `personalizations` | `list` | no |
-| `reply_to` | `mailchannels.emails.EmailAddressDict \| str` | no |
+| `personalizations` | `list[PersonalizationDict]` | no |
+| `reply_to` | `EmailAddressDict \| str` | no |
 | `subject` | `str` | no |
 | `text` | `str` | no |
-| `to` | `list[mailchannels.emails.EmailAddressDict] \| mailchannels.emails.EmailAddressDict \| list[str] \| str` | no |
+| `to` | `list[EmailAddressDict] \| EmailAddressDict \| list[str] \| str` | no |
 | `transactional` | `bool` | no |
 
 #### `mailchannels.emails.SendResponse`
@@ -1523,7 +1523,7 @@ Fields:
 
 | Field | Type | Required |
 | --- | --- | --- |
-| `algorithm` | `Literal` | no |
+| `algorithm` | `DkimAlgorithm` | no |
 | `key_length` | `int` | no |
 | `selector` | `str` | no |
 
@@ -1589,7 +1589,7 @@ Fields:
 | `limit` | `int` | no |
 | `offset` | `int` | no |
 | `selector` | `str` | no |
-| `status` | `Literal` | no |
+| `status` | `DkimKeyStatus` | no |
 
 #### `mailchannels.dkim.DkimResource`
 
@@ -1713,9 +1713,9 @@ Fields:
 | Field | Type | Required |
 | --- | --- | --- |
 | `campaign_id` | `str` | no |
-| `end_time` | `Union` | no |
-| `interval` | `Literal` | no |
-| `start_time` | `Union` | no |
+| `end_time` | `MetricsTime` | no |
+| `interval` | `MetricsInterval` | no |
+| `start_time` | `MetricsTime` | no |
 
 #### `mailchannels.metrics.MetricsRecipientBehaviour`
 
@@ -1779,11 +1779,11 @@ Fields:
 
 | Field | Type | Required |
 | --- | --- | --- |
-| `end_time` | `Union` | no |
+| `end_time` | `MetricsTime` | no |
 | `limit` | `int` | no |
 | `offset` | `int` | no |
-| `sort_order` | `Literal` | no |
-| `start_time` | `Union` | no |
+| `sort_order` | `MetricsSortOrder` | no |
+| `start_time` | `MetricsTime` | no |
 
 #### `mailchannels.metrics.MetricsSenderResponse`
 
@@ -1854,8 +1854,8 @@ Fields:
 
 | Field | Type | Required |
 | --- | --- | --- |
-| `company_name` | `str` | no |
-| `handle` | `str` | no |
+| `company_name` | `NotRequired[str]` | no |
+| `handle` | `NotRequired[str]` | no |
 
 #### `mailchannels.sub_accounts.SetLimitParams`
 
@@ -2049,7 +2049,7 @@ Fields:
 | --- | --- | --- |
 | `notes` | `str \| None` | no |
 | `recipient` | `str` | no |
-| `suppression_types` | `list` | no |
+| `suppression_types` | `list[SuppressionType]` | no |
 
 #### `mailchannels.suppressions.SuppressionListResponse`
 
