@@ -5,8 +5,8 @@ This reference is generated from public SDK exports, type hints, Pydantic models
 For task-oriented examples, start with the README. This file is the formal public surface reference.
 
 - SDK version: `0.1.0`
-- Top-level exports: `62`
-- Documented public module exports: `175`
+- Top-level exports: `63`
+- Documented public module exports: `177`
 
 ## Top-Level Exports
 
@@ -50,7 +50,8 @@ For task-oriented examples, start with the README. This file is the formal publi
 | `ResponseValidationError` | `exception` | Raised when strict response validation fails. |
 | `SDKResponse` | `class` | Normalized HTTP response returned by SDK transports. |
 | `SendParams` | `TypedDict` | Resend-style or MailChannels-style email parameters. |
-| `SendResponse` | `Pydantic model` | Response returned by MailChannels email send endpoints. |
+| `SendResponse` | `Pydantic model` | Response returned by the MailChannels `/send` endpoint. |
+| `SendResult` | `Pydantic model` | Delivery handoff result for one send personalization. |
 | `SenderDomainResult` | `Pydantic model` | Sender-domain DNS check result. |
 | `ServerError` | `exception` | Raised when MailChannels returns a server-side failure. |
 | `SignatureParameters` | `Pydantic model` | Parsed metadata from a MailChannels Signature-Input header. |
@@ -533,12 +534,14 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Response returned when MailChannels queues an email for async processing.
-- Signature: `mailchannels.QueuedSendResponse()`
+- Signature: `mailchannels.QueuedSendResponse(request_id: str, queued_at: datetime)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
+| `request_id` | `str` | yes | `` |
+| `queued_at` | `datetime` | yes | `` |
 
 #### `mailchannels.RateLimitError`
 
@@ -602,13 +605,31 @@ Fields:
 #### `mailchannels.SendResponse`
 
 - Kind: `Pydantic model`
-- Summary: Response returned by MailChannels email send endpoints.
-- Signature: `mailchannels.SendResponse()`
+- Summary: Response returned by the MailChannels `/send` endpoint.
+- Signature: `mailchannels.SendResponse(request_id: str | None, results: list[mailchannels.emails.SendResult] | None, data: list[str] | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
+| `request_id` | `str \| None` | no | `None` |
+| `results` | `list[mailchannels.emails.SendResult] \| None` | no | `None` |
+| `data` | `list[str] \| None` | no | `None` |
+
+#### `mailchannels.SendResult`
+
+- Kind: `Pydantic model`
+- Summary: Delivery handoff result for one send personalization.
+- Signature: `mailchannels.SendResult(index: int, message_id: str, status: Literal, reason: str | None)`
+
+Fields:
+
+| Field | Type | Required | Default |
+| --- | --- | --- | --- |
+| `index` | `int` | yes | `` |
+| `message_id` | `str` | yes | `` |
+| `status` | `Literal` | yes | `` |
+| `reason` | `str \| None` | no | `None` |
 
 #### `mailchannels.SenderDomainResult`
 
@@ -1081,12 +1102,14 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Response returned when MailChannels queues an email for async processing.
-- Signature: `mailchannels.emails.QueuedSendResponse()`
+- Signature: `mailchannels.emails.QueuedSendResponse(request_id: str, queued_at: datetime)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
+| `request_id` | `str` | yes | `` |
+| `queued_at` | `datetime` | yes | `` |
 
 #### `mailchannels.emails.SendParams`
 
@@ -1122,13 +1145,31 @@ Fields:
 #### `mailchannels.emails.SendResponse`
 
 - Kind: `Pydantic model`
-- Summary: Response returned by MailChannels email send endpoints.
-- Signature: `mailchannels.emails.SendResponse()`
+- Summary: Response returned by the MailChannels `/send` endpoint.
+- Signature: `mailchannels.emails.SendResponse(request_id: str | None, results: list[mailchannels.emails.SendResult] | None, data: list[str] | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
+| `request_id` | `str \| None` | no | `None` |
+| `results` | `list[mailchannels.emails.SendResult] \| None` | no | `None` |
+| `data` | `list[str] \| None` | no | `None` |
+
+#### `mailchannels.emails.SendResult`
+
+- Kind: `Pydantic model`
+- Summary: Delivery handoff result for one send personalization.
+- Signature: `mailchannels.emails.SendResult(index: int, message_id: str, status: Literal, reason: str | None)`
+
+Fields:
+
+| Field | Type | Required | Default |
+| --- | --- | --- | --- |
+| `index` | `int` | yes | `` |
+| `message_id` | `str` | yes | `` |
+| `status` | `Literal` | yes | `` |
+| `reason` | `str \| None` | no | `None` |
 
 #### `mailchannels.emails.UNSUBSCRIBE_URL_PLACEHOLDER`
 

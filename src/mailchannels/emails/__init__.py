@@ -16,6 +16,7 @@ from .types import (
     QueuedSendResponse,
     SendParams,
     SendResponse,
+    SendResult,
 )
 
 __all__ = [
@@ -34,6 +35,7 @@ __all__ = [
     "QueuedSendResponse",
     "SendParams",
     "SendResponse",
+    "SendResult",
     "UNSUBSCRIBE_URL_PLACEHOLDER",
     "normalize_email_params",
 ]

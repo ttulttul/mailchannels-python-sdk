@@ -227,6 +227,10 @@ longer matches the expected shape. Endpoints without a stable model still return
 the normal dict-like response. The test suite covers every exposed response model
 with valid bodies, missing required fields, invalid field types, response
 headers, and extra API fields so SDK/API shape drift is caught early.
+For email sends, strict mode validates `/send` normal responses as
+`SendResponse(request_id=..., results=[...])`, `/send` dry-run responses as
+`SendResponse(data=[...])`, and `/send-async` responses as
+`QueuedSendResponse(request_id=..., queued_at=...)`.
 
 ```python
 client = mailchannels.Client(

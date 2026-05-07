@@ -369,3 +369,11 @@ annotations that contain newer union syntax mixing built-in generics and
 TypedDicts. The API reference generator should render raw TypedDict
 `__annotations__` instead. Documentation does not need runtime-resolved types,
 and avoiding evaluation keeps generated docs compatible across the CI matrix.
+
+## 2026-05-07: Strict send responses need variant validation
+
+MailChannels `/send` has two successful response shapes: normal sends return a
+request ID with per-personalization send results, while dry-run sends return
+rendered message data. `/send-async` returns a request ID and queue timestamp.
+Strict response mode should validate these variants explicitly so `{}` and
+other unmodeled response bodies do not pass on the SDK's primary endpoints.

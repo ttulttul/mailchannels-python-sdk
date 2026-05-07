@@ -5,12 +5,13 @@ from __future__ import annotations
 import base64
 import logging
 import mimetypes
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal, TypedDict
 from urllib.parse import urlparse
 
 import requests
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing_extensions import NotRequired
 
 from ..exceptions import MailChannelsError
@@ -301,16 +302,74 @@ class EmailParams(BaseModel):
         return self.model_dump(by_alias=True, exclude_none=True)
 
 
-class SendResponse(BaseModel):
-    """Response returned by MailChannels email send endpoints."""
+class SendResult(BaseModel):
+    """Delivery handoff result for one send personalization."""
 
     model_config = ConfigDict(extra="allow")
+
+    index: int
+    message_id: str
+    status: Literal["sent", "failed"]
+    reason: str | None = None
+
+
+class SendResponse(BaseModel):
+    """Response returned by the MailChannels `/send` endpoint."""
+
+    model_config = ConfigDict(extra="allow")
+
+    request_id: str | None = None
+    results: list[SendResult] | None = None
+    data: list[str] | None = None
+
+    @field_validator("results")
+    @classmethod
+    def _validate_send_results(
+        cls,
+        value: list[SendResult] | None,
+    ) -> list[SendResult] | None:
+        """Require normal send responses to include at least one result."""
+        if value is not None and len(value) == 0:
+            logger.error("MailChannels send response included no results")
+            raise ValueError("send results must not be empty")
+        return value
+
+    @field_validator("data")
+    @classmethod
+    def _validate_dry_run_data(cls, value: list[str] | None) -> list[str] | None:
+        """Require dry-run send responses to include rendered message data."""
+        if value is not None and len(value) == 0:
+            logger.error("MailChannels dry-run response included no rendered data")
+            raise ValueError("dry-run data must not be empty")
+        return value
+
+    @field_validator("request_id")
+    @classmethod
+    def _validate_send_shape(cls, value: str | None) -> str | None:
+        """Keep request IDs non-empty when the API returns them."""
+        if value == "":
+            logger.error("MailChannels send response included an empty request_id")
+            raise ValueError("request_id must not be empty")
+        return value
+
+    @model_validator(mode="after")
+    def _validate_response_variant(self) -> SendResponse:
+        """Validate that `/send` returned either send results or dry-run data."""
+        has_send_results = self.request_id is not None and self.results is not None
+        has_dry_run_data = self.data is not None
+        if not has_send_results and not has_dry_run_data:
+            logger.error("MailChannels send response missing results or dry-run data")
+            raise ValueError("send response must include request_id/results or data")
+        return self
 
 
 class QueuedSendResponse(BaseModel):
     """Response returned when MailChannels queues an email for async processing."""
 
     model_config = ConfigDict(extra="allow")
+
+    request_id: str
+    queued_at: datetime
 
 
 def _base64_content(data: bytes) -> str:

@@ -32,6 +32,7 @@ from .emails import (
     QueuedSendResponse,
     SendParams,
     SendResponse,
+    SendResult,
 )
 from .exceptions import (
     ApiError,
@@ -112,6 +113,7 @@ __all__ = [
     "RequestsClient",
     "SendParams",
     "SendResponse",
+    "SendResult",
     "SenderDomainResult",
     "ServerError",
     "SDKResponse",

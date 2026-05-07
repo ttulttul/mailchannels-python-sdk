@@ -95,7 +95,37 @@ STRICT_RESPONSE_CASES = (
             }
         ),
         SendResponse,
-        {"id": "sent_123"},
+        {
+            "request_id": "req_123",
+            "results": [
+                {
+                    "index": 0,
+                    "message_id": "msg_123",
+                    "status": "sent",
+                }
+            ],
+        },
+        missing_required={"request_id": "req_123"},
+        invalid_type={
+            "request_id": "req_123",
+            "results": [{"index": 0, "message_id": "msg_123", "status": "unknown"}],
+        },
+    ),
+    StrictResponseCase(
+        "emails-send-dry-run",
+        lambda client: client.emails.send(
+            {
+                "from": {"email": "sender@example.com"},
+                "to": "recipient@example.net",
+                "subject": "Hello",
+                "text": "Hello",
+            },
+            dry_run=True,
+        ),
+        SendResponse,
+        {"data": ["From: sender@example.com\n\nHello"]},
+        missing_required={},
+        invalid_type={"data": []},
     ),
     StrictResponseCase(
         "emails-queue",
@@ -108,7 +138,9 @@ STRICT_RESPONSE_CASES = (
             }
         ),
         QueuedSendResponse,
-        {"id": "queued_123"},
+        {"request_id": "req_queued", "queued_at": "2026-04-01T00:00:00Z"},
+        missing_required={"request_id": "req_queued"},
+        invalid_type={"request_id": "req_queued", "queued_at": "not-a-date"},
     ),
     StrictResponseCase(
         "usage",
