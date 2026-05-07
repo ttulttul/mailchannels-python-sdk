@@ -151,6 +151,36 @@ class Client:
         logger.debug("Resolved MailChannels URL path=%s url=%s", path, resolved)
         return resolved
 
+    def close(self) -> None:
+        """Close owned synchronous transport resources when supported."""
+        close = getattr(self.http_client, "close", None)
+        if callable(close):
+            logger.debug("Closing MailChannels sync transport")
+            close()
+
+    async def aclose(self) -> None:
+        """Close owned asynchronous transport resources when supported."""
+        aclose = getattr(self.async_http_client, "aclose", None)
+        if callable(aclose):
+            logger.debug("Closing MailChannels async transport")
+            await aclose()
+
+    def __enter__(self) -> Client:
+        """Enter a synchronous client context."""
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        """Close sync transport resources when leaving a client context."""
+        self.close()
+
+    async def __aenter__(self) -> Client:
+        """Enter an asynchronous client context."""
+        return self
+
+    async def __aexit__(self, *args: object) -> None:
+        """Close async transport resources when leaving a client context."""
+        await self.aclose()
+
 
 def get_default_client() -> Client:
     """Create a client from module-level SDK configuration."""

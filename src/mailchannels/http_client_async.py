@@ -21,6 +21,7 @@ class HTTPXClient:
     def __init__(self, *, timeout: float = 30.0) -> None:
         """Create an httpx-backed async HTTP client."""
         self.timeout = timeout
+        self._client: Any | None = None
 
     async def request(
         self,
@@ -32,24 +33,14 @@ class HTTPXClient:
         params: dict[str, Any] | None = None,
     ) -> SDKResponse:
         """Send an async HTTP request and return a normalized SDK response."""
-        try:
-            import httpx
-        except ImportError as error:
-            logger.error("httpx is required for async MailChannels requests")
-            raise AsyncClientNotConfigured(
-                'Install async support with `pip install "mailchannels[async]"`.',
-                code="AsyncClientNotConfigured",
-            ) from error
-
         logger.info("Sending async MailChannels request method=%s url=%s", method, url)
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            response = await client.request(
-                method,
-                url,
-                headers=headers,
-                json=json,
-                params=params,
-            )
+        response = await self._get_client().request(
+            method,
+            url,
+            headers=headers,
+            json=json,
+            params=params,
+        )
         try:
             data: Any = response.json()
         except ValueError:
@@ -64,3 +55,36 @@ class HTTPXClient:
             text=response.text,
             headers=dict(response.headers),
         )
+
+    async def aclose(self) -> None:
+        """Close the underlying httpx async client if it has been created."""
+        if self._client is None:
+            logger.debug("MailChannels async HTTP client was never opened")
+            return
+        logger.debug("Closing MailChannels async HTTP client")
+        await self._client.aclose()
+        self._client = None
+
+    async def __aenter__(self) -> HTTPXClient:
+        """Enter an asynchronous transport context."""
+        return self
+
+    async def __aexit__(self, *args: object) -> None:
+        """Close the transport when leaving an asynchronous context."""
+        await self.aclose()
+
+    def _get_client(self) -> Any:
+        """Return the persistent httpx async client, creating it on first use."""
+        if self._client is not None:
+            return self._client
+        try:
+            import httpx
+        except ImportError as error:
+            logger.error("httpx is required for async MailChannels requests")
+            raise AsyncClientNotConfigured(
+                'Install async support with `pip install "mailchannels[async]"`.',
+                code="AsyncClientNotConfigured",
+            ) from error
+        self._client = httpx.AsyncClient(timeout=self.timeout)
+        logger.debug("Created persistent MailChannels async HTTP client")
+        return self._client

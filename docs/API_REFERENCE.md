@@ -257,6 +257,8 @@ Methods:
 
 | Method | Signature | Summary |
 | --- | --- | --- |
+| `aclose` | `aclose() -> None` | Close owned asynchronous transport resources when supported. |
+| `close` | `close() -> None` | Close owned synchronous transport resources when supported. |
 | `request` | `request(method: str, path: str, *, json: dict[str, Any] | None = None, params: dict[str, Any] | None = None, extra_headers: dict[str, str] | None = None, require_api_key: bool = True, response_model: type[ResponseModel] | None = None) -> Any` | Send a synchronous API request. |
 | `request_async` | `request_async(method: str, path: str, *, json: dict[str, Any] | None = None, params: dict[str, Any] | None = None, extra_headers: dict[str, str] | None = None, require_api_key: bool = True, response_model: type[ResponseModel] | None = None) -> Any` | Send an asynchronous API request. |
 
@@ -442,6 +444,7 @@ Methods:
 
 | Method | Signature | Summary |
 | --- | --- | --- |
+| `aclose` | `aclose() -> None` | Close the underlying httpx async client if it has been created. |
 | `request` | `request(method: str, url: str, *, headers: dict[str, str], json: dict[str, Any] | None = None, params: dict[str, Any] | None = None) -> SDKResponse` | Send an async HTTP request and return a normalized SDK response. |
 
 #### `mailchannels.InvalidRequestError`
@@ -558,6 +561,7 @@ Methods:
 
 | Method | Signature | Summary |
 | --- | --- | --- |
+| `close` | `close() -> None` | Close the underlying requests session. |
 | `request` | `request(method: str, url: str, *, headers: dict[str, str], json: dict[str, Any] | None = None, params: dict[str, Any] | None = None) -> SDKResponse` | Send an HTTP request and return a normalized SDK response. |
 
 #### `mailchannels.ResponseValidationError`

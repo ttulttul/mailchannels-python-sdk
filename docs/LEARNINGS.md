@@ -377,3 +377,12 @@ request ID with per-personalization send results, while dry-run sends return
 rendered message data. `/send-async` returns a request ID and queue timestamp.
 Strict response mode should validate these variants explicitly so `{}` and
 other unmodeled response bodies do not pass on the SDK's primary endpoints.
+
+## 2026-05-07: Default transports should pool connections
+
+The SDK's default transports should be reusable resources, not per-request
+wrappers. `RequestsClient` owns one `requests.Session`, and `HTTPXClient`
+lazily creates one `httpx.AsyncClient` so sync-only installs still work without
+the async extra. Explicit `close()` and `aclose()` hooks, plus sync and async
+client context managers, make lifecycle management visible to applications and
+tests.

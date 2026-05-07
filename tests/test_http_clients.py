@@ -9,9 +9,11 @@ from typing import Any
 import pytest
 import requests
 
+from mailchannels.client import Client
 from mailchannels.exceptions import AsyncClientNotConfigured
 from mailchannels.http_client import RequestsClient
 from mailchannels.http_client_async import HTTPXClient
+from mailchannels.response import SDKResponse
 
 
 class _FakeRequestsResponse:
@@ -69,37 +71,51 @@ class _FakeHTTPXResponse:
 def test_requests_client_passes_request_arguments_and_timeout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """It forwards request arguments to requests with the configured timeout."""
+    """It forwards request arguments through a persistent requests session."""
     calls: list[dict[str, Any]] = []
+    sessions: list[FakeSession] = []
 
-    def fake_request(
-        method: str,
-        url: str,
-        *,
-        headers: dict[str, str],
-        json: dict[str, Any] | None,
-        params: dict[str, Any] | None,
-        timeout: float,
-    ) -> _FakeRequestsResponse:
-        """Record the request arguments and return a JSON response."""
-        calls.append(
-            {
-                "method": method,
-                "url": url,
-                "headers": headers,
-                "json": json,
-                "params": params,
-                "timeout": timeout,
-            }
-        )
-        return _FakeRequestsResponse(
-            status_code=201,
-            data={"ok": True},
-            text='{"ok": true}',
-            headers={"X-Request-ID": "req_sync"},
-        )
+    class FakeSession:
+        """Minimal requests session used to prove pooling."""
 
-    monkeypatch.setattr(requests, "request", fake_request)
+        def __init__(self) -> None:
+            """Record the created session."""
+            self.closed = False
+            sessions.append(self)
+
+        def request(
+            self,
+            method: str,
+            url: str,
+            *,
+            headers: dict[str, str],
+            json: dict[str, Any] | None,
+            params: dict[str, Any] | None,
+            timeout: float,
+        ) -> _FakeRequestsResponse:
+            """Record the request arguments and return a JSON response."""
+            calls.append(
+                {
+                    "method": method,
+                    "url": url,
+                    "headers": headers,
+                    "json": json,
+                    "params": params,
+                    "timeout": timeout,
+                }
+            )
+            return _FakeRequestsResponse(
+                status_code=201,
+                data={"ok": True},
+                text='{"ok": true}',
+                headers={"X-Request-ID": "req_sync"},
+            )
+
+        def close(self) -> None:
+            """Record that the session was closed."""
+            self.closed = True
+
+    monkeypatch.setattr(requests, "Session", FakeSession)
     client = RequestsClient(timeout=12.5)
 
     response = client.request(
@@ -109,8 +125,16 @@ def test_requests_client_passes_request_arguments_and_timeout(
         json={"hello": "world"},
         params={"dry-run": "true"},
     )
+    client.request(
+        "GET",
+        "https://api.example.test/usage",
+        headers={"X-Api-Key": "test-key"},
+    )
+    client.close()
 
-    assert calls == [
+    assert len(sessions) == 1
+    assert sessions[0].closed is True
+    assert calls[:1] == [
         {
             "method": "POST",
             "url": "https://api.example.test/send",
@@ -120,6 +144,7 @@ def test_requests_client_passes_request_arguments_and_timeout(
             "timeout": 12.5,
         }
     ]
+    assert calls[1]["url"] == "https://api.example.test/usage"
     assert response.status_code == 201
     assert response.data == {"ok": True}
     assert response.text == '{"ok": true}'
@@ -132,12 +157,15 @@ def test_requests_client_handles_non_json_response(
     """It normalizes non-JSON responses with data set to None."""
     monkeypatch.setattr(
         requests,
-        "request",
-        lambda *args, **kwargs: _FakeRequestsResponse(
-            status_code=204,
-            text="",
-            headers={"X-Request-ID": "req_empty"},
-            json_error=requests.JSONDecodeError("bad json", "", 0),
+        "Session",
+        lambda: types.SimpleNamespace(
+            request=lambda *args, **kwargs: _FakeRequestsResponse(
+                status_code=204,
+                text="",
+                headers={"X-Request-ID": "req_empty"},
+                json_error=requests.JSONDecodeError("bad json", "", 0),
+            ),
+            close=lambda: None,
         ),
     )
 
@@ -156,22 +184,18 @@ def test_requests_client_handles_non_json_response(
 async def test_httpx_client_passes_request_arguments_and_timeout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """It forwards async request arguments through httpx.AsyncClient."""
+    """It forwards async requests through one persistent httpx.AsyncClient."""
     calls: list[dict[str, Any]] = []
+    clients: list[FakeAsyncClient] = []
 
     class FakeAsyncClient:
-        """Minimal async context manager matching httpx.AsyncClient."""
+        """Minimal async client matching httpx.AsyncClient."""
 
         def __init__(self, *, timeout: float) -> None:
             """Record the configured timeout."""
             self.timeout = timeout
-
-        async def __aenter__(self) -> FakeAsyncClient:
-            """Enter the async context manager."""
-            return self
-
-        async def __aexit__(self, *args: object) -> None:
-            """Exit the async context manager."""
+            self.closed = False
+            clients.append(self)
 
         async def request(
             self,
@@ -200,6 +224,10 @@ async def test_httpx_client_passes_request_arguments_and_timeout(
                 headers={"X-Request-ID": "req_async"},
             )
 
+        async def aclose(self) -> None:
+            """Record that the async client was closed."""
+            self.closed = True
+
     monkeypatch.setitem(
         __import__("sys").modules,
         "httpx",
@@ -214,8 +242,16 @@ async def test_httpx_client_passes_request_arguments_and_timeout(
         json={"hello": "world"},
         params={"dry-run": "true"},
     )
+    await client.request(
+        "GET",
+        "https://api.example.test/usage",
+        headers={"X-Api-Key": "test-key"},
+    )
+    await client.aclose()
 
-    assert calls == [
+    assert len(clients) == 1
+    assert clients[0].closed is True
+    assert calls[:1] == [
         {
             "method": "POST",
             "url": "https://api.example.test/send-async",
@@ -225,6 +261,7 @@ async def test_httpx_client_passes_request_arguments_and_timeout(
             "timeout": 7.5,
         }
     ]
+    assert calls[1]["url"] == "https://api.example.test/usage"
     assert response.status_code == 202
     assert response.data == {"queued": True}
     assert response.text == '{"queued": true}'
@@ -237,17 +274,10 @@ async def test_httpx_client_handles_non_json_response(
     """It normalizes async non-JSON responses with data set to None."""
 
     class FakeAsyncClient:
-        """Minimal async context manager returning a non-JSON response."""
+        """Minimal async client returning a non-JSON response."""
 
         def __init__(self, *, timeout: float) -> None:
             """Accept the configured timeout."""
-
-        async def __aenter__(self) -> FakeAsyncClient:
-            """Enter the async context manager."""
-            return self
-
-        async def __aexit__(self, *args: object) -> None:
-            """Exit the async context manager."""
 
         async def request(self, *args: object, **kwargs: object) -> _FakeHTTPXResponse:
             """Return a response whose JSON parser fails."""
@@ -257,6 +287,9 @@ async def test_httpx_client_handles_non_json_response(
                 headers={"X-Request-ID": "req_async_empty"},
                 json_error=ValueError("bad json"),
             )
+
+        async def aclose(self) -> None:
+            """Close the fake async client."""
 
     monkeypatch.setitem(
         __import__("sys").modules,
@@ -301,3 +334,71 @@ async def test_httpx_client_missing_httpx_dependency_raises_configuration_error(
     assert error.value.code == "AsyncClientNotConfigured"
     assert error.value.error_type == "AsyncClientNotConfigured"
     assert 'pip install "mailchannels[async]"' in str(error.value)
+
+
+def test_client_context_closes_sync_transport() -> None:
+    """It closes sync transport resources when used as a context manager."""
+
+    class ClosableSyncTransport:
+        """Sync transport that records close calls."""
+
+        def __init__(self) -> None:
+            """Create a closable sync transport."""
+            self.closed = False
+
+        def request(
+            self,
+            method: str,
+            url: str,
+            *,
+            headers: dict[str, str],
+            json: dict[str, Any] | None = None,
+            params: dict[str, Any] | None = None,
+        ) -> SDKResponse:
+            """Return a minimal successful response."""
+            return SDKResponse(200, {"ok": True}, "{}")
+
+        def close(self) -> None:
+            """Record that the transport was closed."""
+            self.closed = True
+
+    transport = ClosableSyncTransport()
+
+    with Client(api_key="test-key", http_client=transport):
+        pass
+
+    assert transport.closed is True
+
+
+async def test_client_async_context_closes_async_transport() -> None:
+    """It closes async transport resources when used as an async context manager."""
+
+    class ClosableAsyncTransport:
+        """Async transport that records close calls."""
+
+        def __init__(self) -> None:
+            """Create a closable async transport."""
+            self.closed = False
+
+        async def request(
+            self,
+            method: str,
+            url: str,
+            *,
+            headers: dict[str, str],
+            json: dict[str, Any] | None = None,
+            params: dict[str, Any] | None = None,
+        ) -> SDKResponse:
+            """Return a minimal successful response."""
+            return SDKResponse(200, {"ok": True}, "{}")
+
+        async def aclose(self) -> None:
+            """Record that the transport was closed."""
+            self.closed = True
+
+    transport = ClosableAsyncTransport()
+
+    async with Client(api_key="test-key", async_http_client=transport):
+        pass
+
+    assert transport.closed is True

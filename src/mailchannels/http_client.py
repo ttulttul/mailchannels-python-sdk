@@ -22,6 +22,7 @@ class RequestsClient:
     def __init__(self, *, timeout: float = 30.0) -> None:
         """Create a requests-backed HTTP client."""
         self.timeout = timeout
+        self._session = requests.Session()
 
     def request(
         self,
@@ -34,7 +35,7 @@ class RequestsClient:
     ) -> SDKResponse:
         """Send an HTTP request and return a normalized SDK response."""
         logger.info("Sending MailChannels request method=%s url=%s", method, url)
-        response = requests.request(
+        response = self._session.request(
             method,
             url,
             headers=headers,
@@ -56,3 +57,16 @@ class RequestsClient:
             text=response.text,
             headers=dict(response.headers),
         )
+
+    def close(self) -> None:
+        """Close the underlying requests session."""
+        logger.debug("Closing MailChannels requests session")
+        self._session.close()
+
+    def __enter__(self) -> RequestsClient:
+        """Enter a synchronous transport context."""
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        """Close the transport when leaving a synchronous context."""
+        self.close()

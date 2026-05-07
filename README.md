@@ -926,11 +926,18 @@ print(mailchannels.__version__)
 print(mailchannels.get_version())
 ```
 
-The default synchronous transport uses `requests`, and the default async
-transport uses `httpx`. If your application needs custom retry behavior,
-instrumentation, test isolation, or a framework-specific HTTP stack, pass a
-transport object that implements the `SyncHTTPClient` or `AsyncHTTPClient`
-protocol. The method must return `mailchannels.SDKResponse`.
+The default synchronous transport keeps one `requests.Session` per SDK
+transport, and the default async transport keeps one lazily-created
+`httpx.AsyncClient` per SDK transport. Reuse a `Client` instance when sending
+multiple requests so connection pooling and TLS reuse can work. Call
+`client.close()` for sync clients or `await client.aclose()` for async clients
+when a long-lived process is done with the SDK, or use the client as a context
+manager.
+
+If your application needs custom retry behavior, instrumentation, test
+isolation, or a framework-specific HTTP stack, pass a transport object that
+implements the `SyncHTTPClient` or `AsyncHTTPClient` protocol. The method must
+return `mailchannels.SDKResponse`.
 
 ```python
 from typing import Any
@@ -940,6 +947,10 @@ import mailchannels
 
 class LoggingTransport:
     """Small example transport that satisfies SyncHTTPClient."""
+
+    def __init__(self) -> None:
+        """Create a logging transport with a pooled inner transport."""
+        self._inner = mailchannels.RequestsClient()
 
     def request(
         self,
@@ -952,13 +963,17 @@ class LoggingTransport:
     ) -> mailchannels.SDKResponse:
         """Send a request and return a normalized SDK response."""
         print(method, url)
-        return mailchannels.RequestsClient().request(
+        return self._inner.request(
             method,
             url,
             headers=headers,
             json=json,
             params=params,
         )
+
+    def close(self) -> None:
+        """Close the pooled inner transport."""
+        self._inner.close()
 
 
 client = mailchannels.Client(

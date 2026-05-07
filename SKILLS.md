@@ -423,6 +423,12 @@ building examples or support-facing error paths.
 The SDK exports `mailchannels.__version__` and `mailchannels.get_version()`.
 The User-Agent is derived from this value.
 
+Default transports are pooled. `RequestsClient` owns one `requests.Session`;
+`HTTPXClient` lazily creates and reuses one `httpx.AsyncClient`. Reuse explicit
+`Client` instances for multiple calls, and close long-lived clients with
+`client.close()`, `await client.aclose()`, or the sync/async context-manager
+protocols.
+
 For custom transports, implement `mailchannels.SyncHTTPClient` or
 `mailchannels.AsyncHTTPClient`. The `request()` method must accept `method`,
 `url`, `headers`, optional `json`, optional `params`, and return

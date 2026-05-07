@@ -6,42 +6,24 @@ choosing the next engineering task.
 
 ## Recommended Order
 
-1. Tighten strict response typing and `/send` response validation
-2. Reuse HTTP transport clients across requests
-3. Add complete webhook signature verification
-4. Fix future-dated webhook signature freshness checks
-5. Lower intentional destructive-operation logs from warning to info
-6. Add API spec compatibility guarantees
-7. Explore OpenAPI-assisted generation
-8. Add request options if the API exposes per-request controls
+1. Tighten strict response return typing
+2. Add complete webhook signature verification
+3. Fix future-dated webhook signature freshness checks
+4. Lower intentional destructive-operation logs from warning to info
+5. Add API spec compatibility guarantees
+6. Explore OpenAPI-assisted generation
+7. Add request options if the API exposes per-request controls
 
-## 1. Tighten Strict Response Typing And `/send` Validation
+## 1. Tighten Strict Response Return Typing
 
 Strict response mode currently returns Pydantic models at runtime while public
 resource annotations still say `dict[str, Any]`. That hides the benefit from
 type checkers. Add overloads or another typed response strategy so callers who
 opt into `strict_responses=True` can see model attributes statically.
 
-The `/send` and `/send-async` response models must also declare the documented
-fields instead of accepting any object. Model the normal `/send` request ID and
-per-personalization results, the dry-run rendered-message response, and the
-`/send-async` request ID and queue timestamp so strict mode detects API drift on
-the SDK's highest-volume endpoints.
-
 Priority: high.
 
-## 2. Reuse HTTP Transport Clients Across Requests
-
-The sync transport currently calls `requests.request(...)` directly and the
-async transport constructs a new `httpx.AsyncClient` per call. Hold one
-`requests.Session` per sync transport and one `httpx.AsyncClient` per async
-transport so the SDK gets connection pooling, TLS reuse, and HTTP/2
-multiplexing where available. Add close/context-manager support for the async
-client and update test fakes accordingly.
-
-Priority: high.
-
-## 3. Add Complete Webhook Signature Verification
+## 2. Add Complete Webhook Signature Verification
 
 `Webhooks.verify_content_digest(...)` only validates the `Content-Digest` header
 against the raw body. It does not verify the RFC 9421 Ed25519 signature. Add a
@@ -51,7 +33,7 @@ documentation.
 
 Priority: high.
 
-## 4. Fix Future-Dated Webhook Signature Freshness
+## 3. Fix Future-Dated Webhook Signature Freshness
 
 `signature_is_fresh(...)` uses `abs(reference - created)`, which treats
 signatures from the future the same as old signatures. Split the check into
@@ -60,7 +42,7 @@ for one release.
 
 Priority: high.
 
-## 5. Lower Intentional Destructive-Operation Logs
+## 4. Lower Intentional Destructive-Operation Logs
 
 User-initiated destructive calls currently log at warning level in DKIM,
 webhooks, sub-accounts, and suppressions. Lower those normal operations to info
@@ -68,7 +50,7 @@ level and reserve warning for unexpected recoverable behavior.
 
 Priority: high.
 
-## 6. Add API Spec Compatibility Guarantees
+## 5. Add API Spec Compatibility Guarantees
 
 Tie SDK releases to the MailChannels OpenAPI document they were checked against.
 Expose the OpenAPI source URL, spec hash, and checked date in generated
@@ -82,7 +64,7 @@ introspection.
 
 Priority: high.
 
-## 7. Explore OpenAPI-Assisted Generation
+## 6. Explore OpenAPI-Assisted Generation
 
 Investigate generating selected SDK artifacts from the MailChannels OpenAPI
 spec. A fully generated SDK may not be the right product design, but generated
@@ -95,7 +77,7 @@ the desired generated artifacts obvious.
 
 Priority: medium.
 
-## 8. Add Request Options If Needed
+## 7. Add Request Options If Needed
 
 If MailChannels exposes per-request option headers such as idempotency keys,
 model them as an `options` argument rather than forcing those controls into
@@ -143,6 +125,9 @@ API changes:
 - Sync/async request parity tests.
 - Strict response mode and initial typed response models.
 - Strict response model coverage across the modeled SDK response surface.
+- Strict `/send` and `/send-async` response variant validation.
+- Persistent sync and async HTTP transport client pooling with explicit close
+  and context-manager lifecycle hooks.
 - Email payload negative tests for local validation, mocked API rejection, and
   live dry-run API rejection.
 - Refined API error taxonomy.
