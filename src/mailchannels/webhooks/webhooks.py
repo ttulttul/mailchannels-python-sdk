@@ -50,7 +50,9 @@ class WebhooksResource(Generic[StrictResponses]):
         body: bytes | str,
         public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey,
         *,
-        tolerance_seconds: int = 300,
+        max_age_seconds: int = 300,
+        max_skew_seconds: int = 30,
+        tolerance_seconds: int | None = None,
         now: int | None = None,
     ) -> bool:
         """Verify a MailChannels webhook digest, freshness, and Ed25519 signature."""
@@ -58,6 +60,8 @@ class WebhooksResource(Generic[StrictResponses]):
             headers,
             body,
             public_key,
+            max_age_seconds=max_age_seconds,
+            max_skew_seconds=max_skew_seconds,
             tolerance_seconds=tolerance_seconds,
             now=now,
         )
@@ -569,7 +573,9 @@ class Webhooks:
         body: bytes | str,
         public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey,
         *,
-        tolerance_seconds: int = 300,
+        max_age_seconds: int = 300,
+        max_skew_seconds: int = 30,
+        tolerance_seconds: int | None = None,
         now: int | None = None,
     ) -> bool:
         """Verify a MailChannels webhook digest, freshness, and Ed25519 signature."""
@@ -577,6 +583,8 @@ class Webhooks:
             headers,
             body,
             public_key,
+            max_age_seconds=max_age_seconds,
+            max_skew_seconds=max_skew_seconds,
             tolerance_seconds=tolerance_seconds,
             now=now,
         )
@@ -590,12 +598,16 @@ class Webhooks:
     def signature_is_fresh(
         parameters: SignatureParameters,
         *,
-        tolerance_seconds: int = 300,
+        max_age_seconds: int = 300,
+        max_skew_seconds: int = 30,
+        tolerance_seconds: int | None = None,
         now: int | None = None,
     ) -> bool:
-        """Return whether a signature timestamp is within the allowed age."""
+        """Return whether a signature timestamp is within the allowed replay window."""
         return signature_is_fresh(
             parameters,
+            max_age_seconds=max_age_seconds,
+            max_skew_seconds=max_skew_seconds,
             tolerance_seconds=tolerance_seconds,
             now=now,
         )
@@ -640,17 +652,34 @@ def signature_key_id(headers: dict[str, str]) -> str | None:
 def signature_is_fresh(
     parameters: SignatureParameters,
     *,
-    tolerance_seconds: int = 300,
+    max_age_seconds: int = 300,
+    max_skew_seconds: int = 30,
+    tolerance_seconds: int | None = None,
     now: int | None = None,
 ) -> bool:
-    """Return whether a signature timestamp is within the allowed age."""
+    """Return whether a signature timestamp is within the allowed replay window."""
     if parameters.created is None:
         logger.warning("Webhook signature is missing created timestamp")
         return False
     reference = now if now is not None else int(time.time())
-    age = abs(reference - parameters.created)
-    fresh = age <= tolerance_seconds
-    logger.debug("Webhook signature age=%s fresh=%s", age, fresh)
+    age_window = tolerance_seconds if tolerance_seconds is not None else max_age_seconds
+    age_seconds = reference - parameters.created
+    if age_seconds < 0:
+        fresh = abs(age_seconds) <= max_skew_seconds
+        logger.debug(
+            "Webhook signature future_skew=%s max_skew=%s fresh=%s",
+            abs(age_seconds),
+            max_skew_seconds,
+            fresh,
+        )
+        return fresh
+    fresh = age_seconds <= age_window
+    logger.debug(
+        "Webhook signature age=%s max_age=%s fresh=%s",
+        age_seconds,
+        age_window,
+        fresh,
+    )
     return fresh
 
 
@@ -681,7 +710,9 @@ def verify_webhook_signature(
     body: bytes | str,
     public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey,
     *,
-    tolerance_seconds: int = 300,
+    max_age_seconds: int = 300,
+    max_skew_seconds: int = 30,
+    tolerance_seconds: int | None = None,
     now: int | None = None,
 ) -> bool:
     """Verify a MailChannels webhook digest, freshness, and Ed25519 signature."""
@@ -706,6 +737,8 @@ def verify_webhook_signature(
         return False
     if not signature_is_fresh(
         parameters,
+        max_age_seconds=max_age_seconds,
+        max_skew_seconds=max_skew_seconds,
         tolerance_seconds=tolerance_seconds,
         now=now,
     ):

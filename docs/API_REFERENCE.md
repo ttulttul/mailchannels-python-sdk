@@ -71,7 +71,7 @@ For task-oriented examples, start with the README. This file is the formal publi
 | `default_http_client` | `value` |  |
 | `get_version` | `function` | Return the installed MailChannels SDK version string. |
 | `parse_signature_input` | `function` | Parse a MailChannels RFC 9421 Signature-Input header value. |
-| `signature_is_fresh` | `function` | Return whether a signature timestamp is within the allowed age. |
+| `signature_is_fresh` | `function` | Return whether a signature timestamp is within the allowed replay window. |
 | `signature_key_id` | `function` | Extract the signing key ID from webhook headers. |
 | `strict_responses` | `value` |  |
 | `verify_content_digest` | `function` | Verify the webhook Content-Digest header against the raw request body. |
@@ -828,11 +828,11 @@ Methods:
 | `public_key_async` | `public_key_async(key_id: str) -> WebhookPublicKey | MailChannelsResponse` | Retrieve a webhook public signing key by ID using async HTTP. |
 | `resend_batch` | `resend_batch(batch_id: int, *, customer_handle: str) -> dict[str, Any]` | Synchronously resend one webhook batch. |
 | `resend_batch_async` | `resend_batch_async(batch_id: int, *, customer_handle: str) -> dict[str, Any]` | Synchronously resend one webhook batch using async HTTP. |
-| `signature_is_fresh` | `signature_is_fresh(parameters: SignatureParameters, *, tolerance_seconds: int = 300, now: int | None = None) -> bool` | Return whether a signature timestamp is within the allowed age. |
+| `signature_is_fresh` | `signature_is_fresh(parameters: SignatureParameters, *, max_age_seconds: int = 300, max_skew_seconds: int = 30, tolerance_seconds: int | None = None, now: int | None = None) -> bool` | Return whether a signature timestamp is within the allowed replay window. |
 | `signature_key_id` | `signature_key_id(headers: dict[str, str]) -> str | None` | Extract the signing key ID from webhook headers. |
 | `validate` | `validate(*, request_id: str | None = None) -> WebhookValidationResults | MailChannelsResponse` | Validate enrolled webhook endpoints with a test event. |
 | `validate_async` | `validate_async(*, request_id: str | None = None) -> WebhookValidationResults | MailChannelsResponse` | Validate enrolled webhook endpoints with a test event using async HTTP. |
-| `verify` | `verify(headers: dict[str, str], body: bytes | str, public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey, *, tolerance_seconds: int = 300, now: int | None = None) -> bool` | Verify a MailChannels webhook digest, freshness, and Ed25519 signature. |
+| `verify` | `verify(headers: dict[str, str], body: bytes | str, public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey, *, max_age_seconds: int = 300, max_skew_seconds: int = 30, tolerance_seconds: int | None = None, now: int | None = None) -> bool` | Verify a MailChannels webhook digest, freshness, and Ed25519 signature. |
 | `verify_content_digest` | `verify_content_digest(headers: dict[str, str], body: bytes | str) -> bool` | Verify the webhook Content-Digest header against the raw body. |
 
 Example for `list`:
@@ -881,8 +881,8 @@ mailchannels.Webhooks.list()
 #### `mailchannels.signature_is_fresh`
 
 - Kind: `function`
-- Summary: Return whether a signature timestamp is within the allowed age.
-- Signature: `mailchannels.signature_is_fresh(parameters: SignatureParameters, *, tolerance_seconds: int = 300, now: int | None = None) -> bool`
+- Summary: Return whether a signature timestamp is within the allowed replay window.
+- Signature: `mailchannels.signature_is_fresh(parameters: SignatureParameters, *, max_age_seconds: int = 300, max_skew_seconds: int = 30, tolerance_seconds: int | None = None, now: int | None = None) -> bool`
 
 #### `mailchannels.signature_key_id`
 
@@ -905,7 +905,7 @@ mailchannels.Webhooks.list()
 
 - Kind: `function`
 - Summary: Verify a MailChannels webhook digest, freshness, and Ed25519 signature.
-- Signature: `mailchannels.verify_webhook_signature(headers: dict[str, str], body: bytes | str, public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey, *, tolerance_seconds: int = 300, now: int | None = None) -> bool`
+- Signature: `mailchannels.verify_webhook_signature(headers: dict[str, str], body: bytes | str, public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey, *, max_age_seconds: int = 300, max_skew_seconds: int = 30, tolerance_seconds: int | None = None, now: int | None = None) -> bool`
 
 ### `mailchannels.emails`
 
@@ -2405,11 +2405,11 @@ Methods:
 | `public_key_async` | `public_key_async(key_id: str) -> WebhookPublicKey | MailChannelsResponse` | Retrieve a webhook public signing key by ID using async HTTP. |
 | `resend_batch` | `resend_batch(batch_id: int, *, customer_handle: str) -> dict[str, Any]` | Synchronously resend one webhook batch. |
 | `resend_batch_async` | `resend_batch_async(batch_id: int, *, customer_handle: str) -> dict[str, Any]` | Synchronously resend one webhook batch using async HTTP. |
-| `signature_is_fresh` | `signature_is_fresh(parameters: SignatureParameters, *, tolerance_seconds: int = 300, now: int | None = None) -> bool` | Return whether a signature timestamp is within the allowed age. |
+| `signature_is_fresh` | `signature_is_fresh(parameters: SignatureParameters, *, max_age_seconds: int = 300, max_skew_seconds: int = 30, tolerance_seconds: int | None = None, now: int | None = None) -> bool` | Return whether a signature timestamp is within the allowed replay window. |
 | `signature_key_id` | `signature_key_id(headers: dict[str, str]) -> str | None` | Extract the signing key ID from webhook headers. |
 | `validate` | `validate(*, request_id: str | None = None) -> WebhookValidationResults | MailChannelsResponse` | Validate enrolled webhook endpoints with a test event. |
 | `validate_async` | `validate_async(*, request_id: str | None = None) -> WebhookValidationResults | MailChannelsResponse` | Validate enrolled webhook endpoints with a test event using async HTTP. |
-| `verify` | `verify(headers: dict[str, str], body: bytes | str, public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey, *, tolerance_seconds: int = 300, now: int | None = None) -> bool` | Verify a MailChannels webhook digest, freshness, and Ed25519 signature. |
+| `verify` | `verify(headers: dict[str, str], body: bytes | str, public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey, *, max_age_seconds: int = 300, max_skew_seconds: int = 30, tolerance_seconds: int | None = None, now: int | None = None) -> bool` | Verify a MailChannels webhook digest, freshness, and Ed25519 signature. |
 | `verify_content_digest` | `verify_content_digest(headers: dict[str, str], body: bytes | str) -> bool` | Verify the webhook Content-Digest header against the raw body. |
 
 #### `mailchannels.webhooks.WebhooksResource`
@@ -2436,7 +2436,7 @@ Methods:
 | `resend_batch_async` | `resend_batch_async(batch_id: int, *, customer_handle: str) -> dict[str, Any]` | Synchronously resend one webhook batch using async HTTP. |
 | `validate` | `validate(*, request_id: str | None = None) -> WebhookValidationResults | MailChannelsResponse` | Validate enrolled webhook endpoints with a test event. |
 | `validate_async` | `validate_async(*, request_id: str | None = None) -> WebhookValidationResults | MailChannelsResponse` | Validate enrolled webhook endpoints with a test event using async HTTP. |
-| `verify` | `verify(headers: dict[str, str], body: bytes | str, public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey, *, tolerance_seconds: int = 300, now: int | None = None) -> bool` | Verify a MailChannels webhook digest, freshness, and Ed25519 signature. |
+| `verify` | `verify(headers: dict[str, str], body: bytes | str, public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey, *, max_age_seconds: int = 300, max_skew_seconds: int = 30, tolerance_seconds: int | None = None, now: int | None = None) -> bool` | Verify a MailChannels webhook digest, freshness, and Ed25519 signature. |
 
 #### `mailchannels.webhooks.parse_signature_input`
 
@@ -2447,8 +2447,8 @@ Methods:
 #### `mailchannels.webhooks.signature_is_fresh`
 
 - Kind: `function`
-- Summary: Return whether a signature timestamp is within the allowed age.
-- Signature: `mailchannels.webhooks.signature_is_fresh(parameters: SignatureParameters, *, tolerance_seconds: int = 300, now: int | None = None) -> bool`
+- Summary: Return whether a signature timestamp is within the allowed replay window.
+- Signature: `mailchannels.webhooks.signature_is_fresh(parameters: SignatureParameters, *, max_age_seconds: int = 300, max_skew_seconds: int = 30, tolerance_seconds: int | None = None, now: int | None = None) -> bool`
 
 #### `mailchannels.webhooks.signature_key_id`
 
@@ -2466,5 +2466,5 @@ Methods:
 
 - Kind: `function`
 - Summary: Verify a MailChannels webhook digest, freshness, and Ed25519 signature.
-- Signature: `mailchannels.webhooks.verify_webhook_signature(headers: dict[str, str], body: bytes | str, public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey, *, tolerance_seconds: int = 300, now: int | None = None) -> bool`
+- Signature: `mailchannels.webhooks.verify_webhook_signature(headers: dict[str, str], body: bytes | str, public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey, *, max_age_seconds: int = 300, max_skew_seconds: int = 30, tolerance_seconds: int | None = None, now: int | None = None) -> bool`
 

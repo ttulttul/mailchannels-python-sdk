@@ -390,8 +390,10 @@ if not mailchannels.Webhooks.verify(headers, raw_body, public_key):
 ```
 
 Fetch unknown public signing keys with `mailchannels.Webhooks.public_key(key_id)`.
-Use `verify_content_digest`, `parse_signature_input`, and
-`signature_is_fresh` only for low-level diagnostics or custom verification flows.
+The default replay window accepts signatures up to 300 seconds old and allows
+30 seconds of future clock skew. Use `verify_content_digest`,
+`parse_signature_input`, and `signature_is_fresh` only for low-level diagnostics
+or custom verification flows.
 
 ## Error Handling
 

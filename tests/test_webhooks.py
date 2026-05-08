@@ -297,6 +297,39 @@ def test_webhook_signature_created_outside_tolerance_is_not_fresh() -> None:
     assert not signature_is_fresh(parameters, now=1738868400, tolerance_seconds=300)
 
 
+def test_webhook_signature_tolerance_alias_controls_max_age() -> None:
+    """It keeps tolerance_seconds as a compatibility alias for max age."""
+    parameters = parse_signature_input(
+        'sig=("content-digest");created=1738868000;keyid="mckey"'
+    )
+
+    assert not signature_is_fresh(parameters, now=1738868400)
+    assert signature_is_fresh(parameters, now=1738868400, tolerance_seconds=500)
+
+
+def test_webhook_signature_small_future_skew_is_fresh() -> None:
+    """It accepts a small forward clock skew."""
+    parameters = parse_signature_input(
+        'sig=("content-digest");created=1738868425;keyid="mckey"'
+    )
+
+    assert signature_is_fresh(parameters, now=1738868400)
+
+
+def test_webhook_signature_future_within_age_but_outside_skew_is_not_fresh() -> None:
+    """It rejects future signatures even when inside the stale-age window."""
+    parameters = parse_signature_input(
+        'sig=("content-digest");created=1738868460;keyid="mckey"'
+    )
+
+    assert not signature_is_fresh(parameters, now=1738868400)
+    assert signature_is_fresh(
+        parameters,
+        now=1738868400,
+        max_skew_seconds=60,
+    )
+
+
 def test_webhook_signature_future_created_outside_tolerance_is_not_fresh() -> None:
     """It rejects signatures created too far in the future."""
     parameters = parse_signature_input(

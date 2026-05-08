@@ -844,6 +844,9 @@ Webhook receivers should verify the `customer_handle` in each event and check
 the signature headers MailChannels sends with the request. The SDK can verify
 the `Content-Digest`, replay age, and RFC 9421 Ed25519 signature when given the
 public signing key returned by `Webhooks.public_key(...)`.
+By default, signature timestamps may be up to 300 seconds old and no more than
+30 seconds in the future. Pass `max_age_seconds` or `max_skew_seconds` to
+`Webhooks.verify(...)` if your receiver needs a different replay window.
 
 ```python
 import mailchannels

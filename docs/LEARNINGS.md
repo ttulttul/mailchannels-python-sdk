@@ -404,3 +404,11 @@ high-level webhook receiver path should use `Webhooks.verify(...)` or
 freshness, and the RFC 9421 Ed25519 `Signature` value against the public key
 returned by `/webhook/public-key`. Keep the lower-level helpers for diagnostics
 and custom verification flows.
+
+## 2026-05-07: Webhook freshness must be directional
+
+Replay windows should not treat future timestamps like stale timestamps.
+`signature_is_fresh(...)`, `verify_webhook_signature(...)`, and
+`Webhooks.verify(...)` now use separate `max_age_seconds` and `max_skew_seconds`
+windows. Keep `tolerance_seconds` only as a compatibility alias for stale-age
+tolerance.
