@@ -460,3 +460,20 @@ The `examples/` directory has examples for async sending, attachments,
 templates, unsubscribe, custom headers, DKIM, Cloudflare DKIM publication,
 sub-accounts, metrics, domain checks, suppressions, webhooks, usage, custom HTTP
 clients, and structured error handling.
+
+## Documentation Layout
+
+Keep `README.md` focused on user onboarding and common production tasks. It
+should explain installation, configuration, sending, queueing, core resources,
+and links to deeper references without becoming a maintainer runbook.
+
+Use the focused docs for details that would interrupt the README flow:
+
+- `docs/API_REFERENCE.md` for generated public API details.
+- `docs/API_COVERAGE.md` for OpenAPI endpoint coverage and contract status.
+- `docs/ADVANCED.md` for strict responses, custom transports, API compatibility
+  metadata, client lifecycle, and low-level webhook helpers.
+- `docs/DKIM.md` for hosted DKIM, key rotation, customer-managed keys, and
+  Cloudflare DNS publication.
+- `docs/DEVELOPMENT.md` for local checks, online tests, SmolVM verification,
+  CI, and publishing.

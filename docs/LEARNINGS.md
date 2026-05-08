@@ -1,5 +1,16 @@
 # Learnings
 
+## 2026-05-08: README should stay user-facing
+
+The README is now intentionally a concise onboarding and common-task guide
+rather than a complete manual. Keep OpenAPI contract details in
+`docs/API_COVERAGE.md`, generated public surface details in
+`docs/API_REFERENCE.md`, advanced runtime topics in `docs/ADVANCED.md`, DKIM DNS
+walkthroughs in `docs/DKIM.md`, and maintainer workflows in
+`docs/DEVELOPMENT.md`. This keeps package users on the shortest path from
+installing the SDK to sending production email while preserving deeper details
+for readers who need them.
+
 ## 2026-04-24: SDK starts as a greenfield package
 
 The repository currently contains only project instructions, so the SDK can be

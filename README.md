@@ -15,10 +15,7 @@ custom headers, metrics, suppressions, and webhooks.
 MailChannels is especially strong for multi-tenant sending. Parent accounts can
 create isolated sub-accounts, issue separate credentials, set granular limits,
 inspect usage, and keep one customer's bad traffic from endangering the parent
-account or other tenants. Behind the API, MailChannels applies sophisticated
-spam and phishing filtering, automatically using fine-grained rate limits and
-blocks to contain abusive or compromised senders without treating all traffic as
-one shared risk pool.
+account or other tenants.
 
 The SDK accepts familiar dictionary payloads for quick scripts and Pydantic
 models for codebases that prefer explicit runtime validation. Use the
@@ -32,7 +29,7 @@ credentials.
 - Building a sending workflow: use [Common Sending Recipes](#common-sending-recipes).
 - Building a multi-tenant product: read [Account And Domain Operations](#account-and-domain-operations).
 - Operating at scale: jump to [Production Operations](#production-operations).
-- Maintaining the SDK: see [Development](#development).
+- Looking for details: see [API Reference And Further Reading](#api-reference-and-further-reading).
 
 ## Five-Minute Quickstart
 
@@ -44,8 +41,7 @@ Install the SDK with uv:
 uv add mailchannels
 ```
 
-The synchronous client uses `requests`. Async HTTP support is optional so
-applications that do not need it avoid an extra dependency:
+The synchronous client uses `requests`. Async HTTP support is optional:
 
 ```bash
 uv add "mailchannels[async]"
@@ -54,8 +50,7 @@ uv add "mailchannels[async]"
 ### Configure
 
 For small applications and scripts, set the module-level API key once and use
-the top-level resources. This mirrors the style of SDKs such as Resend and keeps
-common email sends readable.
+the top-level resources.
 
 ```python
 import mailchannels
@@ -73,8 +68,7 @@ export MAILCHANNELS_API_KEY="YOUR-API-KEY"
 ```
 
 For services that send on behalf of multiple accounts, create explicit clients.
-Each client carries its own API key, which is useful when parent-account and
-sub-account credentials are both active in the same process.
+Each client carries its own API key.
 
 ```python
 import mailchannels
@@ -85,9 +79,8 @@ sub_account_client = mailchannels.Client(api_key="SUB-ACCOUNT-API-KEY")
 
 ### Send
 
-The quickest path is `Emails.send()`. It performs a synchronous HTTP request to
-MailChannels and returns the API response after the message has been accepted.
-Use this when you want immediate validation feedback from the send endpoint.
+Use `Emails.send()` when you want immediate validation feedback from the regular
+send endpoint.
 
 ```python
 import mailchannels
@@ -106,32 +99,9 @@ email = mailchannels.Emails.send(
 print(email)
 ```
 
-The SDK normalizes this compact payload into the MailChannels send shape. For
-advanced messages, you can pass MailChannels-native `personalizations` and
-`content` directly.
-
-```python
-email = mailchannels.Emails.send(
-    {
-        "from": {"email": "sender@example.com"},
-        "personalizations": [
-            {"to": [{"email": "recipient@example.net"}]},
-        ],
-        "subject": "Native payload",
-        "content": [
-            {"type": "text/plain", "value": "Plain text body"},
-            {"type": "text/html", "value": "<strong>HTML body</strong>"},
-        ],
-    }
-)
-```
-
-### Queue With `/send-async`
-
-MailChannels has a first-class asynchronous processing endpoint. Use
-`Emails.queue()` when your application should hand the message to MailChannels
-quickly and continue without waiting for the regular send path. The payload is
-the same as `Emails.send()`, but the SDK posts it to `/send-async`.
+Use `Emails.queue()` for `/send-async` when your application should hand the
+message to MailChannels quickly and continue without waiting for the regular
+send path.
 
 ```python
 queued = mailchannels.Emails.queue(
@@ -154,47 +124,28 @@ workers, or any path where email should not slow down the user-facing request.
 The SDK covers the MailChannels Email API surfaces that production senders need
 most often:
 
-- Email sending through `/send` and queued sending through `/send-async`.
-- Domain validation through `POST /check-domain`, exposed as
-  `mailchannels.CheckDomain` and `client.check_domain`.
-- MailChannels-hosted DKIM key creation, listing, status updates, and rotation.
-- Sub-account creation, suspension, activation, credentials, singular
-  `/sub-account/{handle}/limit` rate limits, and usage stats.
-- Templates, unsubscribe metadata, custom email headers, suppression lists,
-  metrics, usage, and webhooks.
+| Need | SDK surface |
+| --- | --- |
+| Send now with `/send` | `mailchannels.Emails.send()` |
+| Queue for processing with `/send-async` | `mailchannels.Emails.queue()` |
+| Validate sender DNS and Domain Lockdown | `mailchannels.CheckDomain.check()` |
+| Manage hosted DKIM keys | `mailchannels.Dkim` |
+| Isolate tenants | `mailchannels.SubAccounts` |
+| Cap tenant volume | `mailchannels.SubAccounts.Limits` |
+| Inspect traffic health | `mailchannels.Metrics` |
+| Manage suppressions | `mailchannels.Suppressions` |
+| Receive delivery events | `mailchannels.Webhooks` |
 
-| Need | Endpoint | SDK surface |
-| --- | --- | --- |
-| Send now | `POST /send` | `mailchannels.Emails.send()` |
-| Queue for processing | `POST /send-async` | `mailchannels.Emails.queue()` |
-| Validate sender DNS and lockdown | `POST /check-domain` | `mailchannels.CheckDomain.check()` |
-| Manage hosted DKIM keys | `/domains/{domain}/dkim-keys` | `mailchannels.Dkim` |
-| Isolate tenants | `/sub-account` | `mailchannels.SubAccounts` |
-| Cap tenant volume | `/sub-account/{handle}/limit` | `mailchannels.SubAccounts.Limits` |
-| Inspect traffic health | `/metrics/*` | `mailchannels.Metrics` |
-| Manage suppressions | `/suppression-list` | `mailchannels.Suppressions` |
-| Receive delivery events | `/webhook*` | `mailchannels.Webhooks` |
+Generated reports provide the deeper detail:
 
-Route coverage is guarded in three layers. The normal test tree includes
-`tests/test_openapi_contract.py`, which checks exact agreement between SDK
-route declarations and a local OpenAPI route snapshot.
-`tests/test_openapi_request_contract.py` executes every declared route through a
-fake transport and validates the emitted method, path, JSON keys, query keys,
-and operation-specific headers against the documented request shape; it also
-asserts the sync and async variants emit identical requests. CI also runs
-`scripts/check_openapi_drift.py`, which parses and validates the official
-MailChannels OpenAPI document with `openapi-spec-validator` before comparing
-its routes with the SDK route registry in both directions. That catches stale
-SDK routes, newly documented endpoints, async drift, and subtle request-shape
-drift before it lands on `main`. The generated
-[API coverage report](docs/API_COVERAGE.md) summarizes endpoint coverage, SDK
-surfaces, contract-test coverage, online-test coverage, the OpenAPI spec hash,
-and the SDK version used for the report.
-The generated [API reference](docs/API_REFERENCE.md) lists public exports,
-classes, methods, parameters, return types, model fields, and compact examples
-from the SDK source.
+- [API coverage report](docs/API_COVERAGE.md) summarizes endpoint coverage,
+  contract-test coverage, online-test coverage, the OpenAPI spec hash, and the
+  SDK version used for the report.
+- [API reference](docs/API_REFERENCE.md) lists public exports, classes, methods,
+  parameters, return types, model fields, and compact examples from the SDK
+  source.
 
-### Choosing The Right Entry Point
+### Choose An Entry Point
 
 | Use this | When it fits |
 | --- | --- |
@@ -208,9 +159,8 @@ from the SDK source.
 ### Read Responses
 
 SDK responses behave like ordinary dictionaries, but they also support
-attribute access for the common case where you want to read one or two fields.
-HTTP response headers are preserved under `http_headers` for diagnostics,
-request IDs, and future rate-limit metadata.
+attribute access. HTTP response headers are preserved under `http_headers` for
+diagnostics and request IDs.
 
 ```python
 queued = mailchannels.Emails.queue(message)
@@ -221,32 +171,9 @@ print(queued.http_headers)
 ```
 
 Set `strict_responses=True` when you want modeled endpoints to return Pydantic
-response objects instead. Strict mode validates the API response body against
-the SDK's response model and raises `ResponseValidationError` if the response no
-longer matches the expected shape. Endpoints without a stable model still return
-the normal dict-like response. The test suite covers every exposed response model
-with valid bodies, missing required fields, invalid field types, response
-headers, and extra API fields so SDK/API shape drift is caught early.
-Explicit clients created with `Client(strict_responses=True)` also expose those
-Pydantic model return types to type checkers. Module-level helpers still have a
-broader return type because `mailchannels.strict_responses` is mutable runtime
-configuration.
-For email sends, strict mode validates `/send` normal responses as
-`SendResponse(request_id=..., results=[...])`, `/send` dry-run responses as
-`SendResponse(data=[...])`, and `/send-async` responses as
-`QueuedSendResponse(request_id=..., queued_at=...)`.
-
-```python
-client = mailchannels.Client(
-    api_key="YOUR-API-KEY",
-    strict_responses=True,
-)
-
-usage = client.usage.retrieve()
-
-print(usage.total_usage)
-print(usage.http_headers)
-```
+response objects instead. See [Advanced Usage](docs/ADVANCED.md) for strict
+response models, custom transports, API compatibility metadata, and client
+lifecycle details.
 
 ### Use Typed Models
 
@@ -274,9 +201,6 @@ mailchannels.Emails.send(params)
 
 Use typed models when you are constructing messages across several functions or
 want validation errors to appear close to the code that builds the payload.
-The SDK validates common payload mistakes before transport, including missing
-senders, recipients, subjects, content, invalid email address shape, empty
-recipient/content collections, and reserved message headers in custom headers.
 
 ## Common Sending Recipes
 
@@ -322,17 +246,14 @@ mailchannels.Emails.queue(
 )
 ```
 
-Use `Attachment.from_bytes()` when the file is generated in memory, such as a
-PDF created by your application. Use `Attachment.from_url()` when the attachment
-already lives behind an HTTP URL and you want the SDK to fetch and encode it
-before sending. Missing local files and failed remote attachment fetches raise
-`MailChannelsError` with stable attachment-specific error codes.
+Use `Attachment.from_bytes()` when the file is generated in memory and
+`Attachment.from_url()` when the attachment already lives behind an HTTP URL.
 
 ### Preview With Dry Run
 
 MailChannels supports dry-run validation on the send endpoint. Pass
 `dry_run=True` to send the request for validation and rendering checks without
-actually delivering the message.
+delivering the message.
 
 ```python
 preview = mailchannels.Emails.send(
@@ -345,9 +266,6 @@ preview = mailchannels.Emails.send(
     dry_run=True,
 )
 ```
-
-Dry runs are especially useful when testing templates, headers, and unsubscribe
-behavior.
 
 ### Send A Template Email
 
@@ -364,11 +282,7 @@ preview = mailchannels.Emails.send(
             {
                 "to": [{"email": "jane@example.net"}],
                 "dynamic_template_data": {"name": "Jane Doe"},
-            },
-            {
-                "to": [{"email": "john@example.net"}],
-                "dynamic_template_data": {"name": "John Smith"},
-            },
+            }
         ],
         "subject": "Template Example",
         "content": [
@@ -383,15 +297,11 @@ preview = mailchannels.Emails.send(
 )
 ```
 
-The example renders a different greeting for each recipient. `dry_run=True`
-keeps the example safe while you confirm the final rendered content.
-
 ### Manage DKIM Keys
 
-MailChannels can generate and store DKIM private keys for your account. This is
-the easiest way to avoid handling private key material in your own application:
-create a key pair with the DKIM API, publish the returned public DNS record, and
-then reference the selector when sending.
+MailChannels can generate and store DKIM private keys for your account. Create a
+key pair, publish the returned public DNS record in your own DNS zone, and then
+reference the selector when sending.
 
 ```python
 key = mailchannels.Dkim.create(
@@ -405,87 +315,7 @@ for record in key.get("dkim_dns_records", []):
     print(record["name"], record["type"], record["value"])
 ```
 
-MailChannels hosts the private key used for signing. At this time,
-MailChannels does not host DKIM public keys for your domain; you must copy the
-returned public DKIM TXT record into your own DNS zone. The TXT record name will
-look like `mcdkim._domainkey.example.com`.
-
-If your DNS is hosted in Cloudflare, you can publish the returned DKIM TXT
-record with Cloudflare's official Python SDK. The example below uses
-`CLOUDFLARE_API_TOKEN` from the environment, finds the zone, updates an existing
-TXT record when it is present, and creates it when it is missing.
-
-```bash
-uv add cloudflare
-export CLOUDFLARE_API_TOKEN="your_cloudflare_api_token"
-```
-
-```python
-from cloudflare import Cloudflare
-
-import mailchannels
-
-
-DOMAIN = "example.com"
-SELECTOR = "mcdkim"
-
-mailchannels.api_key = "YOUR-MAILCHANNELS-API-KEY"
-cloudflare = Cloudflare()
-
-
-def publish_mailchannels_dkim_record() -> None:
-    """Create a MailChannels DKIM key and publish its public key in Cloudflare."""
-    key = mailchannels.Dkim.create(
-        DOMAIN,
-        selector=SELECTOR,
-        algorithm="rsa",
-        key_length=2048,
-    )
-    dns_record = key["dkim_dns_records"][0]
-
-    zones = cloudflare.zones.list(name=DOMAIN)
-    zone = next(iter(zones), None)
-    if zone is None:
-        raise RuntimeError(f"Cloudflare zone not found: {DOMAIN}")
-
-    records = cloudflare.dns.records.list(
-        zone_id=zone.id,
-        type="TXT",
-        name=dns_record["name"],
-    )
-    existing_record = next(iter(records), None)
-
-    if existing_record is None:
-        updated_record = cloudflare.dns.records.create(
-            zone_id=zone.id,
-            type="TXT",
-            name=dns_record["name"],
-            content=dns_record["value"],
-            ttl=1,
-        )
-    else:
-        updated_record = cloudflare.dns.records.update(
-            existing_record.id,
-            zone_id=zone.id,
-            type="TXT",
-            name=dns_record["name"],
-            content=dns_record["value"],
-            ttl=1,
-        )
-
-    print(f"Published DKIM record: {updated_record.name}")
-
-
-publish_mailchannels_dkim_record()
-```
-
-The Cloudflare token needs permission to read the zone and edit DNS records. In
-Cloudflare's dashboard, grant at least `Zone: Read` and `DNS: Edit` for the
-zone that owns the sending domain.
-
-After the DNS record is published, send mail with the selector. If
-`dkim_domain` is omitted, MailChannels can derive it from the `from` address,
-but setting it explicitly keeps the signing intent obvious.
+After the DNS record is published, send mail with the selector.
 
 ```python
 mailchannels.Emails.queue(
@@ -500,24 +330,8 @@ mailchannels.Emails.queue(
 )
 ```
 
-You can retrieve keys, include the suggested DNS record in the response, update
-key status, and rotate active keys. Rotation creates a replacement key and
-returns the DNS record you need to publish before switching all signing traffic
-to the new selector.
-
-```python
-keys = mailchannels.Dkim.list("example.com", include_dns_record=True)
-rotated = mailchannels.Dkim.rotate(
-    "example.com",
-    "mcdkim",
-    new_selector="mcdkim2",
-)
-mailchannels.Dkim.update_status("example.com", "mcdkim", status="rotated")
-```
-
-If you manage your own DKIM keys instead, pass `dkim_domain`, `dkim_selector`,
-and the Base64-encoded `dkim_private_key` in the send payload. Values set inside
-a personalization override root-level DKIM values for that recipient.
+See [DKIM And DNS](docs/DKIM.md) for key rotation, customer-managed private
+keys, and a Cloudflare DNS publication example.
 
 ### Add Unsubscribe Support
 
@@ -551,31 +365,11 @@ For automatic `List-Unsubscribe` headers, set `transactional` to `False`.
 MailChannels documents that this mode also requires one recipient per
 personalization and DKIM signing.
 
-```python
-mailchannels.Emails.queue(
-    {
-        "from": {"email": "sender@example.com"},
-        "personalizations": [
-            {
-                "to": [{"email": "recipient@example.net"}],
-                "dkim_domain": "example.com",
-                "dkim_selector": "mailchannels",
-                "dkim_private_key": "-----BEGIN PRIVATE KEY-----...",
-            }
-        ],
-        "subject": "Newsletter",
-        "text": "Hello",
-        "transactional": False,
-    }
-)
-```
-
 ### Add Custom Email Headers
 
-Use `headers` when a message needs additional email headers such as campaign
-metadata, unsubscribe hints, or application-specific tracking values.
-MailChannels may reject restricted or duplicate headers, so prefer a small,
-intentional set.
+Use `headers` when a message needs additional application-specific metadata or
+tracking values. MailChannels may reject restricted or duplicate headers, so
+prefer a small, intentional set.
 
 ```python
 mailchannels.Emails.send(
@@ -585,40 +379,14 @@ mailchannels.Emails.send(
         "subject": "Custom Header Example",
         "text": "This email includes custom headers.",
         "headers": {
-            "List-Unsubscribe": "<mailto:unsubscribe@example.com>",
             "X-Campaign-ID": "newsletter-123",
         },
     }
 )
 ```
 
-Headers can also be set per personalization. This is useful when each recipient
-needs a different value. If the same header exists globally and on a
-personalization, MailChannels uses the personalization-level value.
-
-```python
-mailchannels.Emails.send(
-    {
-        "from": {"email": "sender@example.com"},
-        "subject": "Bananas Are On Sale",
-        "personalizations": [
-            {
-                "to": [{"email": "banana-lover@example.net"}],
-                "headers": {
-                    "List-Unsubscribe": "<mailto:unsubscribe@bananas.example>",
-                    "X-Custom-Header": "BananaFan123",
-                },
-            }
-        ],
-        "content": [
-            {
-                "type": "text/plain",
-                "value": "This email includes custom headers.",
-            }
-        ],
-    }
-)
-```
+Headers can also be set per personalization. If the same header exists globally
+and on a personalization, MailChannels uses the personalization-level value.
 
 ### Async Python
 
@@ -670,9 +438,7 @@ api_key = mailchannels.SubAccounts.ApiKeys.create("clienta")
 ```
 
 Rate limits are useful when each customer, tenant, or downstream sender should
-have its own monthly allocation. Set a monthly limit on the sub-account and
-MailChannels will enforce that cap independently from the parent account's
-overall allocation.
+have its own monthly allocation.
 
 ```python
 limit = mailchannels.SubAccounts.Limits.set(
@@ -684,29 +450,11 @@ current_limit = mailchannels.SubAccounts.Limits.retrieve("clienta")
 ```
 
 Usage stats let you show customers how much of their allocation has been used
-or decide when to raise, lower, or suspend a limit. Retrieve usage by handle
-from the parent account.
+or decide when to raise, lower, or suspend a limit.
 
 ```python
 usage = mailchannels.SubAccounts.retrieve_usage("clienta")
-```
-
-The parent account also has its own top-level usage endpoint. Use it when you
-need the current billing-period total for the account represented by the API key
-rather than for one specific sub-account.
-
-```python
-usage = mailchannels.Usage.retrieve()
-
-print(usage.total_usage)
-print(usage.period_start_date, usage.period_end_date)
-```
-
-If you want the sub-account to inherit the parent account's remaining capacity
-again, delete the explicit sub-account limit.
-
-```python
-mailchannels.SubAccounts.Limits.delete("clienta")
+parent_usage = mailchannels.Usage.retrieve()
 ```
 
 When sending as a sub-account, create a separate client with that sub-account's
@@ -726,13 +474,9 @@ client.emails.queue(
 
 ### Domain Checks
 
-Before sending from a domain, you can ask MailChannels to verify the domain's
-authentication posture. `CheckDomain.check()` and `DomainChecks.check()` both
-call `/check-domain` and return the API's DKIM, SPF, sender-domain DNS, and
-Domain Lockdown results. This is useful in setup flows where you want to tell a
-user exactly which DNS or DKIM step is still missing. Client instances expose
-the same operation as `client.check_domain.check(...)`; `client.domain_checks`
-is kept as a plural alias for consistency with the result set.
+Before sending from a domain, ask MailChannels to verify the domain's
+authentication posture. `CheckDomain.check()` calls `/check-domain` and returns
+the API's DKIM, SPF, sender-domain DNS, and Domain Lockdown results.
 
 ```python
 result = mailchannels.CheckDomain.check("example.com")
@@ -742,8 +486,7 @@ print(result.references)
 ```
 
 If you use MailChannels-hosted DKIM keys, pass the selector you expect the
-domain to use. MailChannels will validate the stored key for that domain and
-selector.
+domain to use.
 
 ```python
 result = mailchannels.CheckDomain.check(
@@ -763,8 +506,6 @@ result = mailchannels.CheckDomain.check(
 
 Metrics endpoints expose the operational view of your email traffic. Use them
 to build dashboards, reconcile campaign performance, or monitor sender health.
-The time-series endpoints accept `start_time`, `end_time`, `campaign_id`, and
-`interval`.
 
 ```python
 engagement = mailchannels.Metrics.engagement(
@@ -794,9 +535,7 @@ Available metrics methods are `engagement()`, `performance()`,
 
 Suppression lists are the MailChannels-native way to keep known unwanted
 recipients out of future sends. The SDK exposes list, create, and delete
-operations. Use them when you need to import suppressions from your own product,
-inspect automatically generated hard-bounce or complaint suppressions, or remove
-an address after a user explicitly opts back in.
+operations.
 
 ```python
 mailchannels.Suppressions.create(
@@ -844,9 +583,6 @@ Webhook receivers should verify the `customer_handle` in each event and check
 the signature headers MailChannels sends with the request. The SDK can verify
 the `Content-Digest`, replay age, and RFC 9421 Ed25519 signature when given the
 public signing key returned by `Webhooks.public_key(...)`.
-By default, signature timestamps may be up to 300 seconds old and no more than
-30 seconds in the future. Pass `max_age_seconds` or `max_skew_seconds` to
-`Webhooks.verify(...)` if your receiver needs a different replay window.
 
 ```python
 import mailchannels
@@ -867,11 +603,6 @@ def receive_webhook(headers: dict[str, str], body: bytes) -> None:
         raise ValueError("Invalid MailChannels webhook signature")
 ```
 
-MailChannels signs webhooks with Ed25519 and documents the signing flow in terms
-of RFC 9421. `verify_content_digest(...)`, `parse_signature_input(...)`,
-`signature_key_id(...)`, and `signature_is_fresh(...)` remain available as
-low-level helpers when an application needs to inspect individual checks.
-
 ### Error Handling
 
 The SDK maps common MailChannels API failures to typed exceptions. Catch the
@@ -883,260 +614,38 @@ or server-side failures.
 try:
     mailchannels.Emails.queue(message)
 except mailchannels.PayloadTooLargeError:
-    # Reduce attachments or message size before retrying.
     raise
 except mailchannels.ForbiddenError:
-    # The API key is valid but cannot perform this operation.
     raise
 except mailchannels.RateLimitError:
-    # Back off before retrying; inspect error.retry_after if present.
     raise
 except mailchannels.InvalidRequestError:
-    # Fix request parameters or payload shape before retrying.
     raise
 except mailchannels.ServerError:
-    # Retry later or contact support with error.request_id.
     raise
 ```
-
-All API response exceptions inherit from `ApiError`, and all SDK exceptions
-inherit from `MailChannelsError`.
 
 Each exception carries structured metadata for logs and support workflows:
 `status_code`, `code`, `error_type`, `headers`, `request_id`, `retry_after`,
 `suggested_action`, and the parsed API `response`. Use `to_dict()` when you want
 to send consistent error metadata to your logger.
-Routine SDK operations, including user-requested delete, suspend, rotate, and
-resend calls, log at info level. Warning logs are reserved for unexpected
-recoverable conditions such as missing webhook signature metadata.
 
-```python
-try:
-    mailchannels.Emails.queue(message)
-except mailchannels.MailChannelsError as error:
-    logger.error("MailChannels request failed", extra=error.to_dict())
-    raise
-```
+## API Reference And Further Reading
 
-### Version And Custom Transports
-
-The package exports its version so applications can log it at startup or include
-it in diagnostics. The SDK uses the same value in its `User-Agent` header.
-It also exports the MailChannels OpenAPI document metadata that this SDK release
-was checked against, which is useful for support tickets, release audits, and
-startup diagnostics.
-
-```python
-import mailchannels
-
-print(mailchannels.__version__)
-print(mailchannels.get_version())
-print(mailchannels.API_SPEC_COMPATIBILITY.to_dict())
-```
-
-The default synchronous transport keeps one `requests.Session` per SDK
-transport, and the default async transport keeps one lazily-created
-`httpx.AsyncClient` per SDK transport. Reuse a `Client` instance when sending
-multiple requests so connection pooling and TLS reuse can work. Call
-`client.close()` for sync clients or `await client.aclose()` for async clients
-when a long-lived process is done with the SDK, or use the client as a context
-manager.
-
-If your application needs custom retry behavior, instrumentation, test
-isolation, or a framework-specific HTTP stack, pass a transport object that
-implements the `SyncHTTPClient` or `AsyncHTTPClient` protocol. The method must
-return `mailchannels.SDKResponse`.
-
-```python
-from typing import Any
-
-import mailchannels
-
-
-class LoggingTransport:
-    """Small example transport that satisfies SyncHTTPClient."""
-
-    def __init__(self) -> None:
-        """Create a logging transport with a pooled inner transport."""
-        self._inner = mailchannels.RequestsClient()
-
-    def request(
-        self,
-        method: str,
-        url: str,
-        *,
-        headers: dict[str, str],
-        json: dict[str, Any] | None = None,
-        params: dict[str, Any] | None = None,
-    ) -> mailchannels.SDKResponse:
-        """Send a request and return a normalized SDK response."""
-        print(method, url)
-        return self._inner.request(
-            method,
-            url,
-            headers=headers,
-            json=json,
-            params=params,
-        )
-
-    def close(self) -> None:
-        """Close the pooled inner transport."""
-        self._inner.close()
-
-
-client = mailchannels.Client(
-    api_key="YOUR-API-KEY",
-    http_client=LoggingTransport(),
-)
-```
-
-## Examples
-
-The `examples/` directory contains tested, focused examples for common
-production tasks:
-
-- `async_email.py` queues a message with the async transport.
-- `attachments.py` sends local, generated, and inline attachments.
-- `templates.py` builds and dry-runs mustache template messages.
-- `unsubscribe.py` builds one-click and automatic List-Unsubscribe messages.
-- `custom_headers.py` sends global and per-recipient custom email headers.
-- `dkim.py` creates, lists, and rotates MailChannels-hosted DKIM keys.
-- `cloudflare_dkim.py` publishes MailChannels DKIM TXT records in Cloudflare.
-- `sub_accounts.py` creates sub-accounts, credentials, limits, and usage views.
-- `metrics.py` retrieves engagement and sender metrics.
-- `domain_checks.py` validates DKIM, SPF, sender-domain DNS, and Domain Lockdown
-  status for a sending domain.
-- `suppressions.py` creates, lists, and deletes suppression entries.
-- `webhooks.py` configures webhooks and verifies local webhook metadata.
-- `usage.py` retrieves parent-account and sub-account usage.
-- `custom_http_client.py` wraps a custom transport.
-- `error_handling.py` logs structured SDK exception metadata.
-
-The README's fenced Python snippets are also syntax-checked and smoke-tested
-with fake SDK transports so documentation examples stay aligned with executable
-SDK behavior without calling the live MailChannels API.
-
-## Development
-
-Install all development dependencies and run the local test suite:
-
-```bash
-uv sync --extra async --extra dev
-uv run pytest
-uv run pytest --cov --cov-report=term-missing
-uv run ruff check src tests examples scripts typing_tests
-uv run mypy
-uv run python scripts/run_consumer_typing.py
-uv build
-uv run python scripts/smoke_wheel_install.py
-uv run python scripts/check_openapi_drift.py
-uv run python scripts/generate_api_coverage.py
-uv run python scripts/generate_api_reference.py
-```
-
-Current uv releases do not expose `uv pytest` as a native subcommand; use
-`uv run pytest` for the portable pytest harness.
-
-The GitHub Actions CI workflow runs the same checks on pushes to `main`, pull
-requests, and manual dispatches. It runs pytest across Python 3.9 through 3.13
-and enforces an 85% branch coverage threshold on Python 3.13. It also compares
-the SDK's declared routes with the official MailChannels OpenAPI spec so
-documented endpoint changes are caught early. The unit test suite includes
-direct transport-wrapper tests and explicit API error mapping tests so request
-forwarding, non-JSON responses, headers, timeouts, and exception metadata stay
-stable. It also validates strict response models across the modeled SDK surface so
-typed responses keep preserving `http_headers` while rejecting missing or
-wrongly typed API fields. Email negative tests cover local SDK validation,
-mocked API rejection, and live dry-run API rejection for malformed send
-payloads. It also extracts README Python snippets and executes the safe examples
-against fake transports so user documentation cannot quietly drift from the
-SDK. CI type-checks a small external-consumer fixture and installs the built
-wheel into clean environments with and without the `[async]` extra. The separate
-online API workflow is manual-only and expects
-`MAILCHANNELS_API_KEY` as a GitHub secret plus optional repository or environment
-variables for sender, recipient, DKIM domain, and API URL.
-
-The PyPI publishing workflow builds, tests, type-checks, validates OpenAPI
-drift, runs `twine check`, and publishes the verified `dist/` artifact through
-PyPI trusted publishing. Configure PyPI with a trusted publisher for
-`.github/workflows/publish.yml` and the GitHub environment `pypi`. Push a
-version tag such as `v0.1.0`, matching `pyproject.toml`, to publish
-automatically, or run the workflow manually with `publish=true`.
-
-### Online API Tests
-
-The default test suite never calls the live MailChannels API. Online tests are
-marked with `online` and run only when you both provide a real API key in the
-environment and pass `--online`.
-
-```bash
-export MAILCHANNELS_API_KEY="your_real_mailchannels_api_key"
-uv run pytest -m online --online
-```
-
-The online suite includes parent-account usage, async usage, volume metrics,
-sub-account listing, suppression listing, webhook listing, optional domain
-checks, DKIM listing, dry-run sending, and dry-run rejection checks for
-malformed raw send payloads. The volume metrics test sends an explicit 24-hour
-`start_time` and `end_time` window so the live service does not need to infer an
-unbounded range. The send tests use MailChannels dry runs, which do not deliver
-messages. Set sender and recipient addresses to enable those dry-run tests:
-
-```bash
-export MAILCHANNELS_ONLINE_FROM="sender@example.com"
-export MAILCHANNELS_ONLINE_TO="recipient@example.net"
-uv run pytest -m online --online
-```
-
-To run the optional `/check-domain` and DKIM listing tests, provide a domain
-that belongs to the account:
-
-```bash
-export MAILCHANNELS_ONLINE_DOMAIN="example.com"
-uv run pytest -m online --online
-```
-
-The suite also includes a test that sends a real email through `/send`. It is
-disabled unless you explicitly opt in with `MAILCHANNELS_ONLINE_SEND_REAL=1`:
-
-```bash
-export MAILCHANNELS_ONLINE_FROM="sender@example.com"
-export MAILCHANNELS_ONLINE_TO="recipient@example.net"
-export MAILCHANNELS_ONLINE_SEND_REAL=1
-uv run pytest tests/test_online_api.py::test_online_send_real_email --online
-```
-
-Use `MAILCHANNELS_API_URL` if you need to point the online tests at a non-default
-MailChannels API host.
-
-If the live MailChannels service returns a 5xx response, times out, or drops a
-connection for an online endpoint, that test is reported as `xfail` because the
-failure is outside the local SDK behavior being tested. Authentication and
-authorization errors still fail the test normally.
-
-Destructive online CRUD tests are marked `online_destructive` and stay disabled
-unless you pass both `--online` and `--online-destructive` and set
-`MAILCHANNELS_ONLINE_DESTRUCTIVE=1`. Run these only against a dedicated test
-account because they create and delete suppressions, sub-accounts, credentials,
-limits, and webhook configuration. The MailChannels webhook delete endpoint
-removes all configured webhooks.
-
-```bash
-export MAILCHANNELS_ONLINE_DESTRUCTIVE=1
-uv run pytest -m online_destructive --online --online-destructive
-```
-
-Run the suite in SmolVM before committing. In this macOS sandbox, copying a tar
-archive into the VM is more reliable than a direct bind mount:
-
-```bash
-COPYFILE_DISABLE=1 tar --exclude .venv --exclude .git --exclude dist --exclude .mypy_cache --exclude .ruff_cache --exclude .pytest_cache -cf /tmp/mailchannels-python-sdk.tar .
-smolvm machine create mc-sdk-tests --net --image python:3.13-slim
-smolvm machine start --name mc-sdk-tests
-smolvm machine cp /tmp/mailchannels-python-sdk.tar mc-sdk-tests:/workspace/mailchannels-python-sdk.tar
-smolvm machine exec --name mc-sdk-tests -- sh -lc 'cd /workspace && mkdir -p mailchannels-python-sdk && tar -xf mailchannels-python-sdk.tar -C mailchannels-python-sdk && cd mailchannels-python-sdk && pip install uv && uv sync --extra async --extra dev && uv run pytest'
-smolvm machine stop --name mc-sdk-tests
-```
+- [API reference](docs/API_REFERENCE.md) is the generated public surface
+  reference.
+- [API coverage](docs/API_COVERAGE.md) shows endpoint, contract-test, and online
+  test coverage against the MailChannels OpenAPI document.
+- [Advanced usage](docs/ADVANCED.md) covers strict responses, custom transports,
+  API compatibility metadata, client lifecycle, and low-level webhook helpers.
+- [DKIM and DNS](docs/DKIM.md) covers hosted DKIM keys, rotation, customer-managed
+  keys, and Cloudflare DNS publication.
+- [Development](docs/DEVELOPMENT.md) covers local checks, online tests, SmolVM,
+  CI, and publishing.
+- `examples/` contains tested examples for async sending, attachments,
+  templates, unsubscribe, custom headers, DKIM, Cloudflare DKIM publication,
+  sub-accounts, metrics, domain checks, suppressions, webhooks, usage, custom
+  HTTP clients, and structured error handling.
 
 ## License
 
