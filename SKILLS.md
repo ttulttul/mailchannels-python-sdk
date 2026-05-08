@@ -1,8 +1,8 @@
 # MailChannels Python SDK Usage Guide For LLMs
 
 Use this file when writing, reviewing, or modifying code that consumes the
-`mailchannels` Python SDK. Keep examples aligned with the public API exported
-from `src/mailchannels`.
+`mailchannels` Python SDK. The public API is exported from the `mailchannels`
+package and its resource namespaces.
 
 ## Install And Configure
 
@@ -78,14 +78,6 @@ Responses are dict-like objects with attribute access. It is valid to read
 `response["id"]` or `response.id`. HTTP headers are available on
 `response.http_headers`.
 
-When adding or changing a resource method with `response_model=`, update
-`tests/test_response_config.py` so the strict response matrix covers the exposed
-response model and any distinct sync operation that exercises a materially
-different SDK path. Include a valid-body case and, where the response shape has
-stable required fields, missing-required and invalid-type cases. Strict response
-models should allow extra API fields so
-`http_headers` and forward-compatible response fields survive validation.
-
 ## Payload Shapes
 
 The SDK accepts compact Resend-style dictionaries and normalizes them into the
@@ -127,10 +119,9 @@ Email payload validation should fail before transport for common mistakes:
 missing sender, missing recipient, missing subject, missing content, invalid
 basic email address shape, empty recipient/content collections, and custom
 headers that try to set structured message headers such as `From`, `To`,
-`Subject`, `DKIM-Signature`, `Message-ID`, or `Content-Type`. Keep
-`tests/test_email_payload_negative.py` aligned when changing send normalization.
-That file also contains raw invalid payload cases that run against both a fake
-400 response and the live dry-run API when `--online` is enabled.
+`Subject`, `DKIM-Signature`, `Message-ID`, or `Content-Type`. Use payload
+fields instead of raw SMTP headers for sender, recipient, subject, content,
+reply-to, DKIM, and unsubscribe configuration.
 
 ## Attachments
 
@@ -275,7 +266,7 @@ mailchannels.SubAccounts.ApiKeys.create("clienta")
 mailchannels.SubAccounts.SmtpPasswords.create("clienta")
 ```
 
-Document rate limits and usage stats when touching sub-account flows:
+Use the sub-account limit and usage helpers for tenant quota and billing views:
 
 ```python
 mailchannels.SubAccounts.Limits.set("clienta", sends=100_000)
@@ -286,8 +277,7 @@ mailchannels.Usage.retrieve()
 
 Sub-account limit endpoints must use singular `/sub-account/{handle}/limit`.
 Setting a limit must send `PUT` with a `sends` payload. The SDK still accepts
-`monthly_limit` as a compatibility alias, but examples and docs should prefer
-`sends`.
+`monthly_limit` as a compatibility alias, but new code should prefer `sends`.
 
 ## Domain Checks
 
@@ -420,10 +410,6 @@ Exceptions expose `headers`, `request_id`, `retry_after`, `error_type`,
 `suggested_action`, `response`, and `to_dict()`. Prefer logging `to_dict()` when
 building examples or support-facing error paths.
 
-Routine destructive operations log at info level, not warning. Keep warning
-logs for unexpected recoverable behavior such as missing webhook signature
-metadata, malformed webhook headers, or optional dependency fallbacks.
-
 ## Version And Custom HTTP Clients
 
 The SDK exports `mailchannels.__version__` and `mailchannels.get_version()`.
@@ -456,128 +442,17 @@ The default SDK response remains dict-like and supports attribute access. When
 callers set `strict_responses=True` on `Client` or set
 `mailchannels.strict_responses = True` for module-level helpers, modeled
 endpoints return Pydantic response objects and raise `ResponseValidationError`
-when the API response does not match the expected model. When adding a stable
-endpoint response, pass its model to `client.request(..., response_model=...)`
-and add strict-mode tests plus consumer typing coverage. Explicit
-`Client(strict_responses=True)` callers should see Pydantic return models in
-mypy; module-level helpers may keep broader return types because module-level
-strictness is mutable. `/send` strict responses accept either a normal
-`request_id` plus per-personalization `results`, or dry-run rendered-message
-`data`; `/send-async` strict responses require `request_id` and `queued_at`.
+when the API response does not match the expected model. Explicit
+`Client(strict_responses=True)` callers get precise Pydantic return models in
+type checkers; module-level helpers keep broader return types because
+module-level strictness is mutable at runtime. `/send` strict responses accept
+either a normal `request_id` plus per-personalization `results`, or dry-run
+rendered-message `data`; `/send-async` strict responses require `request_id`
+and `queued_at`.
 
 ## Examples
 
-The `examples/` directory has tested examples for async sending, attachments,
+The `examples/` directory has examples for async sending, attachments,
 templates, unsubscribe, custom headers, DKIM, Cloudflare DKIM publication,
 sub-accounts, metrics, domain checks, suppressions, webhooks, usage, custom HTTP
-clients, and structured error handling. Keep examples importable and avoid
-doing network work at import time; tests should exercise example functions with
-fake transports and fake external service clients.
-
-## Online Tests
-
-Online tests are marked `online` and require both a real
-`MAILCHANNELS_API_KEY` environment variable and the pytest `--online` flag:
-
-```bash
-uv run pytest -m online --online
-```
-
-The dry-run send tests, including raw invalid-payload rejection tests,
-additionally need `MAILCHANNELS_ONLINE_FROM` and `MAILCHANNELS_ONLINE_TO`.
-Optional DKIM listing needs `MAILCHANNELS_ONLINE_DOMAIN`.
-
-Keep online metrics tests bounded with explicit `start_time` and `end_time`
-values. The live `/metrics/volume?interval=day` query can time out when the
-range is left implicit.
-
-Do not make online tests deliver messages by default. The real send test must
-stay gated behind `MAILCHANNELS_ONLINE_SEND_REAL=1` and should be run directly
-when needed:
-
-```bash
-uv run pytest tests/test_online_api.py::test_online_send_real_email --online
-```
-
-Online tests may mark live MailChannels 5xx responses, timeouts, and transport
-failures as `xfail`; 4xx authentication, authorization, validation, or SDK
-behavior errors should still fail normally.
-
-Destructive online CRUD tests are marked `online_destructive` and require
-`--online`, `--online-destructive`, and `MAILCHANNELS_ONLINE_DESTRUCTIVE=1`.
-Keep them manual-only and run them only against a dedicated test account. The
-webhook lifecycle test calls `DELETE /webhook`, which removes all configured
-webhooks for the account.
-
-## Repository Maintenance
-
-When adding or changing SDK behavior:
-
-- Update tests for the changed behavior.
-- Update `README.md` with user-facing documentation.
-- Update this `SKILLS.md` when an LLM would need different guidance.
-- Update `docs/LEARNINGS.md` for important discoveries or API semantics.
-- Keep `docs/WISHLIST.md` focused on active roadmap items. Move completed work
-  into its completed-foundation summary instead of leaving implemented items in
-  the prioritized task list.
-- Run `uv run pytest`, ruff, build, and the SmolVM pytest workflow before
-  committing.
-- Run `uv run pytest --cov --cov-report=term-missing` when changing tests or
-  coverage configuration. The current branch coverage threshold starts at 85%.
-- Keep `tests/test_readme_examples.py` aligned with README Python snippets. The
-  test should compile every Python fence and execute safe snippets with fake
-  transports; skip only examples that need external SDKs or real side effects.
-- Run `uv run python scripts/run_consumer_typing.py` after changing public
-  exports, type hints, or Pydantic request models.
-- Run `uv run python scripts/smoke_wheel_install.py` after `uv build` when
-  packaging metadata, dependencies, optional extras, or package data changes.
-- Keep `.github/workflows/ci.yml` aligned with the local quality gates when the
-  required checks change. Keep online API tests in the manual-only workflow so
-  live sends and production API calls require explicit operator intent.
-- Keep `.github/workflows/publish.yml` scoped to release publishing. It should
-  build and verify distributions before publishing, use the `pypi` GitHub
-  environment, and rely on PyPI trusted publishing with `id-token: write`
-  instead of long-lived API-token secrets.
-- Keep `src/mailchannels/routes.py` updated whenever adding, removing, or
-  correcting an API endpoint. Run `uv run python scripts/check_openapi_drift.py`
-  when route declarations change; it fails if SDK routes are missing from the
-  OpenAPI spec or if the OpenAPI spec has endpoints not declared by the SDK.
-- Run `uv run python scripts/generate_api_coverage.py` after route, contract,
-  online-test, or OpenAPI coverage changes so `docs/API_COVERAGE.md` stays
-  aligned with the SDK registry and official spec hash.
-- Run `uv run python scripts/generate_api_reference.py` after changing public
-  exports, public method signatures, Pydantic models, TypedDicts, or docstrings
-  so `docs/API_REFERENCE.md` stays aligned with the source.
-  The generator must not call `typing.get_type_hints()` for TypedDict fields;
-  render raw `__annotations__` so Python 3.9 and 3.10 do not evaluate newer
-  union syntax inside postponed annotations.
-  Treat built-in generic aliases such as `dict[str, str]` as plain exported
-  values before class introspection, because Python version differences can
-  otherwise render aliases like `EmailHeaders` as `class` entries with `dict`
-  docstrings.
-- Keep `tests/test_openapi_contract.py` aligned with the route registry so API
-  coverage remains visible in the public test tree. The snapshot should match
-  `sdk_route_keys()` exactly.
-- Keep `tests/test_openapi_request_contract.py` aligned with
-  `src/mailchannels/routes.py`. Every SDK route needs an executable contract row
-  that calls the public SDK method and validates method, path, JSON/query keys,
-  required headers, forbidden headers, and legacy payload keys such as
-  `monthly_limit`. Each row also needs an async call so the suite can assert
-  sync/async request parity for method, URL, headers, JSON, and query params.
-- Keep `tests/test_http_clients.py` covering the real sync and async transport
-  wrappers whenever transport signatures or dependency behavior changes.
-- Keep `tests/test_errors.py` covering status-to-exception mappings, error
-  message extraction, retry metadata, and request ID header variants whenever
-  exception behavior changes.
-- Prefer Node 24-ready GitHub Actions versions in workflows, such as
-  `actions/checkout@v6`, `actions/setup-python@v6`, and
-  `astral-sh/setup-uv@v8.1.0` or newer.
-- Include `typing_tests` in ruff checks so consumer typing fixtures stay
-  formatted with the rest of the repository.
-- Keep `setup-uv` workflow caching disabled unless there is a clear need for it;
-  this small test matrix runs quickly and parallel cache saves can create noisy
-  GitHub Actions annotations.
-- When preparing the SmolVM archive on macOS, use `COPYFILE_DISABLE=1` and
-  exclude `.venv`, `.git`, `dist`, `.mypy_cache`, `.ruff_cache`, and
-  `.pytest_cache` so cache files and extended metadata do not make extraction
-  slow or noisy.
+clients, and structured error handling.

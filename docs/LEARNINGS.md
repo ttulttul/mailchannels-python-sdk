@@ -427,3 +427,10 @@ Python versions can disagree about whether built-in generic aliases such as
 generator should classify these aliases before regular class introspection so
 exports such as `EmailHeaders` stay rendered as simple values without inheriting
 the built-in `dict` docstring.
+
+## 2026-05-07: SKILLS.md should stay focused on SDK usage
+
+`SKILLS.md` is guidance for AI agents consuming the MailChannels Python SDK, not
+a repository contributor playbook. Keep maintenance procedures, test workflows,
+release notes, and implementation chores out of that file unless they directly
+teach correct SDK usage.
