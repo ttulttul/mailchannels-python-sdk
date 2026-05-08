@@ -45,7 +45,7 @@ def test_render_reference_includes_models_methods_and_examples() -> None:
     assert "#### `mailchannels.Emails`" in report
     assert (
         "`send(params: SendParamsType | EmailParams, *, "
-        "dry_run: bool = False) -> dict[str, Any]`"
+        "dry_run: bool = False) -> SendResponse | MailChannelsResponse`"
     ) in report
     assert "Example for `send`:" in report
     assert "mailchannels.Emails.send(" in report

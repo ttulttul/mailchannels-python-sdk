@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from typing import Any
+from typing import Any, Generic, Literal, TypeVar, overload
 from urllib.parse import urljoin
 
 from .exceptions import ConfigurationError
@@ -23,10 +23,44 @@ from .version import user_agent
 logger = logging.getLogger(__name__)
 
 DEFAULT_BASE_URL = "https://api.mailchannels.net/tx/v1"
+StrictResponses = TypeVar("StrictResponses", bound=bool)
 
 
-class Client:
+class Client(Generic[StrictResponses]):
     """Client for the MailChannels Email API."""
+
+    @overload
+    def __init__(
+        self: Client[Literal[False]],
+        *,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        http_client: SyncHTTPClient | None = None,
+        async_http_client: AsyncHTTPClient | None = None,
+        strict_responses: Literal[False] = False,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: Client[Literal[True]],
+        *,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        http_client: SyncHTTPClient | None = None,
+        async_http_client: AsyncHTTPClient | None = None,
+        strict_responses: Literal[True],
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: Client[bool],
+        *,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        http_client: SyncHTTPClient | None = None,
+        async_http_client: AsyncHTTPClient | None = None,
+        strict_responses: bool,
+    ) -> None: ...
 
     def __init__(
         self,
@@ -53,15 +87,21 @@ class Client:
         from .usage import UsageResource
         from .webhooks import WebhooksResource
 
-        self.dkim = DkimResource(self)
-        self.domain_checks = DomainChecksResource(self)
+        self.dkim: DkimResource[StrictResponses] = DkimResource(self)
+        self.domain_checks: DomainChecksResource[StrictResponses] = (
+            DomainChecksResource(self)
+        )
         self.check_domain = self.domain_checks
-        self.emails = EmailsResource(self)
-        self.metrics = MetricsResource(self)
-        self.suppressions = SuppressionsResource(self)
-        self.sub_accounts = SubAccountsResource(self)
-        self.usage = UsageResource(self)
-        self.webhooks = WebhooksResource(self)
+        self.emails: EmailsResource[StrictResponses] = EmailsResource(self)
+        self.metrics: MetricsResource[StrictResponses] = MetricsResource(self)
+        self.suppressions: SuppressionsResource[StrictResponses] = (
+            SuppressionsResource(self)
+        )
+        self.sub_accounts: SubAccountsResource[StrictResponses] = SubAccountsResource(
+            self
+        )
+        self.usage: UsageResource[StrictResponses] = UsageResource(self)
+        self.webhooks: WebhooksResource[StrictResponses] = WebhooksResource(self)
 
     def request(
         self,
@@ -182,7 +222,7 @@ class Client:
         await self.aclose()
 
 
-def get_default_client() -> Client:
+def get_default_client() -> Client[bool]:
     """Create a client from module-level SDK configuration."""
     module_http_client = _module_attr("default_http_client")
     module_async_http_client = _module_attr("default_async_http_client")

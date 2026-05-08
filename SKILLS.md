@@ -452,7 +452,10 @@ callers set `strict_responses=True` on `Client` or set
 endpoints return Pydantic response objects and raise `ResponseValidationError`
 when the API response does not match the expected model. When adding a stable
 endpoint response, pass its model to `client.request(..., response_model=...)`
-and add strict-mode tests. `/send` strict responses accept either a normal
+and add strict-mode tests plus consumer typing coverage. Explicit
+`Client(strict_responses=True)` callers should see Pydantic return models in
+mypy; module-level helpers may keep broader return types because module-level
+strictness is mutable. `/send` strict responses accept either a normal
 `request_id` plus per-personalization `results`, or dry-run rendered-message
 `data`; `/send-async` strict responses require `request_id` and `queued_at`.
 

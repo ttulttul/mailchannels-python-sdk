@@ -6,24 +6,14 @@ choosing the next engineering task.
 
 ## Recommended Order
 
-1. Tighten strict response return typing
-2. Add complete webhook signature verification
-3. Fix future-dated webhook signature freshness checks
-4. Lower intentional destructive-operation logs from warning to info
-5. Add API spec compatibility guarantees
-6. Explore OpenAPI-assisted generation
-7. Add request options if the API exposes per-request controls
+1. Add complete webhook signature verification
+2. Fix future-dated webhook signature freshness checks
+3. Lower intentional destructive-operation logs from warning to info
+4. Add API spec compatibility guarantees
+5. Explore OpenAPI-assisted generation
+6. Add request options if the API exposes per-request controls
 
-## 1. Tighten Strict Response Return Typing
-
-Strict response mode currently returns Pydantic models at runtime while public
-resource annotations still say `dict[str, Any]`. That hides the benefit from
-type checkers. Add overloads or another typed response strategy so callers who
-opt into `strict_responses=True` can see model attributes statically.
-
-Priority: high.
-
-## 2. Add Complete Webhook Signature Verification
+## 1. Add Complete Webhook Signature Verification
 
 `Webhooks.verify_content_digest(...)` only validates the `Content-Digest` header
 against the raw body. It does not verify the RFC 9421 Ed25519 signature. Add a
@@ -33,7 +23,7 @@ documentation.
 
 Priority: high.
 
-## 3. Fix Future-Dated Webhook Signature Freshness
+## 2. Fix Future-Dated Webhook Signature Freshness
 
 `signature_is_fresh(...)` uses `abs(reference - created)`, which treats
 signatures from the future the same as old signatures. Split the check into
@@ -42,7 +32,7 @@ for one release.
 
 Priority: high.
 
-## 4. Lower Intentional Destructive-Operation Logs
+## 3. Lower Intentional Destructive-Operation Logs
 
 User-initiated destructive calls currently log at warning level in DKIM,
 webhooks, sub-accounts, and suppressions. Lower those normal operations to info
@@ -50,7 +40,7 @@ level and reserve warning for unexpected recoverable behavior.
 
 Priority: high.
 
-## 5. Add API Spec Compatibility Guarantees
+## 4. Add API Spec Compatibility Guarantees
 
 Tie SDK releases to the MailChannels OpenAPI document they were checked against.
 Expose the OpenAPI source URL, spec hash, and checked date in generated
@@ -64,7 +54,7 @@ introspection.
 
 Priority: high.
 
-## 6. Explore OpenAPI-Assisted Generation
+## 5. Explore OpenAPI-Assisted Generation
 
 Investigate generating selected SDK artifacts from the MailChannels OpenAPI
 spec. A fully generated SDK may not be the right product design, but generated
@@ -77,7 +67,7 @@ the desired generated artifacts obvious.
 
 Priority: medium.
 
-## 7. Add Request Options If Needed
+## 6. Add Request Options If Needed
 
 If MailChannels exposes per-request option headers such as idempotency keys,
 model them as an `options` argument rather than forcing those controls into
@@ -126,6 +116,8 @@ API changes:
 - Strict response mode and initial typed response models.
 - Strict response model coverage across the modeled SDK response surface.
 - Strict `/send` and `/send-async` response variant validation.
+- Strict response return typing for explicit `Client(strict_responses=True)`
+  callers across the modeled resource surface.
 - Persistent sync and async HTTP transport client pooling with explicit close
   and context-manager lifecycle hooks.
 - Email payload negative tests for local validation, mocked API rejection, and

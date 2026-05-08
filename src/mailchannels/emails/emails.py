@@ -3,30 +3,56 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Generic, Literal, TypeVar, overload
 
 from pydantic import ValidationError
 
 from ..exceptions import MailChannelsError
+from ..response import MailChannelsResponse
 from .types import EmailAddress, EmailParams, QueuedSendResponse, SendResponse
 from .types import SendParams as SendParamsType
 
 logger = logging.getLogger(__name__)
+StrictResponses = TypeVar("StrictResponses", bound=bool)
 
 
-class EmailsResource:
+class EmailsResource(Generic[StrictResponses]):
     """Client-bound email operations."""
 
     def __init__(self, client: Any) -> None:
         """Create an email resource bound to a client."""
         self._client = client
 
+    @overload
+    def send(
+        self: EmailsResource[Literal[True]],
+        params: SendParamsType | EmailParams,
+        *,
+        dry_run: bool = False,
+    ) -> SendResponse: ...
+
+    @overload
+    def send(
+        self: EmailsResource[Literal[False]],
+        params: SendParamsType | EmailParams,
+        *,
+        dry_run: bool = False,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     def send(
         self,
         params: SendParamsType | EmailParams,
         *,
         dry_run: bool = False,
-    ) -> dict[str, Any]:
+    ) -> SendResponse | MailChannelsResponse: ...
+
+    def send(
+        self,
+        params: SendParamsType | EmailParams,
+        *,
+        dry_run: bool = False,
+    ) -> SendResponse | MailChannelsResponse:
         """Send an email through the MailChannels `/send` endpoint."""
         payload = normalize_email_params(params)
         query = {"dry-run": "true"} if dry_run else None
@@ -39,12 +65,36 @@ class EmailsResource:
             response_model=SendResponse,
         )
 
+    @overload
+    async def send_async(
+        self: EmailsResource[Literal[True]],
+        params: SendParamsType | EmailParams,
+        *,
+        dry_run: bool = False,
+    ) -> SendResponse: ...
+
+    @overload
+    async def send_async(
+        self: EmailsResource[Literal[False]],
+        params: SendParamsType | EmailParams,
+        *,
+        dry_run: bool = False,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     async def send_async(
         self,
         params: SendParamsType | EmailParams,
         *,
         dry_run: bool = False,
-    ) -> dict[str, Any]:
+    ) -> SendResponse | MailChannelsResponse: ...
+
+    async def send_async(
+        self,
+        params: SendParamsType | EmailParams,
+        *,
+        dry_run: bool = False,
+    ) -> SendResponse | MailChannelsResponse:
         """Send an email through `/send` using async HTTP."""
         payload = normalize_email_params(params)
         query = {"dry-run": "true"} if dry_run else None
@@ -57,7 +107,28 @@ class EmailsResource:
             response_model=SendResponse,
         )
 
-    def queue(self, params: SendParamsType | EmailParams) -> dict[str, Any]:
+    @overload
+    def queue(
+        self: EmailsResource[Literal[True]],
+        params: SendParamsType | EmailParams,
+    ) -> QueuedSendResponse: ...
+
+    @overload
+    def queue(
+        self: EmailsResource[Literal[False]],
+        params: SendParamsType | EmailParams,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    def queue(
+        self,
+        params: SendParamsType | EmailParams,
+    ) -> QueuedSendResponse | MailChannelsResponse: ...
+
+    def queue(
+        self,
+        params: SendParamsType | EmailParams,
+    ) -> QueuedSendResponse | MailChannelsResponse:
         """Queue an email through the MailChannels `/send-async` endpoint."""
         payload = normalize_email_params(params)
         logger.info("Queueing email through MailChannels /send-async")
@@ -68,7 +139,28 @@ class EmailsResource:
             response_model=QueuedSendResponse,
         )
 
-    async def queue_async(self, params: SendParamsType | EmailParams) -> dict[str, Any]:
+    @overload
+    async def queue_async(
+        self: EmailsResource[Literal[True]],
+        params: SendParamsType | EmailParams,
+    ) -> QueuedSendResponse: ...
+
+    @overload
+    async def queue_async(
+        self: EmailsResource[Literal[False]],
+        params: SendParamsType | EmailParams,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    async def queue_async(
+        self,
+        params: SendParamsType | EmailParams,
+    ) -> QueuedSendResponse | MailChannelsResponse: ...
+
+    async def queue_async(
+        self,
+        params: SendParamsType | EmailParams,
+    ) -> QueuedSendResponse | MailChannelsResponse:
         """Queue an email through `/send-async` using async HTTP."""
         payload = normalize_email_params(params)
         logger.info("Queueing email through MailChannels /send-async using async HTTP")
@@ -91,7 +183,7 @@ class Emails:
         params: SendParamsType | EmailParams,
         *,
         dry_run: bool = False,
-    ) -> dict[str, Any]:
+    ) -> SendResponse | MailChannelsResponse:
         """Send an email through the globally configured client."""
         from ..client import get_default_client
 
@@ -103,21 +195,27 @@ class Emails:
         params: SendParamsType | EmailParams,
         *,
         dry_run: bool = False,
-    ) -> dict[str, Any]:
+    ) -> SendResponse | MailChannelsResponse:
         """Send an email through the globally configured async client."""
         from ..client import get_default_client
 
         return await get_default_client().emails.send_async(params, dry_run=dry_run)
 
     @classmethod
-    def queue(cls, params: SendParamsType | EmailParams) -> dict[str, Any]:
+    def queue(
+        cls,
+        params: SendParamsType | EmailParams,
+    ) -> QueuedSendResponse | MailChannelsResponse:
         """Queue an email through the globally configured client."""
         from ..client import get_default_client
 
         return get_default_client().emails.queue(params)
 
     @classmethod
-    async def queue_async(cls, params: SendParamsType | EmailParams) -> dict[str, Any]:
+    async def queue_async(
+        cls,
+        params: SendParamsType | EmailParams,
+    ) -> QueuedSendResponse | MailChannelsResponse:
         """Queue an email through the globally configured async client."""
         from ..client import get_default_client
 

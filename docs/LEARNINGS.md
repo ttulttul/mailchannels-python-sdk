@@ -386,3 +386,12 @@ lazily creates one `httpx.AsyncClient` so sync-only installs still work without
 the async extra. Explicit `close()` and `aclose()` hooks, plus sync and async
 client context managers, make lifecycle management visible to applications and
 tests.
+
+## 2026-05-07: Strict response typing needs client-level literals
+
+Mypy can infer `Client[Literal[True]]` from `Client(strict_responses=True)` when
+the constructor is overloaded. Resource objects should carry the same strictness
+literal and overload modeled methods so explicit strict clients return Pydantic
+models statically, while non-strict clients keep the dict-like
+`MailChannelsResponse`. Module-level helpers should remain broader because
+`mailchannels.strict_responses` is mutable runtime state.

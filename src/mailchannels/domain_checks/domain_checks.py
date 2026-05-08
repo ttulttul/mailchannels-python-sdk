@@ -3,22 +3,51 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Generic, Literal, TypeVar, overload
 
 from pydantic import ValidationError
 
 from ..exceptions import MailChannelsError
+from ..response import MailChannelsResponse
 from .types import CheckDomainParams, CheckDomainResult, DkimSetting
 
 logger = logging.getLogger(__name__)
+StrictResponses = TypeVar("StrictResponses", bound=bool)
 
 
-class DomainChecksResource:
+class DomainChecksResource(Generic[StrictResponses]):
     """Client-bound domain configuration check operations."""
 
     def __init__(self, client: Any) -> None:
         """Create a domain checks resource bound to a client."""
         self._client = client
+
+    @overload
+    def check(
+        self: DomainChecksResource[Literal[True]],
+        domain: str,
+        *,
+        sender_id: str | None = None,
+        dkim_settings: list[DkimSetting | dict[str, str]] | None = None,
+    ) -> CheckDomainResult: ...
+
+    @overload
+    def check(
+        self: DomainChecksResource[Literal[False]],
+        domain: str,
+        *,
+        sender_id: str | None = None,
+        dkim_settings: list[DkimSetting | dict[str, str]] | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    def check(
+        self,
+        domain: str,
+        *,
+        sender_id: str | None = None,
+        dkim_settings: list[DkimSetting | dict[str, str]] | None = None,
+    ) -> CheckDomainResult | MailChannelsResponse: ...
 
     def check(
         self,
@@ -26,7 +55,7 @@ class DomainChecksResource:
         *,
         sender_id: str | None = None,
         dkim_settings: list[DkimSetting | dict[str, str]] | None = None,
-    ) -> dict[str, Any]:
+    ) -> CheckDomainResult | MailChannelsResponse:
         """Check DKIM, SPF, sender-domain DNS, and Domain Lockdown status."""
         payload = _check_domain_payload(
             domain,
@@ -41,13 +70,40 @@ class DomainChecksResource:
             response_model=CheckDomainResult,
         )
 
+    @overload
+    async def check_async(
+        self: DomainChecksResource[Literal[True]],
+        domain: str,
+        *,
+        sender_id: str | None = None,
+        dkim_settings: list[DkimSetting | dict[str, str]] | None = None,
+    ) -> CheckDomainResult: ...
+
+    @overload
+    async def check_async(
+        self: DomainChecksResource[Literal[False]],
+        domain: str,
+        *,
+        sender_id: str | None = None,
+        dkim_settings: list[DkimSetting | dict[str, str]] | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     async def check_async(
         self,
         domain: str,
         *,
         sender_id: str | None = None,
         dkim_settings: list[DkimSetting | dict[str, str]] | None = None,
-    ) -> dict[str, Any]:
+    ) -> CheckDomainResult | MailChannelsResponse: ...
+
+    async def check_async(
+        self,
+        domain: str,
+        *,
+        sender_id: str | None = None,
+        dkim_settings: list[DkimSetting | dict[str, str]] | None = None,
+    ) -> CheckDomainResult | MailChannelsResponse:
         """Check domain configuration status using async HTTP."""
         payload = _check_domain_payload(
             domain,
@@ -76,7 +132,7 @@ class DomainChecks:
         *,
         sender_id: str | None = None,
         dkim_settings: list[DkimSetting | dict[str, str]] | None = None,
-    ) -> dict[str, Any]:
+    ) -> CheckDomainResult | MailChannelsResponse:
         """Check DKIM, SPF, sender-domain DNS, and Domain Lockdown status."""
         from ..client import get_default_client
 
@@ -93,7 +149,7 @@ class DomainChecks:
         *,
         sender_id: str | None = None,
         dkim_settings: list[DkimSetting | dict[str, str]] | None = None,
-    ) -> dict[str, Any]:
+    ) -> CheckDomainResult | MailChannelsResponse:
         """Check domain configuration status using async HTTP."""
         from ..client import get_default_client
 

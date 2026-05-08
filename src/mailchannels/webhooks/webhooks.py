@@ -9,9 +9,10 @@ import logging
 import re
 import time
 from builtins import list as list_type
-from typing import Any
+from typing import Any, Generic, Literal, TypeVar, overload
 
 from ..query import compact_query, pagination_query
+from ..response import MailChannelsResponse
 from .types import (
     SignatureParameters,
     WebhookBatchResult,
@@ -21,6 +22,7 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
+StrictResponses = TypeVar("StrictResponses", bound=bool)
 
 _SIGNATURE_INPUT_RE = re.compile(
     r"^(?P<name>[^=]+)=\((?P<covered>[^)]*)\)(?P<params>.*)$"
@@ -29,7 +31,7 @@ _PARAM_RE = re.compile(r";(?P<key>[a-zA-Z0-9_-]+)=(?P<value>\"[^\"]*\"|[^;]+)")
 _DIGEST_RE = re.compile(r"sha-256=:(?P<digest>[^:]+):")
 
 
-class WebhooksResource:
+class WebhooksResource(Generic[StrictResponses]):
     """Client-bound webhook operations."""
 
     def __init__(self, client: Any) -> None:
@@ -77,6 +79,31 @@ class WebhooksResource:
         logger.warning("Deleting all MailChannels webhooks using async HTTP")
         return await self._client.request_async("DELETE", "/webhook")
 
+    @overload
+    def batches(
+        self: WebhooksResource[Literal[True]],
+        *,
+        created_after: str | None = None,
+        created_before: str | None = None,
+        statuses: list_type[WebhookBatchStatus] | None = None,
+        webhook: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> WebhookBatchResult: ...
+
+    @overload
+    def batches(
+        self: WebhooksResource[Literal[False]],
+        *,
+        created_after: str | None = None,
+        created_before: str | None = None,
+        statuses: list_type[WebhookBatchStatus] | None = None,
+        webhook: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     def batches(
         self,
         *,
@@ -86,7 +113,18 @@ class WebhooksResource:
         webhook: str | None = None,
         limit: int | None = None,
         offset: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> WebhookBatchResult | MailChannelsResponse: ...
+
+    def batches(
+        self,
+        *,
+        created_after: str | None = None,
+        created_before: str | None = None,
+        statuses: list_type[WebhookBatchStatus] | None = None,
+        webhook: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> WebhookBatchResult | MailChannelsResponse:
         """Retrieve webhook delivery batches."""
         logger.info("Listing MailChannels webhook batches")
         return self._client.request(
@@ -104,6 +142,31 @@ class WebhooksResource:
             response_model=WebhookBatchResult,
         )
 
+    @overload
+    async def batches_async(
+        self: WebhooksResource[Literal[True]],
+        *,
+        created_after: str | None = None,
+        created_before: str | None = None,
+        statuses: list_type[WebhookBatchStatus] | None = None,
+        webhook: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> WebhookBatchResult: ...
+
+    @overload
+    async def batches_async(
+        self: WebhooksResource[Literal[False]],
+        *,
+        created_after: str | None = None,
+        created_before: str | None = None,
+        statuses: list_type[WebhookBatchStatus] | None = None,
+        webhook: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     async def batches_async(
         self,
         *,
@@ -113,7 +176,18 @@ class WebhooksResource:
         webhook: str | None = None,
         limit: int | None = None,
         offset: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> WebhookBatchResult | MailChannelsResponse: ...
+
+    async def batches_async(
+        self,
+        *,
+        created_after: str | None = None,
+        created_before: str | None = None,
+        statuses: list_type[WebhookBatchStatus] | None = None,
+        webhook: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> WebhookBatchResult | MailChannelsResponse:
         """Retrieve webhook delivery batches using async HTTP."""
         logger.info("Listing MailChannels webhook batches using async HTTP")
         return await self._client.request_async(
@@ -165,7 +239,22 @@ class WebhooksResource:
             require_api_key=False,
         )
 
-    def public_key(self, key_id: str) -> dict[str, Any]:
+    @overload
+    def public_key(
+        self: WebhooksResource[Literal[True]],
+        key_id: str,
+    ) -> WebhookPublicKey: ...
+
+    @overload
+    def public_key(
+        self: WebhooksResource[Literal[False]],
+        key_id: str,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    def public_key(self, key_id: str) -> WebhookPublicKey | MailChannelsResponse: ...
+
+    def public_key(self, key_id: str) -> WebhookPublicKey | MailChannelsResponse:
         """Retrieve a webhook public signing key by ID."""
         logger.info("Retrieving MailChannels webhook public key key_id=%s", key_id)
         return self._client.request(
@@ -176,7 +265,28 @@ class WebhooksResource:
             response_model=WebhookPublicKey,
         )
 
-    async def public_key_async(self, key_id: str) -> dict[str, Any]:
+    @overload
+    async def public_key_async(
+        self: WebhooksResource[Literal[True]],
+        key_id: str,
+    ) -> WebhookPublicKey: ...
+
+    @overload
+    async def public_key_async(
+        self: WebhooksResource[Literal[False]],
+        key_id: str,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    async def public_key_async(
+        self,
+        key_id: str,
+    ) -> WebhookPublicKey | MailChannelsResponse: ...
+
+    async def public_key_async(
+        self,
+        key_id: str,
+    ) -> WebhookPublicKey | MailChannelsResponse:
         """Retrieve a webhook public signing key by ID using async HTTP."""
         logger.info(
             "Retrieving MailChannels webhook public key using async HTTP key_id=%s",
@@ -190,7 +300,32 @@ class WebhooksResource:
             response_model=WebhookPublicKey,
         )
 
-    def validate(self, *, request_id: str | None = None) -> dict[str, Any]:
+    @overload
+    def validate(
+        self: WebhooksResource[Literal[True]],
+        *,
+        request_id: str | None = None,
+    ) -> WebhookValidationResults: ...
+
+    @overload
+    def validate(
+        self: WebhooksResource[Literal[False]],
+        *,
+        request_id: str | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    def validate(
+        self,
+        *,
+        request_id: str | None = None,
+    ) -> WebhookValidationResults | MailChannelsResponse: ...
+
+    def validate(
+        self,
+        *,
+        request_id: str | None = None,
+    ) -> WebhookValidationResults | MailChannelsResponse:
         """Validate enrolled webhook endpoints with a test event."""
         logger.info("Validating MailChannels webhooks request_id=%s", request_id)
         return self._client.request(
@@ -200,7 +335,32 @@ class WebhooksResource:
             response_model=WebhookValidationResults,
         )
 
-    async def validate_async(self, *, request_id: str | None = None) -> dict[str, Any]:
+    @overload
+    async def validate_async(
+        self: WebhooksResource[Literal[True]],
+        *,
+        request_id: str | None = None,
+    ) -> WebhookValidationResults: ...
+
+    @overload
+    async def validate_async(
+        self: WebhooksResource[Literal[False]],
+        *,
+        request_id: str | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    async def validate_async(
+        self,
+        *,
+        request_id: str | None = None,
+    ) -> WebhookValidationResults | MailChannelsResponse: ...
+
+    async def validate_async(
+        self,
+        *,
+        request_id: str | None = None,
+    ) -> WebhookValidationResults | MailChannelsResponse:
         """Validate enrolled webhook endpoints with a test event using async HTTP."""
         logger.info(
             "Validating MailChannels webhooks using async HTTP request_id=%s",
@@ -269,7 +429,7 @@ class Webhooks:
         webhook: str | None = None,
         limit: int | None = None,
         offset: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> WebhookBatchResult | MailChannelsResponse:
         """Retrieve webhook delivery batches."""
         from ..client import get_default_client
 
@@ -292,7 +452,7 @@ class Webhooks:
         webhook: str | None = None,
         limit: int | None = None,
         offset: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> WebhookBatchResult | MailChannelsResponse:
         """Retrieve webhook delivery batches using async HTTP."""
         from ..client import get_default_client
 
@@ -331,28 +491,39 @@ class Webhooks:
         )
 
     @classmethod
-    def public_key(cls, key_id: str) -> dict[str, Any]:
+    def public_key(cls, key_id: str) -> WebhookPublicKey | MailChannelsResponse:
         """Retrieve a webhook public signing key by ID."""
         from ..client import get_default_client
 
         return get_default_client().webhooks.public_key(key_id)
 
     @classmethod
-    async def public_key_async(cls, key_id: str) -> dict[str, Any]:
+    async def public_key_async(
+        cls,
+        key_id: str,
+    ) -> WebhookPublicKey | MailChannelsResponse:
         """Retrieve a webhook public signing key by ID using async HTTP."""
         from ..client import get_default_client
 
         return await get_default_client().webhooks.public_key_async(key_id)
 
     @classmethod
-    def validate(cls, *, request_id: str | None = None) -> dict[str, Any]:
+    def validate(
+        cls,
+        *,
+        request_id: str | None = None,
+    ) -> WebhookValidationResults | MailChannelsResponse:
         """Validate enrolled webhook endpoints with a test event."""
         from ..client import get_default_client
 
         return get_default_client().webhooks.validate(request_id=request_id)
 
     @classmethod
-    async def validate_async(cls, *, request_id: str | None = None) -> dict[str, Any]:
+    async def validate_async(
+        cls,
+        *,
+        request_id: str | None = None,
+    ) -> WebhookValidationResults | MailChannelsResponse:
         """Validate enrolled webhook endpoints with a test event using async HTTP."""
         from ..client import get_default_client
 

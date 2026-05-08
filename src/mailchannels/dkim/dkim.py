@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Generic, Literal, TypeVar, overload
 
 from ..query import pagination_query
+from ..response import MailChannelsResponse
 from .types import (
     DkimAlgorithm,
     DkimKeyInfo,
@@ -16,14 +17,45 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
+StrictResponses = TypeVar("StrictResponses", bound=bool)
 
 
-class DkimResource:
+class DkimResource(Generic[StrictResponses]):
     """Client-bound DKIM key management operations."""
 
     def __init__(self, client: Any) -> None:
         """Create a DKIM resource bound to a client."""
         self._client = client
+
+    @overload
+    def create(
+        self: DkimResource[Literal[True]],
+        domain: str,
+        *,
+        selector: str,
+        algorithm: DkimAlgorithm | None = None,
+        key_length: int | None = None,
+    ) -> DkimKeyInfo: ...
+
+    @overload
+    def create(
+        self: DkimResource[Literal[False]],
+        domain: str,
+        *,
+        selector: str,
+        algorithm: DkimAlgorithm | None = None,
+        key_length: int | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    def create(
+        self,
+        domain: str,
+        *,
+        selector: str,
+        algorithm: DkimAlgorithm | None = None,
+        key_length: int | None = None,
+    ) -> DkimKeyInfo | MailChannelsResponse: ...
 
     def create(
         self,
@@ -32,7 +64,7 @@ class DkimResource:
         selector: str,
         algorithm: DkimAlgorithm | None = None,
         key_length: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> DkimKeyInfo | MailChannelsResponse:
         """Create a MailChannels-hosted DKIM key pair for a domain."""
         logger.info(
             "Creating MailChannels DKIM key pair domain=%s selector=%s",
@@ -53,6 +85,27 @@ class DkimResource:
             response_model=DkimKeyInfo,
         )
 
+    @overload
+    async def create_async(
+        self: DkimResource[Literal[True]],
+        domain: str,
+        *,
+        selector: str,
+        algorithm: DkimAlgorithm | None = None,
+        key_length: int | None = None,
+    ) -> DkimKeyInfo: ...
+
+    @overload
+    async def create_async(
+        self: DkimResource[Literal[False]],
+        domain: str,
+        *,
+        selector: str,
+        algorithm: DkimAlgorithm | None = None,
+        key_length: int | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     async def create_async(
         self,
         domain: str,
@@ -60,7 +113,16 @@ class DkimResource:
         selector: str,
         algorithm: DkimAlgorithm | None = None,
         key_length: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> DkimKeyInfo | MailChannelsResponse: ...
+
+    async def create_async(
+        self,
+        domain: str,
+        *,
+        selector: str,
+        algorithm: DkimAlgorithm | None = None,
+        key_length: int | None = None,
+    ) -> DkimKeyInfo | MailChannelsResponse:
         """Create a MailChannels-hosted DKIM key pair using async HTTP."""
         logger.info(
             "Creating MailChannels DKIM key pair using async HTTP domain=%s "
@@ -82,6 +144,31 @@ class DkimResource:
             response_model=DkimKeyInfo,
         )
 
+    @overload
+    def list(
+        self: DkimResource[Literal[True]],
+        domain: str,
+        *,
+        selector: str | None = None,
+        status: DkimKeyStatus | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+        include_dns_record: bool | None = None,
+    ) -> DkimKeyList: ...
+
+    @overload
+    def list(
+        self: DkimResource[Literal[False]],
+        domain: str,
+        *,
+        selector: str | None = None,
+        status: DkimKeyStatus | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+        include_dns_record: bool | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     def list(
         self,
         domain: str,
@@ -91,7 +178,18 @@ class DkimResource:
         offset: int | None = None,
         limit: int | None = None,
         include_dns_record: bool | None = None,
-    ) -> dict[str, Any]:
+    ) -> DkimKeyList | MailChannelsResponse: ...
+
+    def list(
+        self,
+        domain: str,
+        *,
+        selector: str | None = None,
+        status: DkimKeyStatus | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+        include_dns_record: bool | None = None,
+    ) -> DkimKeyList | MailChannelsResponse:
         """Retrieve MailChannels-hosted DKIM keys for a domain."""
         logger.info("Listing MailChannels DKIM keys domain=%s", domain)
         params = pagination_query(
@@ -108,6 +206,31 @@ class DkimResource:
             response_model=DkimKeyList,
         )
 
+    @overload
+    async def list_async(
+        self: DkimResource[Literal[True]],
+        domain: str,
+        *,
+        selector: str | None = None,
+        status: DkimKeyStatus | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+        include_dns_record: bool | None = None,
+    ) -> DkimKeyList: ...
+
+    @overload
+    async def list_async(
+        self: DkimResource[Literal[False]],
+        domain: str,
+        *,
+        selector: str | None = None,
+        status: DkimKeyStatus | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+        include_dns_record: bool | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     async def list_async(
         self,
         domain: str,
@@ -117,7 +240,18 @@ class DkimResource:
         offset: int | None = None,
         limit: int | None = None,
         include_dns_record: bool | None = None,
-    ) -> dict[str, Any]:
+    ) -> DkimKeyList | MailChannelsResponse: ...
+
+    async def list_async(
+        self,
+        domain: str,
+        *,
+        selector: str | None = None,
+        status: DkimKeyStatus | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+        include_dns_record: bool | None = None,
+    ) -> DkimKeyList | MailChannelsResponse:
         """Retrieve MailChannels-hosted DKIM keys using async HTTP."""
         logger.info("Listing MailChannels DKIM keys using async HTTP domain=%s", domain)
         params = pagination_query(
@@ -175,13 +309,40 @@ class DkimResource:
             json={"status": status},
         )
 
+    @overload
+    def rotate(
+        self: DkimResource[Literal[True]],
+        domain: str,
+        selector: str,
+        *,
+        new_selector: str,
+    ) -> DkimRotateResponse: ...
+
+    @overload
+    def rotate(
+        self: DkimResource[Literal[False]],
+        domain: str,
+        selector: str,
+        *,
+        new_selector: str,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     def rotate(
         self,
         domain: str,
         selector: str,
         *,
         new_selector: str,
-    ) -> dict[str, Any]:
+    ) -> DkimRotateResponse | MailChannelsResponse: ...
+
+    def rotate(
+        self,
+        domain: str,
+        selector: str,
+        *,
+        new_selector: str,
+    ) -> DkimRotateResponse | MailChannelsResponse:
         """Rotate a MailChannels-hosted DKIM key pair."""
         logger.warning(
             "Rotating MailChannels DKIM key domain=%s selector=%s new_selector=%s",
@@ -196,13 +357,40 @@ class DkimResource:
             response_model=DkimRotateResponse,
         )
 
+    @overload
+    async def rotate_async(
+        self: DkimResource[Literal[True]],
+        domain: str,
+        selector: str,
+        *,
+        new_selector: str,
+    ) -> DkimRotateResponse: ...
+
+    @overload
+    async def rotate_async(
+        self: DkimResource[Literal[False]],
+        domain: str,
+        selector: str,
+        *,
+        new_selector: str,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     async def rotate_async(
         self,
         domain: str,
         selector: str,
         *,
         new_selector: str,
-    ) -> dict[str, Any]:
+    ) -> DkimRotateResponse | MailChannelsResponse: ...
+
+    async def rotate_async(
+        self,
+        domain: str,
+        selector: str,
+        *,
+        new_selector: str,
+    ) -> DkimRotateResponse | MailChannelsResponse:
         """Rotate a MailChannels-hosted DKIM key pair using async HTTP."""
         logger.warning(
             "Rotating MailChannels DKIM key using async HTTP domain=%s "
@@ -230,7 +418,7 @@ class Dkim:
         selector: str,
         algorithm: DkimAlgorithm | None = None,
         key_length: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> DkimKeyInfo | MailChannelsResponse:
         """Create a MailChannels-hosted DKIM key pair for a domain."""
         from ..client import get_default_client
 
@@ -249,7 +437,7 @@ class Dkim:
         selector: str,
         algorithm: DkimAlgorithm | None = None,
         key_length: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> DkimKeyInfo | MailChannelsResponse:
         """Create a MailChannels-hosted DKIM key pair using async HTTP."""
         from ..client import get_default_client
 
@@ -270,7 +458,7 @@ class Dkim:
         offset: int | None = None,
         limit: int | None = None,
         include_dns_record: bool | None = None,
-    ) -> dict[str, Any]:
+    ) -> DkimKeyList | MailChannelsResponse:
         """Retrieve MailChannels-hosted DKIM keys for a domain."""
         from ..client import get_default_client
 
@@ -293,7 +481,7 @@ class Dkim:
         offset: int | None = None,
         limit: int | None = None,
         include_dns_record: bool | None = None,
-    ) -> dict[str, Any]:
+    ) -> DkimKeyList | MailChannelsResponse:
         """Retrieve MailChannels-hosted DKIM keys using async HTTP."""
         from ..client import get_default_client
 
@@ -347,7 +535,7 @@ class Dkim:
         selector: str,
         *,
         new_selector: str,
-    ) -> dict[str, Any]:
+    ) -> DkimRotateResponse | MailChannelsResponse:
         """Rotate a MailChannels-hosted DKIM key pair."""
         from ..client import get_default_client
 
@@ -364,7 +552,7 @@ class Dkim:
         selector: str,
         *,
         new_selector: str,
-    ) -> dict[str, Any]:
+    ) -> DkimRotateResponse | MailChannelsResponse:
         """Rotate a MailChannels-hosted DKIM key pair using async HTTP."""
         from ..client import get_default_client
 

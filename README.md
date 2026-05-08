@@ -227,6 +227,10 @@ longer matches the expected shape. Endpoints without a stable model still return
 the normal dict-like response. The test suite covers every exposed response model
 with valid bodies, missing required fields, invalid field types, response
 headers, and extra API fields so SDK/API shape drift is caught early.
+Explicit clients created with `Client(strict_responses=True)` also expose those
+Pydantic model return types to type checkers. Module-level helpers still have a
+broader return type because `mailchannels.strict_responses` is mutable runtime
+configuration.
 For email sends, strict mode validates `/send` normal responses as
 `SendResponse(request_id=..., results=[...])`, `/send` dry-run responses as
 `SendResponse(data=[...])`, and `/send-async` responses as

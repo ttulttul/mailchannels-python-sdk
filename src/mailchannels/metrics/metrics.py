@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Generic, Literal, TypeVar, overload
 
 from ..query import compact_query
+from ..response import MailChannelsResponse
 from .types import (
     MetricsEngagement,
     MetricsInterval,
@@ -19,14 +20,45 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
+StrictResponses = TypeVar("StrictResponses", bound=bool)
 
 
-class MetricsResource:
+class MetricsResource(Generic[StrictResponses]):
     """Client-bound metrics operations."""
 
     def __init__(self, client: Any) -> None:
         """Create a metrics resource bound to a client."""
         self._client = client
+
+    @overload
+    def engagement(
+        self: MetricsResource[Literal[True]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsEngagement: ...
+
+    @overload
+    def engagement(
+        self: MetricsResource[Literal[False]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    def engagement(
+        self,
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsEngagement | MailChannelsResponse: ...
 
     def engagement(
         self,
@@ -35,7 +67,7 @@ class MetricsResource:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsEngagement | MailChannelsResponse:
         """Retrieve engagement metrics."""
         logger.info("Retrieving MailChannels engagement metrics")
         return self._client.request(
@@ -45,6 +77,27 @@ class MetricsResource:
             response_model=MetricsEngagement,
         )
 
+    @overload
+    async def engagement_async(
+        self: MetricsResource[Literal[True]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsEngagement: ...
+
+    @overload
+    async def engagement_async(
+        self: MetricsResource[Literal[False]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     async def engagement_async(
         self,
         *,
@@ -52,7 +105,16 @@ class MetricsResource:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsEngagement | MailChannelsResponse: ...
+
+    async def engagement_async(
+        self,
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsEngagement | MailChannelsResponse:
         """Retrieve engagement metrics using async HTTP."""
         logger.info("Retrieving MailChannels engagement metrics using async HTTP")
         return await self._client.request_async(
@@ -62,6 +124,27 @@ class MetricsResource:
             response_model=MetricsEngagement,
         )
 
+    @overload
+    def performance(
+        self: MetricsResource[Literal[True]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsPerformance: ...
+
+    @overload
+    def performance(
+        self: MetricsResource[Literal[False]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     def performance(
         self,
         *,
@@ -69,7 +152,16 @@ class MetricsResource:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsPerformance | MailChannelsResponse: ...
+
+    def performance(
+        self,
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsPerformance | MailChannelsResponse:
         """Retrieve performance metrics."""
         logger.info("Retrieving MailChannels performance metrics")
         return self._client.request(
@@ -79,6 +171,27 @@ class MetricsResource:
             response_model=MetricsPerformance,
         )
 
+    @overload
+    async def performance_async(
+        self: MetricsResource[Literal[True]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsPerformance: ...
+
+    @overload
+    async def performance_async(
+        self: MetricsResource[Literal[False]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     async def performance_async(
         self,
         *,
@@ -86,7 +199,16 @@ class MetricsResource:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsPerformance | MailChannelsResponse: ...
+
+    async def performance_async(
+        self,
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsPerformance | MailChannelsResponse:
         """Retrieve performance metrics using async HTTP."""
         logger.info("Retrieving MailChannels performance metrics using async HTTP")
         return await self._client.request_async(
@@ -96,6 +218,27 @@ class MetricsResource:
             response_model=MetricsPerformance,
         )
 
+    @overload
+    def recipient_behaviour(
+        self: MetricsResource[Literal[True]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsRecipientBehaviour: ...
+
+    @overload
+    def recipient_behaviour(
+        self: MetricsResource[Literal[False]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     def recipient_behaviour(
         self,
         *,
@@ -103,7 +246,16 @@ class MetricsResource:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsRecipientBehaviour | MailChannelsResponse: ...
+
+    def recipient_behaviour(
+        self,
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsRecipientBehaviour | MailChannelsResponse:
         """Retrieve recipient behaviour metrics."""
         logger.info("Retrieving MailChannels recipient behaviour metrics")
         return self._client.request(
@@ -113,6 +265,27 @@ class MetricsResource:
             response_model=MetricsRecipientBehaviour,
         )
 
+    @overload
+    async def recipient_behaviour_async(
+        self: MetricsResource[Literal[True]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsRecipientBehaviour: ...
+
+    @overload
+    async def recipient_behaviour_async(
+        self: MetricsResource[Literal[False]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     async def recipient_behaviour_async(
         self,
         *,
@@ -120,7 +293,16 @@ class MetricsResource:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsRecipientBehaviour | MailChannelsResponse: ...
+
+    async def recipient_behaviour_async(
+        self,
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsRecipientBehaviour | MailChannelsResponse:
         """Retrieve recipient behaviour metrics using async HTTP."""
         logger.info(
             "Retrieving MailChannels recipient behaviour metrics using async HTTP"
@@ -139,7 +321,7 @@ class MetricsResource:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsRecipientBehaviour | MailChannelsResponse:
         """Retrieve recipient behaviour metrics using US spelling."""
         return self.recipient_behaviour(
             start_time=start_time,
@@ -155,7 +337,7 @@ class MetricsResource:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsRecipientBehaviour | MailChannelsResponse:
         """Retrieve recipient behaviour metrics using US spelling and async HTTP."""
         return await self.recipient_behaviour_async(
             start_time=start_time,
@@ -164,6 +346,27 @@ class MetricsResource:
             interval=interval,
         )
 
+    @overload
+    def volume(
+        self: MetricsResource[Literal[True]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsVolume: ...
+
+    @overload
+    def volume(
+        self: MetricsResource[Literal[False]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     def volume(
         self,
         *,
@@ -171,7 +374,16 @@ class MetricsResource:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsVolume | MailChannelsResponse: ...
+
+    def volume(
+        self,
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsVolume | MailChannelsResponse:
         """Retrieve volume metrics."""
         logger.info("Retrieving MailChannels volume metrics")
         return self._client.request(
@@ -181,6 +393,27 @@ class MetricsResource:
             response_model=MetricsVolume,
         )
 
+    @overload
+    async def volume_async(
+        self: MetricsResource[Literal[True]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsVolume: ...
+
+    @overload
+    async def volume_async(
+        self: MetricsResource[Literal[False]],
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     async def volume_async(
         self,
         *,
@@ -188,7 +421,16 @@ class MetricsResource:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsVolume | MailChannelsResponse: ...
+
+    async def volume_async(
+        self,
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        campaign_id: str | None = None,
+        interval: MetricsInterval | None = None,
+    ) -> MetricsVolume | MailChannelsResponse:
         """Retrieve volume metrics using async HTTP."""
         logger.info("Retrieving MailChannels volume metrics using async HTTP")
         return await self._client.request_async(
@@ -197,6 +439,42 @@ class MetricsResource:
             params=_time_series_query(start_time, end_time, campaign_id, interval),
             response_model=MetricsVolume,
         )
+
+    @overload
+    def senders(
+        self: MetricsResource[Literal[True]],
+        sender_type: MetricsSenderType,
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+        sort_order: MetricsSortOrder | None = None,
+    ) -> MetricsSenderResponse: ...
+
+    @overload
+    def senders(
+        self: MetricsResource[Literal[False]],
+        sender_type: MetricsSenderType,
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+        sort_order: MetricsSortOrder | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    def senders(
+        self,
+        sender_type: MetricsSenderType,
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+        sort_order: MetricsSortOrder | None = None,
+    ) -> MetricsSenderResponse | MailChannelsResponse: ...
 
     def senders(
         self,
@@ -207,7 +485,7 @@ class MetricsResource:
         limit: int | None = None,
         offset: int | None = None,
         sort_order: MetricsSortOrder | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsSenderResponse | MailChannelsResponse:
         """Retrieve sender metrics grouped by campaigns or sub-accounts."""
         logger.info("Retrieving MailChannels sender metrics type=%s", sender_type)
         params = compact_query(
@@ -226,6 +504,31 @@ class MetricsResource:
             response_model=MetricsSenderResponse,
         )
 
+    @overload
+    async def senders_async(
+        self: MetricsResource[Literal[True]],
+        sender_type: MetricsSenderType,
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+        sort_order: MetricsSortOrder | None = None,
+    ) -> MetricsSenderResponse: ...
+
+    @overload
+    async def senders_async(
+        self: MetricsResource[Literal[False]],
+        sender_type: MetricsSenderType,
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+        sort_order: MetricsSortOrder | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     async def senders_async(
         self,
         sender_type: MetricsSenderType,
@@ -235,7 +538,18 @@ class MetricsResource:
         limit: int | None = None,
         offset: int | None = None,
         sort_order: MetricsSortOrder | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsSenderResponse | MailChannelsResponse: ...
+
+    async def senders_async(
+        self,
+        sender_type: MetricsSenderType,
+        *,
+        start_time: MetricsTime | None = None,
+        end_time: MetricsTime | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+        sort_order: MetricsSortOrder | None = None,
+    ) -> MetricsSenderResponse | MailChannelsResponse:
         """Retrieve sender metrics using async HTTP."""
         logger.info(
             "Retrieving MailChannels sender metrics using async HTTP type=%s",
@@ -269,7 +583,7 @@ class Metrics:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsEngagement | MailChannelsResponse:
         """Retrieve engagement metrics."""
         from ..client import get_default_client
 
@@ -288,7 +602,7 @@ class Metrics:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsEngagement | MailChannelsResponse:
         """Retrieve engagement metrics using async HTTP."""
         from ..client import get_default_client
 
@@ -307,7 +621,7 @@ class Metrics:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsPerformance | MailChannelsResponse:
         """Retrieve performance metrics."""
         from ..client import get_default_client
 
@@ -326,7 +640,7 @@ class Metrics:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsPerformance | MailChannelsResponse:
         """Retrieve performance metrics using async HTTP."""
         from ..client import get_default_client
 
@@ -345,7 +659,7 @@ class Metrics:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsRecipientBehaviour | MailChannelsResponse:
         """Retrieve recipient behaviour metrics."""
         from ..client import get_default_client
 
@@ -364,7 +678,7 @@ class Metrics:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsRecipientBehaviour | MailChannelsResponse:
         """Retrieve recipient behaviour metrics using async HTTP."""
         from ..client import get_default_client
 
@@ -383,7 +697,7 @@ class Metrics:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsRecipientBehaviour | MailChannelsResponse:
         """Retrieve recipient behaviour metrics using US spelling."""
         return cls.recipient_behaviour(
             start_time=start_time,
@@ -400,7 +714,7 @@ class Metrics:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsRecipientBehaviour | MailChannelsResponse:
         """Retrieve recipient behaviour metrics using US spelling and async HTTP."""
         return await cls.recipient_behaviour_async(
             start_time=start_time,
@@ -417,7 +731,7 @@ class Metrics:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsVolume | MailChannelsResponse:
         """Retrieve volume metrics."""
         from ..client import get_default_client
 
@@ -436,7 +750,7 @@ class Metrics:
         end_time: MetricsTime | None = None,
         campaign_id: str | None = None,
         interval: MetricsInterval | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsVolume | MailChannelsResponse:
         """Retrieve volume metrics using async HTTP."""
         from ..client import get_default_client
 
@@ -457,7 +771,7 @@ class Metrics:
         limit: int | None = None,
         offset: int | None = None,
         sort_order: MetricsSortOrder | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsSenderResponse | MailChannelsResponse:
         """Retrieve sender metrics grouped by campaigns or sub-accounts."""
         from ..client import get_default_client
 
@@ -480,7 +794,7 @@ class Metrics:
         limit: int | None = None,
         offset: int | None = None,
         sort_order: MetricsSortOrder | None = None,
-    ) -> dict[str, Any]:
+    ) -> MetricsSenderResponse | MailChannelsResponse:
         """Retrieve sender metrics using async HTTP."""
         from ..client import get_default_client
 

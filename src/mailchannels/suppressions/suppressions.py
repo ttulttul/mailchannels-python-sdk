@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import logging
 from builtins import list as list_type
-from typing import Any
+from typing import Any, Generic, Literal, TypeVar, overload
 
 from ..query import compact_query, pagination_query
+from ..response import MailChannelsResponse
 from .types import (
     SuppressionDeleteSource,
     SuppressionEntryParams,
@@ -15,14 +16,51 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
+StrictResponses = TypeVar("StrictResponses", bound=bool)
 
 
-class SuppressionsResource:
+class SuppressionsResource(Generic[StrictResponses]):
     """Client-bound suppression list operations."""
 
     def __init__(self, client: Any) -> None:
         """Create a suppression resource bound to a client."""
         self._client = client
+
+    @overload
+    def list(
+        self: SuppressionsResource[Literal[True]],
+        *,
+        recipient: str | None = None,
+        source: SuppressionSource | None = None,
+        created_before: str | None = None,
+        created_after: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> SuppressionListResponse: ...
+
+    @overload
+    def list(
+        self: SuppressionsResource[Literal[False]],
+        *,
+        recipient: str | None = None,
+        source: SuppressionSource | None = None,
+        created_before: str | None = None,
+        created_after: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    def list(
+        self,
+        *,
+        recipient: str | None = None,
+        source: SuppressionSource | None = None,
+        created_before: str | None = None,
+        created_after: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> SuppressionListResponse | MailChannelsResponse: ...
 
     def list(
         self,
@@ -33,7 +71,7 @@ class SuppressionsResource:
         created_after: str | None = None,
         limit: int | None = None,
         offset: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> SuppressionListResponse | MailChannelsResponse:
         """Retrieve suppression entries."""
         logger.info("Listing MailChannels suppression entries")
         return self._client.request(
@@ -51,6 +89,31 @@ class SuppressionsResource:
             response_model=SuppressionListResponse,
         )
 
+    @overload
+    async def list_async(
+        self: SuppressionsResource[Literal[True]],
+        *,
+        recipient: str | None = None,
+        source: SuppressionSource | None = None,
+        created_before: str | None = None,
+        created_after: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> SuppressionListResponse: ...
+
+    @overload
+    async def list_async(
+        self: SuppressionsResource[Literal[False]],
+        *,
+        recipient: str | None = None,
+        source: SuppressionSource | None = None,
+        created_before: str | None = None,
+        created_after: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     async def list_async(
         self,
         *,
@@ -60,7 +123,18 @@ class SuppressionsResource:
         created_after: str | None = None,
         limit: int | None = None,
         offset: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> SuppressionListResponse | MailChannelsResponse: ...
+
+    async def list_async(
+        self,
+        *,
+        recipient: str | None = None,
+        source: SuppressionSource | None = None,
+        created_before: str | None = None,
+        created_after: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> SuppressionListResponse | MailChannelsResponse:
         """Retrieve suppression entries using async HTTP."""
         logger.info("Listing MailChannels suppression entries using async HTTP")
         return await self._client.request_async(
@@ -155,14 +229,17 @@ class Suppressions:
     """Module-level suppression list operations."""
 
     @classmethod
-    def list(cls, **kwargs: Any) -> dict[str, Any]:
+    def list(cls, **kwargs: Any) -> SuppressionListResponse | MailChannelsResponse:
         """Retrieve suppression entries."""
         from ..client import get_default_client
 
         return get_default_client().suppressions.list(**kwargs)
 
     @classmethod
-    async def list_async(cls, **kwargs: Any) -> dict[str, Any]:
+    async def list_async(
+        cls,
+        **kwargs: Any,
+    ) -> SuppressionListResponse | MailChannelsResponse:
         """Retrieve suppression entries using async HTTP."""
         from ..client import get_default_client
 

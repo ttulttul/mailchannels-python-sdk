@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Generic, Literal, TypeVar, overload
 
 from ..query import pagination_query
+from ..response import MailChannelsResponse
 from .types import (
     ApiKey,
     SmtpPassword,
@@ -17,16 +18,32 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
+StrictResponses = TypeVar("StrictResponses", bound=bool)
 
 
-class SubAccountApiKeysResource:
+class SubAccountApiKeysResource(Generic[StrictResponses]):
     """Client-bound sub-account API key operations."""
 
     def __init__(self, client: Any) -> None:
         """Create a sub-account API key resource bound to a client."""
         self._client = client
 
-    def create(self, handle: str) -> dict[str, Any]:
+    @overload
+    def create(
+        self: SubAccountApiKeysResource[Literal[True]],
+        handle: str,
+    ) -> ApiKey: ...
+
+    @overload
+    def create(
+        self: SubAccountApiKeysResource[Literal[False]],
+        handle: str,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    def create(self, handle: str) -> ApiKey | MailChannelsResponse: ...
+
+    def create(self, handle: str) -> ApiKey | MailChannelsResponse:
         """Create an API key for a sub-account."""
         logger.info("Creating MailChannels sub-account API key handle=%s", handle)
         return self._client.request(
@@ -35,7 +52,22 @@ class SubAccountApiKeysResource:
             response_model=ApiKey,
         )
 
-    async def create_async(self, handle: str) -> dict[str, Any]:
+    @overload
+    async def create_async(
+        self: SubAccountApiKeysResource[Literal[True]],
+        handle: str,
+    ) -> ApiKey: ...
+
+    @overload
+    async def create_async(
+        self: SubAccountApiKeysResource[Literal[False]],
+        handle: str,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    async def create_async(self, handle: str) -> ApiKey | MailChannelsResponse: ...
+
+    async def create_async(self, handle: str) -> ApiKey | MailChannelsResponse:
         """Create an API key for a sub-account using async HTTP."""
         logger.info(
             "Creating MailChannels sub-account API key using async HTTP handle=%s",
@@ -86,14 +118,29 @@ class SubAccountApiKeysResource:
         )
 
 
-class SubAccountSmtpPasswordsResource:
+class SubAccountSmtpPasswordsResource(Generic[StrictResponses]):
     """Client-bound sub-account SMTP password operations."""
 
     def __init__(self, client: Any) -> None:
         """Create a sub-account SMTP password resource bound to a client."""
         self._client = client
 
-    def create(self, handle: str) -> dict[str, Any]:
+    @overload
+    def create(
+        self: SubAccountSmtpPasswordsResource[Literal[True]],
+        handle: str,
+    ) -> SmtpPassword: ...
+
+    @overload
+    def create(
+        self: SubAccountSmtpPasswordsResource[Literal[False]],
+        handle: str,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    def create(self, handle: str) -> SmtpPassword | MailChannelsResponse: ...
+
+    def create(self, handle: str) -> SmtpPassword | MailChannelsResponse:
         """Create an SMTP password for a sub-account."""
         logger.info("Creating MailChannels sub-account SMTP password handle=%s", handle)
         return self._client.request(
@@ -102,7 +149,25 @@ class SubAccountSmtpPasswordsResource:
             response_model=SmtpPassword,
         )
 
-    async def create_async(self, handle: str) -> dict[str, Any]:
+    @overload
+    async def create_async(
+        self: SubAccountSmtpPasswordsResource[Literal[True]],
+        handle: str,
+    ) -> SmtpPassword: ...
+
+    @overload
+    async def create_async(
+        self: SubAccountSmtpPasswordsResource[Literal[False]],
+        handle: str,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    async def create_async(
+        self,
+        handle: str,
+    ) -> SmtpPassword | MailChannelsResponse: ...
+
+    async def create_async(self, handle: str) -> SmtpPassword | MailChannelsResponse:
         """Create an SMTP password for a sub-account using async HTTP."""
         logger.info(
             "Creating MailChannels sub-account SMTP password using async HTTP "
@@ -158,12 +223,39 @@ class SubAccountSmtpPasswordsResource:
         )
 
 
-class SubAccountLimitsResource:
+class SubAccountLimitsResource(Generic[StrictResponses]):
     """Client-bound sub-account sending limit operations."""
 
     def __init__(self, client: Any) -> None:
         """Create a sub-account limits resource bound to a client."""
         self._client = client
+
+    @overload
+    def set(
+        self: SubAccountLimitsResource[Literal[True]],
+        handle: str,
+        *,
+        sends: int | None = None,
+        monthly_limit: int | None = None,
+    ) -> SubAccountLimit: ...
+
+    @overload
+    def set(
+        self: SubAccountLimitsResource[Literal[False]],
+        handle: str,
+        *,
+        sends: int | None = None,
+        monthly_limit: int | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    def set(
+        self,
+        handle: str,
+        *,
+        sends: int | None = None,
+        monthly_limit: int | None = None,
+    ) -> SubAccountLimit | MailChannelsResponse: ...
 
     def set(
         self,
@@ -171,7 +263,7 @@ class SubAccountLimitsResource:
         *,
         sends: int | None = None,
         monthly_limit: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> SubAccountLimit | MailChannelsResponse:
         """Set the monthly sending limit for a sub-account."""
         payload = limit_payload(sends=sends, monthly_limit=monthly_limit)
         logger.info(
@@ -186,13 +278,40 @@ class SubAccountLimitsResource:
             response_model=SubAccountLimit,
         )
 
+    @overload
+    async def set_async(
+        self: SubAccountLimitsResource[Literal[True]],
+        handle: str,
+        *,
+        sends: int | None = None,
+        monthly_limit: int | None = None,
+    ) -> SubAccountLimit: ...
+
+    @overload
+    async def set_async(
+        self: SubAccountLimitsResource[Literal[False]],
+        handle: str,
+        *,
+        sends: int | None = None,
+        monthly_limit: int | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     async def set_async(
         self,
         handle: str,
         *,
         sends: int | None = None,
         monthly_limit: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> SubAccountLimit | MailChannelsResponse: ...
+
+    async def set_async(
+        self,
+        handle: str,
+        *,
+        sends: int | None = None,
+        monthly_limit: int | None = None,
+    ) -> SubAccountLimit | MailChannelsResponse:
         """Set the monthly sending limit for a sub-account using async HTTP."""
         payload = limit_payload(sends=sends, monthly_limit=monthly_limit)
         logger.info(
@@ -208,7 +327,22 @@ class SubAccountLimitsResource:
             response_model=SubAccountLimit,
         )
 
-    def retrieve(self, handle: str) -> dict[str, Any]:
+    @overload
+    def retrieve(
+        self: SubAccountLimitsResource[Literal[True]],
+        handle: str,
+    ) -> SubAccountLimit: ...
+
+    @overload
+    def retrieve(
+        self: SubAccountLimitsResource[Literal[False]],
+        handle: str,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    def retrieve(self, handle: str) -> SubAccountLimit | MailChannelsResponse: ...
+
+    def retrieve(self, handle: str) -> SubAccountLimit | MailChannelsResponse:
         """Retrieve the sending limit for a sub-account."""
         logger.info("Retrieving MailChannels sub-account limit handle=%s", handle)
         return self._client.request(
@@ -217,7 +351,28 @@ class SubAccountLimitsResource:
             response_model=SubAccountLimit,
         )
 
-    async def retrieve_async(self, handle: str) -> dict[str, Any]:
+    @overload
+    async def retrieve_async(
+        self: SubAccountLimitsResource[Literal[True]],
+        handle: str,
+    ) -> SubAccountLimit: ...
+
+    @overload
+    async def retrieve_async(
+        self: SubAccountLimitsResource[Literal[False]],
+        handle: str,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    async def retrieve_async(
+        self,
+        handle: str,
+    ) -> SubAccountLimit | MailChannelsResponse: ...
+
+    async def retrieve_async(
+        self,
+        handle: str,
+    ) -> SubAccountLimit | MailChannelsResponse:
         """Retrieve the sending limit for a sub-account using async HTTP."""
         logger.info(
             "Retrieving MailChannels sub-account limit using async HTTP handle=%s",
@@ -246,22 +401,52 @@ class SubAccountLimitsResource:
         )
 
 
-class SubAccountsResource:
+class SubAccountsResource(Generic[StrictResponses]):
     """Client-bound sub-account operations."""
 
     def __init__(self, client: Any) -> None:
         """Create a sub-account resource bound to a client."""
         self._client = client
-        self.api_keys = SubAccountApiKeysResource(client)
-        self.smtp_passwords = SubAccountSmtpPasswordsResource(client)
-        self.limits = SubAccountLimitsResource(client)
+        self.api_keys: SubAccountApiKeysResource[StrictResponses] = (
+            SubAccountApiKeysResource(client)
+        )
+        self.smtp_passwords: SubAccountSmtpPasswordsResource[StrictResponses] = (
+            SubAccountSmtpPasswordsResource(client)
+        )
+        self.limits: SubAccountLimitsResource[StrictResponses] = (
+            SubAccountLimitsResource(client)
+        )
+
+    @overload
+    def create(
+        self: SubAccountsResource[Literal[True]],
+        *,
+        company_name: str | None = None,
+        handle: str | None = None,
+    ) -> SubAccount: ...
+
+    @overload
+    def create(
+        self: SubAccountsResource[Literal[False]],
+        *,
+        company_name: str | None = None,
+        handle: str | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    def create(
+        self,
+        *,
+        company_name: str | None = None,
+        handle: str | None = None,
+    ) -> SubAccount | MailChannelsResponse: ...
 
     def create(
         self,
         *,
         company_name: str | None = None,
         handle: str | None = None,
-    ) -> dict[str, Any]:
+    ) -> SubAccount | MailChannelsResponse:
         """Create a sub-account under the parent account."""
         logger.info("Creating MailChannels sub-account handle=%s", handle)
         payload = compact_payload({"company_name": company_name, "handle": handle})
@@ -272,12 +457,36 @@ class SubAccountsResource:
             response_model=SubAccount,
         )
 
+    @overload
+    async def create_async(
+        self: SubAccountsResource[Literal[True]],
+        *,
+        company_name: str | None = None,
+        handle: str | None = None,
+    ) -> SubAccount: ...
+
+    @overload
+    async def create_async(
+        self: SubAccountsResource[Literal[False]],
+        *,
+        company_name: str | None = None,
+        handle: str | None = None,
+    ) -> MailChannelsResponse: ...
+
+    @overload
     async def create_async(
         self,
         *,
         company_name: str | None = None,
         handle: str | None = None,
-    ) -> dict[str, Any]:
+    ) -> SubAccount | MailChannelsResponse: ...
+
+    async def create_async(
+        self,
+        *,
+        company_name: str | None = None,
+        handle: str | None = None,
+    ) -> SubAccount | MailChannelsResponse:
         """Create a sub-account under the parent account using async HTTP."""
         logger.info(
             "Creating MailChannels sub-account using async HTTP handle=%s",
@@ -319,7 +528,22 @@ class SubAccountsResource:
             params=pagination_query(limit=limit, offset=offset) or None,
         )
 
-    def retrieve_usage(self, handle: str) -> dict[str, Any]:
+    @overload
+    def retrieve_usage(
+        self: SubAccountsResource[Literal[True]],
+        handle: str,
+    ) -> UsageStats: ...
+
+    @overload
+    def retrieve_usage(
+        self: SubAccountsResource[Literal[False]],
+        handle: str,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    def retrieve_usage(self, handle: str) -> UsageStats | MailChannelsResponse: ...
+
+    def retrieve_usage(self, handle: str) -> UsageStats | MailChannelsResponse:
         """Retrieve usage statistics for a sub-account."""
         logger.info("Retrieving MailChannels sub-account usage handle=%s", handle)
         return self._client.request(
@@ -328,7 +552,28 @@ class SubAccountsResource:
             response_model=UsageStats,
         )
 
-    async def retrieve_usage_async(self, handle: str) -> dict[str, Any]:
+    @overload
+    async def retrieve_usage_async(
+        self: SubAccountsResource[Literal[True]],
+        handle: str,
+    ) -> UsageStats: ...
+
+    @overload
+    async def retrieve_usage_async(
+        self: SubAccountsResource[Literal[False]],
+        handle: str,
+    ) -> MailChannelsResponse: ...
+
+    @overload
+    async def retrieve_usage_async(
+        self,
+        handle: str,
+    ) -> UsageStats | MailChannelsResponse: ...
+
+    async def retrieve_usage_async(
+        self,
+        handle: str,
+    ) -> UsageStats | MailChannelsResponse:
         """Retrieve usage statistics for a sub-account using async HTTP."""
         logger.info(
             "Retrieving MailChannels sub-account usage using async HTTP handle=%s",
@@ -390,14 +635,14 @@ class _ApiKeysProxy:
     """Module-level proxy for sub-account API key operations."""
 
     @classmethod
-    def create(cls, handle: str) -> dict[str, Any]:
+    def create(cls, handle: str) -> ApiKey | MailChannelsResponse:
         """Create an API key for a sub-account."""
         from ..client import get_default_client
 
         return get_default_client().sub_accounts.api_keys.create(handle)
 
     @classmethod
-    async def create_async(cls, handle: str) -> dict[str, Any]:
+    async def create_async(cls, handle: str) -> ApiKey | MailChannelsResponse:
         """Create an API key for a sub-account using async HTTP."""
         from ..client import get_default_client
 
@@ -439,14 +684,14 @@ class _SmtpPasswordsProxy:
     """Module-level proxy for sub-account SMTP password operations."""
 
     @classmethod
-    def create(cls, handle: str) -> dict[str, Any]:
+    def create(cls, handle: str) -> SmtpPassword | MailChannelsResponse:
         """Create an SMTP password for a sub-account."""
         from ..client import get_default_client
 
         return get_default_client().sub_accounts.smtp_passwords.create(handle)
 
     @classmethod
-    async def create_async(cls, handle: str) -> dict[str, Any]:
+    async def create_async(cls, handle: str) -> SmtpPassword | MailChannelsResponse:
         """Create an SMTP password for a sub-account using async HTTP."""
         from ..client import get_default_client
 
@@ -499,7 +744,7 @@ class _LimitsProxy:
         *,
         sends: int | None = None,
         monthly_limit: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> SubAccountLimit | MailChannelsResponse:
         """Set the monthly sending limit for a sub-account."""
         from ..client import get_default_client
 
@@ -516,7 +761,7 @@ class _LimitsProxy:
         *,
         sends: int | None = None,
         monthly_limit: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> SubAccountLimit | MailChannelsResponse:
         """Set the monthly sending limit for a sub-account using async HTTP."""
         from ..client import get_default_client
 
@@ -527,14 +772,17 @@ class _LimitsProxy:
         )
 
     @classmethod
-    def retrieve(cls, handle: str) -> dict[str, Any]:
+    def retrieve(cls, handle: str) -> SubAccountLimit | MailChannelsResponse:
         """Retrieve the sending limit for a sub-account."""
         from ..client import get_default_client
 
         return get_default_client().sub_accounts.limits.retrieve(handle)
 
     @classmethod
-    async def retrieve_async(cls, handle: str) -> dict[str, Any]:
+    async def retrieve_async(
+        cls,
+        handle: str,
+    ) -> SubAccountLimit | MailChannelsResponse:
         """Retrieve the sending limit for a sub-account using async HTTP."""
         from ..client import get_default_client
 
@@ -568,7 +816,7 @@ class SubAccounts:
         *,
         company_name: str | None = None,
         handle: str | None = None,
-    ) -> dict[str, Any]:
+    ) -> SubAccount | MailChannelsResponse:
         """Create a sub-account under the parent account."""
         from ..client import get_default_client
 
@@ -583,7 +831,7 @@ class SubAccounts:
         *,
         company_name: str | None = None,
         handle: str | None = None,
-    ) -> dict[str, Any]:
+    ) -> SubAccount | MailChannelsResponse:
         """Create a sub-account under the parent account using async HTTP."""
         from ..client import get_default_client
 
@@ -620,14 +868,17 @@ class SubAccounts:
         )
 
     @classmethod
-    def retrieve_usage(cls, handle: str) -> dict[str, Any]:
+    def retrieve_usage(cls, handle: str) -> UsageStats | MailChannelsResponse:
         """Retrieve usage statistics for a sub-account."""
         from ..client import get_default_client
 
         return get_default_client().sub_accounts.retrieve_usage(handle)
 
     @classmethod
-    async def retrieve_usage_async(cls, handle: str) -> dict[str, Any]:
+    async def retrieve_usage_async(
+        cls,
+        handle: str,
+    ) -> UsageStats | MailChannelsResponse:
         """Retrieve usage statistics for a sub-account using async HTTP."""
         from ..client import get_default_client
 
