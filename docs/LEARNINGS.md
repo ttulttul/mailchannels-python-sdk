@@ -11,6 +11,14 @@ walkthroughs in `docs/DKIM.md`, and maintainer workflows in
 installing the SDK to sending production email while preserving deeper details
 for readers who need them.
 
+## 2026-05-08: API reference value exports need explicit summaries
+
+The API reference generator can derive summaries from module, class, function,
+TypedDict, and Pydantic docstrings, but plain values, constants, and type
+aliases often have no runtime docstring. Keep `SUMMARY_OVERRIDES` in
+`scripts/generate_api_reference.py` updated for those exports so generated API
+reference sections never contain blank `Summary:` fields.
+
 ## 2026-04-24: SDK starts as a greenfield package
 
 The repository currently contains only project instructions, so the SDK can be

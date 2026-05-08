@@ -64,6 +64,90 @@ METHOD_EXAMPLES = {
     "mailchannels.Usage.retrieve": "mailchannels.Usage.retrieve()",
     "mailchannels.Webhooks.list": "mailchannels.Webhooks.list()",
 }
+SUMMARY_OVERRIDES = {
+    "mailchannels.API_SPEC_COMPATIBILITY": (
+        "MailChannels OpenAPI document metadata targeted by this SDK release."
+    ),
+    "mailchannels.DomainCheckVerdict": (
+        "Allowed verdict values returned by domain configuration checks."
+    ),
+    "mailchannels.EmailHeaders": (
+        "Custom email header mapping accepted by send payloads."
+    ),
+    "mailchannels.UNSUBSCRIBE_URL_PLACEHOLDER": (
+        "Mustache placeholder for MailChannels-hosted one-click unsubscribe URLs."
+    ),
+    "mailchannels.__version__": "Installed MailChannels SDK version.",
+    "mailchannels.api_key": (
+        "Module-level API key used by top-level resource helpers."
+    ),
+    "mailchannels.base_url": (
+        "Module-level MailChannels API base URL used by top-level resource helpers."
+    ),
+    "mailchannels.default_async_http_client": (
+        "Module-level async HTTP transport used by top-level resource helpers."
+    ),
+    "mailchannels.default_http_client": (
+        "Module-level synchronous HTTP transport used by top-level resource helpers."
+    ),
+    "mailchannels.strict_responses": (
+        "Module-level flag that enables strict Pydantic response models."
+    ),
+    "mailchannels.check_domain.DomainCheckVerdict": (
+        "Allowed verdict values returned by domain configuration checks."
+    ),
+    "mailchannels.domain_checks.DomainCheckVerdict": (
+        "Allowed verdict values returned by domain configuration checks."
+    ),
+    "mailchannels.emails.EmailHeaders": (
+        "Custom email header mapping accepted by send payloads."
+    ),
+    "mailchannels.emails.UNSUBSCRIBE_URL_PLACEHOLDER": (
+        "Mustache placeholder for MailChannels-hosted one-click unsubscribe URLs."
+    ),
+    "mailchannels.dkim.DkimAlgorithm": (
+        "Allowed DKIM key algorithms for hosted key creation."
+    ),
+    "mailchannels.dkim.DkimKeyStatus": (
+        "Allowed status values for MailChannels-hosted DKIM keys."
+    ),
+    "mailchannels.dkim.DkimUpdateStatus": (
+        "Allowed status values when updating a hosted DKIM key."
+    ),
+    "mailchannels.metrics.MetricsInterval": (
+        "Allowed bucket intervals for time-series metrics."
+    ),
+    "mailchannels.metrics.MetricsSenderType": (
+        "Allowed sender groupings for sender metrics."
+    ),
+    "mailchannels.metrics.MetricsSortOrder": (
+        "Allowed sort order values for sender metrics."
+    ),
+    "mailchannels.metrics.MetricsTime": (
+        "Date or datetime value accepted by metrics query parameters."
+    ),
+    "mailchannels.suppressions.SuppressionDeleteSource": (
+        "Allowed suppression sources for delete requests."
+    ),
+    "mailchannels.suppressions.SuppressionSource": (
+        "Allowed source values returned by suppression entries."
+    ),
+    "mailchannels.suppressions.SuppressionType": (
+        "Allowed transactional categories for suppression entries."
+    ),
+    "mailchannels.webhooks.WebhookBatchStatus": (
+        "Allowed status filters for webhook batch retrieval."
+    ),
+    "mailchannels.webhooks.WebhookEvent": (
+        "Allowed webhook event names emitted by MailChannels."
+    ),
+    "mailchannels.webhooks.WebhookHeaders": (
+        "HTTP header mapping used by webhook verification helpers."
+    ),
+    "mailchannels.webhooks.WebhookPayload": (
+        "Raw webhook event payload list received from MailChannels."
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -123,7 +207,8 @@ def render_reference(modules: Iterable[ModuleType] = PUBLIC_MODULES) -> str:
     for name in sorted(mailchannels.__all__):
         value = getattr(mailchannels, name)
         lines.append(
-            f"| `{name}` | `{_kind(value)}` | {_escape_table(_summary(value))} |"
+            f"| `{name}` | `{_kind(value)}` | "
+            f"{_escape_table(_summary(value, qualified_name=f'mailchannels.{name}'))} |"
         )
     lines.extend(["", "## Quick Examples", ""])
     lines.extend(_quick_examples())
@@ -188,7 +273,7 @@ def _object_section(item: PublicObject) -> list[str]:
         heading,
         "",
         f"- Kind: `{_kind(value)}`",
-        f"- Summary: {_summary(value)}",
+        f"- Summary: {_summary(value, qualified_name=item.qualified_name)}",
     ]
     signature = _signature(value)
     if signature:
@@ -368,8 +453,10 @@ def _kind(value: Any) -> str:
     return "value"
 
 
-def _summary(value: Any) -> str:
+def _summary(value: Any, *, qualified_name: str | None = None) -> str:
     """Return the first sentence of an object's docstring."""
+    if qualified_name is not None and qualified_name in SUMMARY_OVERRIDES:
+        return SUMMARY_OVERRIDES[qualified_name]
     if _is_generic_alias(value):
         return ""
     if not (

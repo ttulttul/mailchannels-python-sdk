@@ -477,3 +477,8 @@ Use the focused docs for details that would interrupt the README flow:
   Cloudflare DNS publication.
 - `docs/DEVELOPMENT.md` for local checks, online tests, SmolVM verification,
   CI, and publishing.
+
+When updating public exports that are values, constants, type aliases, or other
+objects without useful docstrings, update `SUMMARY_OVERRIDES` in
+`scripts/generate_api_reference.py` so `docs/API_REFERENCE.md` does not render
+blank summaries.

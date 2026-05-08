@@ -83,8 +83,38 @@ def test_generic_alias_exports_are_not_rendered_as_classes(
     monkeypatch.setattr(reference.inspect, "isclass", version_variant_isclass)
 
     assert reference._kind(mailchannels.EmailHeaders) == "value"
-    assert reference._summary(mailchannels.EmailHeaders) == ""
+    assert (
+        reference._summary(
+            mailchannels.EmailHeaders,
+            qualified_name="mailchannels.EmailHeaders",
+        )
+        == "Custom email header mapping accepted by send payloads."
+    )
     assert reference._signature(mailchannels.EmailHeaders) == ""
+
+
+def test_value_exports_have_summary_overrides() -> None:
+    """It documents important value exports that do not have docstrings."""
+    report = reference.render_reference()
+
+    expected_rows = [
+        (
+            "| `API_SPEC_COMPATIBILITY` | `value` | "
+            "MailChannels OpenAPI document metadata targeted by this SDK release. |"
+        ),
+        (
+            "| `UNSUBSCRIBE_URL_PLACEHOLDER` | `constant` | "
+            "Mustache placeholder for MailChannels-hosted one-click "
+            "unsubscribe URLs. |"
+        ),
+        (
+            "| `strict_responses` | `value` | "
+            "Module-level flag that enables strict Pydantic response models. |"
+        ),
+    ]
+
+    for row in expected_rows:
+        assert row in report
 
 
 def test_format_annotation_normalizes_older_typing_forms() -> None:

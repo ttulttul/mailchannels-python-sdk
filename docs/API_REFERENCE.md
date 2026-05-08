@@ -12,7 +12,7 @@ For task-oriented examples, start with the README. This file is the formal publi
 
 | Name | Kind | Summary |
 | --- | --- | --- |
-| `API_SPEC_COMPATIBILITY` | `value` |  |
+| `API_SPEC_COMPATIBILITY` | `value` | MailChannels OpenAPI document metadata targeted by this SDK release. |
 | `ApiError` | `exception` | Raised for MailChannels API failures. |
 | `ApiSpecCompatibility` | `class` | MailChannels OpenAPI document targeted by this SDK release. |
 | `AsyncClientNotConfigured` | `exception` | Raised when async support is requested without an async HTTP client. |
@@ -32,10 +32,10 @@ For task-oriented examples, start with the README. This file is the formal publi
 | `Dkim` | `class` | Module-level DKIM key management using global SDK configuration. |
 | `DkimResult` | `Pydantic model` | One DKIM result returned by the domain check endpoint. |
 | `DkimSetting` | `Pydantic model` | DKIM settings used by the domain check endpoint. |
-| `DomainCheckVerdict` | `value` |  |
+| `DomainCheckVerdict` | `value` | Allowed verdict values returned by domain configuration checks. |
 | `DomainChecks` | `class` | Module-level domain configuration check operations. |
 | `EmailAddress` | `Pydantic model` | Email address used for senders and recipients. |
-| `EmailHeaders` | `value` |  |
+| `EmailHeaders` | `value` | Custom email header mapping accepted by send payloads. |
 | `EmailParams` | `Pydantic model` | Validated MailChannels email send payload. |
 | `Emails` | `class` | Module-level email operations using global SDK configuration. |
 | `ForbiddenError` | `exception` | Raised when an account cannot access a requested feature. |
@@ -61,21 +61,21 @@ For task-oriented examples, start with the README. This file is the formal publi
 | `SubAccounts` | `class` | Module-level sub-account operations using global SDK configuration. |
 | `Suppressions` | `class` | Module-level suppression list operations. |
 | `SyncHTTPClient` | `protocol` | Protocol implemented by synchronous MailChannels HTTP transports. |
-| `UNSUBSCRIBE_URL_PLACEHOLDER` | `constant` |  |
+| `UNSUBSCRIBE_URL_PLACEHOLDER` | `constant` | Mustache placeholder for MailChannels-hosted one-click unsubscribe URLs. |
 | `Usage` | `class` | Module-level parent-account usage operations. |
 | `UsageStats` | `Pydantic model` | MailChannels usage statistics for the current billing period. |
 | `WebhookEventPayload` | `Pydantic model` | Common fields present on MailChannels delivery event payloads. |
 | `Webhooks` | `class` | Module-level webhook operations using global SDK configuration. |
-| `__version__` | `constant` |  |
-| `api_key` | `value` |  |
-| `base_url` | `constant` |  |
-| `default_async_http_client` | `value` |  |
-| `default_http_client` | `value` |  |
+| `__version__` | `constant` | Installed MailChannels SDK version. |
+| `api_key` | `value` | Module-level API key used by top-level resource helpers. |
+| `base_url` | `constant` | Module-level MailChannels API base URL used by top-level resource helpers. |
+| `default_async_http_client` | `value` | Module-level async HTTP transport used by top-level resource helpers. |
+| `default_http_client` | `value` | Module-level synchronous HTTP transport used by top-level resource helpers. |
 | `get_version` | `function` | Return the installed MailChannels SDK version string. |
 | `parse_signature_input` | `function` | Parse a MailChannels RFC 9421 Signature-Input header value. |
 | `signature_is_fresh` | `function` | Return whether a signature timestamp is within the allowed replay window. |
 | `signature_key_id` | `function` | Extract the signing key ID from webhook headers. |
-| `strict_responses` | `value` |  |
+| `strict_responses` | `value` | Module-level flag that enables strict Pydantic response models. |
 | `verify_content_digest` | `function` | Verify the webhook Content-Digest header against the raw request body. |
 | `verify_webhook_signature` | `function` | Verify a MailChannels webhook digest, freshness, and Ed25519 signature. |
 
@@ -123,7 +123,7 @@ Python SDK for the MailChannels Email API.
 #### `mailchannels.API_SPEC_COMPATIBILITY`
 
 - Kind: `value`
-- Summary: 
+- Summary: MailChannels OpenAPI document metadata targeted by this SDK release.
 
 #### `mailchannels.ApiError`
 
@@ -363,7 +363,7 @@ Fields:
 #### `mailchannels.DomainCheckVerdict`
 
 - Kind: `value`
-- Summary: 
+- Summary: Allowed verdict values returned by domain configuration checks.
 
 #### `mailchannels.DomainChecks`
 
@@ -393,7 +393,7 @@ Fields:
 #### `mailchannels.EmailHeaders`
 
 - Kind: `value`
-- Summary: 
+- Summary: Custom email header mapping accepted by send payloads.
 
 #### `mailchannels.EmailParams`
 
@@ -771,7 +771,7 @@ Methods:
 #### `mailchannels.UNSUBSCRIBE_URL_PLACEHOLDER`
 
 - Kind: `constant`
-- Summary: 
+- Summary: Mustache placeholder for MailChannels-hosted one-click unsubscribe URLs.
 
 #### `mailchannels.Usage`
 
@@ -863,27 +863,27 @@ mailchannels.Webhooks.list()
 #### `mailchannels.__version__`
 
 - Kind: `constant`
-- Summary: 
+- Summary: Installed MailChannels SDK version.
 
 #### `mailchannels.api_key`
 
 - Kind: `value`
-- Summary: 
+- Summary: Module-level API key used by top-level resource helpers.
 
 #### `mailchannels.base_url`
 
 - Kind: `constant`
-- Summary: 
+- Summary: Module-level MailChannels API base URL used by top-level resource helpers.
 
 #### `mailchannels.default_async_http_client`
 
 - Kind: `value`
-- Summary: 
+- Summary: Module-level async HTTP transport used by top-level resource helpers.
 
 #### `mailchannels.default_http_client`
 
 - Kind: `value`
-- Summary: 
+- Summary: Module-level synchronous HTTP transport used by top-level resource helpers.
 
 #### `mailchannels.get_version`
 
@@ -912,7 +912,7 @@ mailchannels.Webhooks.list()
 #### `mailchannels.strict_responses`
 
 - Kind: `value`
-- Summary: 
+- Summary: Module-level flag that enables strict Pydantic response models.
 
 #### `mailchannels.verify_content_digest`
 
@@ -1025,7 +1025,7 @@ Fields:
 #### `mailchannels.emails.EmailHeaders`
 
 - Kind: `value`
-- Summary: 
+- Summary: Custom email header mapping accepted by send payloads.
 
 #### `mailchannels.emails.EmailParams`
 
@@ -1205,7 +1205,7 @@ Fields:
 #### `mailchannels.emails.UNSUBSCRIBE_URL_PLACEHOLDER`
 
 - Kind: `constant`
-- Summary: 
+- Summary: Mustache placeholder for MailChannels-hosted one-click unsubscribe URLs.
 
 #### `mailchannels.emails.normalize_email_params`
 
@@ -1317,7 +1317,7 @@ Fields:
 #### `mailchannels.domain_checks.DomainCheckVerdict`
 
 - Kind: `value`
-- Summary: 
+- Summary: Allowed verdict values returned by domain configuration checks.
 
 #### `mailchannels.domain_checks.DomainChecks`
 
@@ -1490,7 +1490,7 @@ Fields:
 #### `mailchannels.check_domain.DomainCheckVerdict`
 
 - Kind: `value`
-- Summary: 
+- Summary: Allowed verdict values returned by domain configuration checks.
 
 #### `mailchannels.check_domain.DomainChecks`
 
@@ -1584,7 +1584,7 @@ Methods:
 #### `mailchannels.dkim.DkimAlgorithm`
 
 - Kind: `value`
-- Summary: 
+- Summary: Allowed DKIM key algorithms for hosted key creation.
 
 #### `mailchannels.dkim.DkimCreateParams`
 
@@ -1646,7 +1646,7 @@ Fields:
 #### `mailchannels.dkim.DkimKeyStatus`
 
 - Kind: `value`
-- Summary: 
+- Summary: Allowed status values for MailChannels-hosted DKIM keys.
 
 #### `mailchannels.dkim.DkimListParams`
 
@@ -1698,7 +1698,7 @@ Fields:
 #### `mailchannels.dkim.DkimUpdateStatus`
 
 - Kind: `value`
-- Summary: 
+- Summary: Allowed status values when updating a hosted DKIM key.
 
 ### `mailchannels.metrics`
 
@@ -1758,7 +1758,7 @@ Fields:
 #### `mailchannels.metrics.MetricsInterval`
 
 - Kind: `value`
-- Summary: 
+- Summary: Allowed bucket intervals for time-series metrics.
 
 #### `mailchannels.metrics.MetricsPerformance`
 
@@ -1875,17 +1875,17 @@ Fields:
 #### `mailchannels.metrics.MetricsSenderType`
 
 - Kind: `value`
-- Summary: 
+- Summary: Allowed sender groupings for sender metrics.
 
 #### `mailchannels.metrics.MetricsSortOrder`
 
 - Kind: `value`
-- Summary: 
+- Summary: Allowed sort order values for sender metrics.
 
 #### `mailchannels.metrics.MetricsTime`
 
 - Kind: `value`
-- Summary: 
+- Summary: Date or datetime value accepted by metrics query parameters.
 
 #### `mailchannels.metrics.MetricsVolume`
 
@@ -2091,7 +2091,7 @@ Suppression list resource exports.
 #### `mailchannels.suppressions.SuppressionDeleteSource`
 
 - Kind: `value`
-- Summary: 
+- Summary: Allowed suppression sources for delete requests.
 
 #### `mailchannels.suppressions.SuppressionEntry`
 
@@ -2138,12 +2138,12 @@ Fields:
 #### `mailchannels.suppressions.SuppressionSource`
 
 - Kind: `value`
-- Summary: 
+- Summary: Allowed source values returned by suppression entries.
 
 #### `mailchannels.suppressions.SuppressionType`
 
 - Kind: `value`
-- Summary: 
+- Summary: Allowed transactional categories for suppression entries.
 
 #### `mailchannels.suppressions.Suppressions`
 
@@ -2301,12 +2301,12 @@ Fields:
 #### `mailchannels.webhooks.WebhookBatchStatus`
 
 - Kind: `value`
-- Summary: 
+- Summary: Allowed status filters for webhook batch retrieval.
 
 #### `mailchannels.webhooks.WebhookEvent`
 
 - Kind: `value`
-- Summary: 
+- Summary: Allowed webhook event names emitted by MailChannels.
 
 #### `mailchannels.webhooks.WebhookEventPayload`
 
@@ -2331,12 +2331,12 @@ Fields:
 #### `mailchannels.webhooks.WebhookHeaders`
 
 - Kind: `value`
-- Summary: 
+- Summary: HTTP header mapping used by webhook verification helpers.
 
 #### `mailchannels.webhooks.WebhookPayload`
 
 - Kind: `value`
-- Summary: 
+- Summary: Raw webhook event payload list received from MailChannels.
 
 #### `mailchannels.webhooks.WebhookPublicKey`
 
