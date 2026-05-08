@@ -8,6 +8,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import TypedDict
 
+import pytest
+
 import mailchannels
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -64,6 +66,24 @@ def test_typed_dict_fields_do_not_evaluate_annotations() -> None:
     fields = reference._typed_dict_fields(FutureTypedDict)
 
     assert "| `payload` | `list[str] \\| MissingRuntimeName` | yes |" in fields
+
+
+def test_generic_alias_exports_are_not_rendered_as_classes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """It renders built-in generic aliases consistently across Python versions."""
+    original_isclass = reference.inspect.isclass
+
+    def version_variant_isclass(value: object) -> bool:
+        """Simulate Python versions where generic aliases appear class-like."""
+        if value is mailchannels.EmailHeaders:
+            return True
+        return original_isclass(value)
+
+    monkeypatch.setattr(reference.inspect, "isclass", version_variant_isclass)
+
+    assert reference._kind(mailchannels.EmailHeaders) == "value"
+    assert reference._summary(mailchannels.EmailHeaders) == ""
 
 
 def test_api_reference_file_is_current() -> None:

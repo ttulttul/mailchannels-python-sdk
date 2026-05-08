@@ -8,7 +8,7 @@ import re
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from types import ModuleType
+from types import GenericAlias, ModuleType
 from typing import Any
 
 from pydantic import BaseModel
@@ -346,6 +346,8 @@ def _stringify_signature(signature: inspect.Signature) -> str:
 
 def _kind(value: Any) -> str:
     """Return a concise public object kind."""
+    if _is_generic_alias(value):
+        return "value"
     if _is_protocol(value):
         return "protocol"
     if inspect.isclass(value):
@@ -365,6 +367,8 @@ def _kind(value: Any) -> str:
 
 def _summary(value: Any) -> str:
     """Return the first sentence of an object's docstring."""
+    if _is_generic_alias(value):
+        return ""
     if not (
         inspect.ismodule(value)
         or inspect.isclass(value)
@@ -436,6 +440,11 @@ def _is_typed_dict(value: Any) -> bool:
         getattr(value, "__total__", None) is not None
         and hasattr(value, "__annotations__")
     )
+
+
+def _is_generic_alias(value: Any) -> bool:
+    """Return whether a value is a parameterized built-in type alias."""
+    return isinstance(value, GenericAlias)
 
 
 def _is_protocol(value: Any) -> bool:

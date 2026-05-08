@@ -551,6 +551,10 @@ When adding or changing SDK behavior:
   The generator must not call `typing.get_type_hints()` for TypedDict fields;
   render raw `__annotations__` so Python 3.9 and 3.10 do not evaluate newer
   union syntax inside postponed annotations.
+  Treat built-in generic aliases such as `dict[str, str]` as plain exported
+  values before class introspection, because Python version differences can
+  otherwise render aliases like `EmailHeaders` as `class` entries with `dict`
+  docstrings.
 - Keep `tests/test_openapi_contract.py` aligned with the route registry so API
   coverage remains visible in the public test tree. The snapshot should match
   `sdk_route_keys()` exactly.

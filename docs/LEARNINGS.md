@@ -419,3 +419,11 @@ Delete, suspend, rotate, resend, and similar user-requested operations are
 normal SDK activity, even when destructive. Log them at info level and reserve
 warning for unexpected recoverable states such as missing webhook signature
 metadata, malformed webhook headers, or optional dependency fallbacks.
+
+## 2026-05-07: Generic aliases need stable docs rendering
+
+Python versions can disagree about whether built-in generic aliases such as
+`dict[str, str]` look class-like to `inspect.isclass()`. The API reference
+generator should classify these aliases before regular class introspection so
+exports such as `EmailHeaders` stay rendered as simple values without inheriting
+the built-in `dict` docstring.
