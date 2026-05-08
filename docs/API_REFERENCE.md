@@ -197,7 +197,7 @@ mailchannels.CheckDomain.check("example.com")
 
 - Kind: `Pydantic model`
 - Summary: Request body for `/check-domain`.
-- Signature: `mailchannels.CheckDomainParams(domain: str, sender_id: str | None, dkim_settings: list[mailchannels.domain_checks.DkimSetting | dict[str, str]] | None)`
+- Signature: `mailchannels.CheckDomainParams(domain: str, sender_id: str | None, dkim_settings: list[DkimSetting | dict[str, str]] | None)`
 
 Fields:
 
@@ -205,7 +205,7 @@ Fields:
 | --- | --- | --- | --- |
 | `domain` | `str` | yes | `` |
 | `sender_id` | `str \| None` | no | `None` |
-| `dkim_settings` | `list[mailchannels.domain_checks.DkimSetting \| dict[str, str]] \| None` | no | `None` |
+| `dkim_settings` | `list[DkimSetting \| dict[str, str]] \| None` | no | `None` |
 
 #### `mailchannels.CheckDomainResource`
 
@@ -224,29 +224,29 @@ Methods:
 
 - Kind: `Pydantic model`
 - Summary: Domain configuration check response model.
-- Signature: `mailchannels.CheckDomainResult(check_results: mailchannels.domain_checks.CheckResults | None, references: list[str] | None)`
+- Signature: `mailchannels.CheckDomainResult(check_results: CheckResults | None, references: list[str] | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `check_results` | `mailchannels.domain_checks.CheckResults \| None` | no | `None` |
+| `check_results` | `CheckResults \| None` | no | `None` |
 | `references` | `list[str] \| None` | no | `None` |
 
 #### `mailchannels.CheckResults`
 
 - Kind: `Pydantic model`
 - Summary: Grouped check results returned by `/check-domain`.
-- Signature: `mailchannels.CheckResults(dkim: list[mailchannels.domain_checks.DkimResult] | None, domain_lockdown: mailchannels.domain_checks.LockdownResult | None, sender_domain: mailchannels.domain_checks.SenderDomainResult | None, spf: mailchannels.domain_checks.SpfResult | None)`
+- Signature: `mailchannels.CheckResults(dkim: list[DkimResult] | None, domain_lockdown: LockdownResult | None, sender_domain: SenderDomainResult | None, spf: SpfResult | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `dkim` | `list[mailchannels.domain_checks.DkimResult] \| None` | no | `None` |
-| `domain_lockdown` | `mailchannels.domain_checks.LockdownResult \| None` | no | `None` |
-| `sender_domain` | `mailchannels.domain_checks.SenderDomainResult \| None` | no | `None` |
-| `spf` | `mailchannels.domain_checks.SpfResult \| None` | no | `None` |
+| `dkim` | `list[DkimResult] \| None` | no | `None` |
+| `domain_lockdown` | `LockdownResult \| None` | no | `None` |
+| `sender_domain` | `SenderDomainResult \| None` | no | `None` |
+| `spf` | `SpfResult \| None` | no | `None` |
 
 #### `mailchannels.Client`
 
@@ -277,15 +277,15 @@ Methods:
 
 - Kind: `Pydantic model`
 - Summary: Email body content part.
-- Signature: `mailchannels.Content(type: Union, value: str, template_type: Optional)`
+- Signature: `mailchannels.Content(type: Literal['text/plain', 'text/html'] | str, value: str, template_type: Literal['mustache'] | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `type` | `Union` | yes | `` |
+| `type` | `Literal['text/plain', 'text/html'] \| str` | yes | `` |
 | `value` | `str` | yes | `` |
-| `template_type` | `Optional` | no | `None` |
+| `template_type` | `Literal['mustache'] \| None` | no | `None` |
 
 #### `mailchannels.Dkim`
 
@@ -315,7 +315,7 @@ mailchannels.Dkim.create("example.com", selector="mcdkim")
 
 - Kind: `Pydantic model`
 - Summary: One DKIM result returned by the domain check endpoint.
-- Signature: `mailchannels.DkimResult(dkim_domain: str | None, dkim_selector: str | None, dkim_key_status: str | None, reason: str | None, verdict: Optional)`
+- Signature: `mailchannels.DkimResult(dkim_domain: str | None, dkim_selector: str | None, dkim_key_status: str | None, reason: str | None, verdict: DomainCheckVerdict | None)`
 
 Fields:
 
@@ -325,7 +325,7 @@ Fields:
 | `dkim_selector` | `str \| None` | no | `None` |
 | `dkim_key_status` | `str \| None` | no | `None` |
 | `reason` | `str \| None` | no | `None` |
-| `verdict` | `Optional` | no | `None` |
+| `verdict` | `DomainCheckVerdict \| None` | no | `None` |
 
 #### `mailchannels.DkimSetting`
 
@@ -380,19 +380,19 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Validated MailChannels email send payload.
-- Signature: `mailchannels.EmailParams(personalizations: list, from: EmailAddress, subject: str, content: list, reply_to: mailchannels.emails.EmailAddress | None, headers: dict[str, str] | None, attachments: list[mailchannels.emails.Attachment] | None, transactional: bool | None, dkim_domain: str | None, dkim_private_key: str | None, dkim_selector: str | None)`
+- Signature: `mailchannels.EmailParams(personalizations: list[Personalization], from: EmailAddress, subject: str, content: list[Content], reply_to: EmailAddress | None, headers: EmailHeaders | None, attachments: list[Attachment] | None, transactional: bool | None, dkim_domain: str | None, dkim_private_key: str | None, dkim_selector: str | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `personalizations` | `list` | yes | `` |
+| `personalizations` | `list[Personalization]` | yes | `` |
 | `from_` | `EmailAddress` | yes | `` |
 | `subject` | `str` | yes | `` |
-| `content` | `list` | yes | `` |
-| `reply_to` | `mailchannels.emails.EmailAddress \| None` | no | `None` |
-| `headers` | `dict[str, str] \| None` | no | `None` |
-| `attachments` | `list[mailchannels.emails.Attachment] \| None` | no | `None` |
+| `content` | `list[Content]` | yes | `` |
+| `reply_to` | `EmailAddress \| None` | no | `None` |
+| `headers` | `EmailHeaders \| None` | no | `None` |
+| `attachments` | `list[Attachment] \| None` | no | `None` |
 | `transactional` | `bool \| None` | no | `None` |
 | `dkim_domain` | `str \| None` | no | `None` |
 | `dkim_private_key` | `str \| None` | no | `None` |
@@ -457,14 +457,14 @@ Methods:
 
 - Kind: `Pydantic model`
 - Summary: Domain Lockdown check result.
-- Signature: `mailchannels.LockdownResult(reason: str | None, verdict: Optional)`
+- Signature: `mailchannels.LockdownResult(reason: str | None, verdict: DomainCheckVerdict | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
 | `reason` | `str \| None` | no | `None` |
-| `verdict` | `Optional` | no | `None` |
+| `verdict` | `DomainCheckVerdict \| None` | no | `None` |
 
 #### `mailchannels.MailChannelsError`
 
@@ -515,19 +515,19 @@ mailchannels.Metrics.volume(start_time="2026-04-01", interval="day")
 
 - Kind: `Pydantic model`
 - Summary: Recipient-specific message customization.
-- Signature: `mailchannels.Personalization(to: list, cc: list[mailchannels.emails.EmailAddress] | None, bcc: list[mailchannels.emails.EmailAddress] | None, subject: str | None, from: mailchannels.emails.EmailAddress | None, reply_to: mailchannels.emails.EmailAddress | None, headers: dict[str, str] | None, substitutions: dict[str, str] | None, dynamic_template_data: dict[str, Any] | None, dkim_domain: str | None, dkim_private_key: str | None, dkim_selector: str | None)`
+- Signature: `mailchannels.Personalization(to: list[EmailAddress], cc: list[EmailAddress] | None, bcc: list[EmailAddress] | None, subject: str | None, from: EmailAddress | None, reply_to: EmailAddress | None, headers: EmailHeaders | None, substitutions: dict[str, str] | None, dynamic_template_data: dict[str, Any] | None, dkim_domain: str | None, dkim_private_key: str | None, dkim_selector: str | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `to` | `list` | no | `` |
-| `cc` | `list[mailchannels.emails.EmailAddress] \| None` | no | `None` |
-| `bcc` | `list[mailchannels.emails.EmailAddress] \| None` | no | `None` |
+| `to` | `list[EmailAddress]` | no | `` |
+| `cc` | `list[EmailAddress] \| None` | no | `None` |
+| `bcc` | `list[EmailAddress] \| None` | no | `None` |
 | `subject` | `str \| None` | no | `None` |
-| `from_` | `mailchannels.emails.EmailAddress \| None` | no | `None` |
-| `reply_to` | `mailchannels.emails.EmailAddress \| None` | no | `None` |
-| `headers` | `dict[str, str] \| None` | no | `None` |
+| `from_` | `EmailAddress \| None` | no | `None` |
+| `reply_to` | `EmailAddress \| None` | no | `None` |
+| `headers` | `EmailHeaders \| None` | no | `None` |
 | `substitutions` | `dict[str, str] \| None` | no | `None` |
 | `dynamic_template_data` | `dict[str, Any] \| None` | no | `None` |
 | `dkim_domain` | `str \| None` | no | `None` |
@@ -611,21 +611,21 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Response returned by the MailChannels `/send` endpoint.
-- Signature: `mailchannels.SendResponse(request_id: str | None, results: list[mailchannels.emails.SendResult] | None, data: list[str] | None)`
+- Signature: `mailchannels.SendResponse(request_id: str | None, results: list[SendResult] | None, data: list[str] | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
 | `request_id` | `str \| None` | no | `None` |
-| `results` | `list[mailchannels.emails.SendResult] \| None` | no | `None` |
+| `results` | `list[SendResult] \| None` | no | `None` |
 | `data` | `list[str] \| None` | no | `None` |
 
 #### `mailchannels.SendResult`
 
 - Kind: `Pydantic model`
 - Summary: Delivery handoff result for one send personalization.
-- Signature: `mailchannels.SendResult(index: int, message_id: str, status: Literal, reason: str | None)`
+- Signature: `mailchannels.SendResult(index: int, message_id: str, status: Literal['sent', 'failed'], reason: str | None)`
 
 Fields:
 
@@ -633,22 +633,22 @@ Fields:
 | --- | --- | --- | --- |
 | `index` | `int` | yes | `` |
 | `message_id` | `str` | yes | `` |
-| `status` | `Literal` | yes | `` |
+| `status` | `Literal['sent', 'failed']` | yes | `` |
 | `reason` | `str \| None` | no | `None` |
 
 #### `mailchannels.SenderDomainResult`
 
 - Kind: `Pydantic model`
 - Summary: Sender-domain DNS check result.
-- Signature: `mailchannels.SenderDomainResult(a: mailchannels.domain_checks.SenderDomainRecordResult | None, mx: mailchannels.domain_checks.SenderDomainRecordResult | None, verdict: Optional)`
+- Signature: `mailchannels.SenderDomainResult(a: SenderDomainRecordResult | None, mx: SenderDomainRecordResult | None, verdict: DomainCheckVerdict | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `a` | `mailchannels.domain_checks.SenderDomainRecordResult \| None` | no | `None` |
-| `mx` | `mailchannels.domain_checks.SenderDomainRecordResult \| None` | no | `None` |
-| `verdict` | `Optional` | no | `None` |
+| `a` | `SenderDomainRecordResult \| None` | no | `None` |
+| `mx` | `SenderDomainRecordResult \| None` | no | `None` |
+| `verdict` | `DomainCheckVerdict \| None` | no | `None` |
 
 #### `mailchannels.ServerError`
 
@@ -659,14 +659,14 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Parsed metadata from a MailChannels Signature-Input header.
-- Signature: `mailchannels.SignatureParameters(signature_name: str, covered_components: list, created: int | None, algorithm: str | None, key_id: str | None, raw: str)`
+- Signature: `mailchannels.SignatureParameters(signature_name: str, covered_components: list[str], created: int | None, algorithm: str | None, key_id: str | None, raw: str)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
 | `signature_name` | `str` | yes | `` |
-| `covered_components` | `list` | yes | `` |
+| `covered_components` | `list[str]` | yes | `` |
 | `created` | `int \| None` | no | `None` |
 | `algorithm` | `str \| None` | no | `None` |
 | `key_id` | `str \| None` | no | `None` |
@@ -676,7 +676,7 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: SPF check result.
-- Signature: `mailchannels.SpfResult(reason: str | None, spfRecord: str | None, spfRecordError: str | None, verdict: Optional)`
+- Signature: `mailchannels.SpfResult(reason: str | None, spfRecord: str | None, spfRecordError: str | None, verdict: DomainCheckVerdict | None)`
 
 Fields:
 
@@ -685,7 +685,7 @@ Fields:
 | `reason` | `str \| None` | no | `None` |
 | `spfRecord` | `str \| None` | no | `None` |
 | `spfRecordError` | `str \| None` | no | `None` |
-| `verdict` | `Optional` | no | `None` |
+| `verdict` | `DomainCheckVerdict \| None` | no | `None` |
 
 #### `mailchannels.SubAccounts`
 
@@ -790,7 +790,7 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Common fields present on MailChannels delivery event payloads.
-- Signature: `mailchannels.WebhookEventPayload(email: str | None, customer_handle: str, timestamp: int, event: Union, request_id: str | None, smtp_id: str | None, recipients: list[str] | None, status: str | None, reason: str | None)`
+- Signature: `mailchannels.WebhookEventPayload(email: str | None, customer_handle: str, timestamp: int, event: WebhookEvent | str, request_id: str | None, smtp_id: str | None, recipients: list[str] | None, status: str | None, reason: str | None)`
 
 Fields:
 
@@ -799,7 +799,7 @@ Fields:
 | `email` | `str \| None` | no | `None` |
 | `customer_handle` | `str` | yes | `` |
 | `timestamp` | `int` | yes | `` |
-| `event` | `Union` | yes | `` |
+| `event` | `WebhookEvent \| str` | yes | `` |
 | `request_id` | `str \| None` | no | `None` |
 | `smtp_id` | `str \| None` | no | `None` |
 | `recipients` | `list[str] \| None` | no | `None` |
@@ -955,15 +955,15 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Email body content part.
-- Signature: `mailchannels.emails.Content(type: Union, value: str, template_type: Optional)`
+- Signature: `mailchannels.emails.Content(type: Literal['text/plain', 'text/html'] | str, value: str, template_type: Literal['mustache'] | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `type` | `Union` | yes | `` |
+| `type` | `Literal['text/plain', 'text/html'] \| str` | yes | `` |
 | `value` | `str` | yes | `` |
-| `template_type` | `Optional` | no | `None` |
+| `template_type` | `Literal['mustache'] \| None` | no | `None` |
 
 #### `mailchannels.emails.ContentDict`
 
@@ -1012,19 +1012,19 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Validated MailChannels email send payload.
-- Signature: `mailchannels.emails.EmailParams(personalizations: list, from: EmailAddress, subject: str, content: list, reply_to: mailchannels.emails.EmailAddress | None, headers: dict[str, str] | None, attachments: list[mailchannels.emails.Attachment] | None, transactional: bool | None, dkim_domain: str | None, dkim_private_key: str | None, dkim_selector: str | None)`
+- Signature: `mailchannels.emails.EmailParams(personalizations: list[Personalization], from: EmailAddress, subject: str, content: list[Content], reply_to: EmailAddress | None, headers: EmailHeaders | None, attachments: list[Attachment] | None, transactional: bool | None, dkim_domain: str | None, dkim_private_key: str | None, dkim_selector: str | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `personalizations` | `list` | yes | `` |
+| `personalizations` | `list[Personalization]` | yes | `` |
 | `from_` | `EmailAddress` | yes | `` |
 | `subject` | `str` | yes | `` |
-| `content` | `list` | yes | `` |
-| `reply_to` | `mailchannels.emails.EmailAddress \| None` | no | `None` |
-| `headers` | `dict[str, str] \| None` | no | `None` |
-| `attachments` | `list[mailchannels.emails.Attachment] \| None` | no | `None` |
+| `content` | `list[Content]` | yes | `` |
+| `reply_to` | `EmailAddress \| None` | no | `None` |
+| `headers` | `EmailHeaders \| None` | no | `None` |
+| `attachments` | `list[Attachment] \| None` | no | `None` |
 | `transactional` | `bool \| None` | no | `None` |
 | `dkim_domain` | `str \| None` | no | `None` |
 | `dkim_private_key` | `str \| None` | no | `None` |
@@ -1069,19 +1069,19 @@ Methods:
 
 - Kind: `Pydantic model`
 - Summary: Recipient-specific message customization.
-- Signature: `mailchannels.emails.Personalization(to: list, cc: list[mailchannels.emails.EmailAddress] | None, bcc: list[mailchannels.emails.EmailAddress] | None, subject: str | None, from: mailchannels.emails.EmailAddress | None, reply_to: mailchannels.emails.EmailAddress | None, headers: dict[str, str] | None, substitutions: dict[str, str] | None, dynamic_template_data: dict[str, Any] | None, dkim_domain: str | None, dkim_private_key: str | None, dkim_selector: str | None)`
+- Signature: `mailchannels.emails.Personalization(to: list[EmailAddress], cc: list[EmailAddress] | None, bcc: list[EmailAddress] | None, subject: str | None, from: EmailAddress | None, reply_to: EmailAddress | None, headers: EmailHeaders | None, substitutions: dict[str, str] | None, dynamic_template_data: dict[str, Any] | None, dkim_domain: str | None, dkim_private_key: str | None, dkim_selector: str | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `to` | `list` | no | `` |
-| `cc` | `list[mailchannels.emails.EmailAddress] \| None` | no | `None` |
-| `bcc` | `list[mailchannels.emails.EmailAddress] \| None` | no | `None` |
+| `to` | `list[EmailAddress]` | no | `` |
+| `cc` | `list[EmailAddress] \| None` | no | `None` |
+| `bcc` | `list[EmailAddress] \| None` | no | `None` |
 | `subject` | `str \| None` | no | `None` |
-| `from_` | `mailchannels.emails.EmailAddress \| None` | no | `None` |
-| `reply_to` | `mailchannels.emails.EmailAddress \| None` | no | `None` |
-| `headers` | `dict[str, str] \| None` | no | `None` |
+| `from_` | `EmailAddress \| None` | no | `None` |
+| `reply_to` | `EmailAddress \| None` | no | `None` |
+| `headers` | `EmailHeaders \| None` | no | `None` |
 | `substitutions` | `dict[str, str] \| None` | no | `None` |
 | `dynamic_template_data` | `dict[str, Any] \| None` | no | `None` |
 | `dkim_domain` | `str \| None` | no | `None` |
@@ -1158,21 +1158,21 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Response returned by the MailChannels `/send` endpoint.
-- Signature: `mailchannels.emails.SendResponse(request_id: str | None, results: list[mailchannels.emails.SendResult] | None, data: list[str] | None)`
+- Signature: `mailchannels.emails.SendResponse(request_id: str | None, results: list[SendResult] | None, data: list[str] | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
 | `request_id` | `str \| None` | no | `None` |
-| `results` | `list[mailchannels.emails.SendResult] \| None` | no | `None` |
+| `results` | `list[SendResult] \| None` | no | `None` |
 | `data` | `list[str] \| None` | no | `None` |
 
 #### `mailchannels.emails.SendResult`
 
 - Kind: `Pydantic model`
 - Summary: Delivery handoff result for one send personalization.
-- Signature: `mailchannels.emails.SendResult(index: int, message_id: str, status: Literal, reason: str | None)`
+- Signature: `mailchannels.emails.SendResult(index: int, message_id: str, status: Literal['sent', 'failed'], reason: str | None)`
 
 Fields:
 
@@ -1180,7 +1180,7 @@ Fields:
 | --- | --- | --- | --- |
 | `index` | `int` | yes | `` |
 | `message_id` | `str` | yes | `` |
-| `status` | `Literal` | yes | `` |
+| `status` | `Literal['sent', 'failed']` | yes | `` |
 | `reason` | `str \| None` | no | `None` |
 
 #### `mailchannels.emails.UNSUBSCRIBE_URL_PLACEHOLDER`
@@ -1214,7 +1214,7 @@ Methods:
 
 - Kind: `Pydantic model`
 - Summary: Request body for `/check-domain`.
-- Signature: `mailchannels.domain_checks.CheckDomainParams(domain: str, sender_id: str | None, dkim_settings: list[mailchannels.domain_checks.DkimSetting | dict[str, str]] | None)`
+- Signature: `mailchannels.domain_checks.CheckDomainParams(domain: str, sender_id: str | None, dkim_settings: list[DkimSetting | dict[str, str]] | None)`
 
 Fields:
 
@@ -1222,7 +1222,7 @@ Fields:
 | --- | --- | --- | --- |
 | `domain` | `str` | yes | `` |
 | `sender_id` | `str \| None` | no | `None` |
-| `dkim_settings` | `list[mailchannels.domain_checks.DkimSetting \| dict[str, str]] \| None` | no | `None` |
+| `dkim_settings` | `list[DkimSetting \| dict[str, str]] \| None` | no | `None` |
 
 #### `mailchannels.domain_checks.CheckDomainResource`
 
@@ -1241,35 +1241,35 @@ Methods:
 
 - Kind: `Pydantic model`
 - Summary: Domain configuration check response model.
-- Signature: `mailchannels.domain_checks.CheckDomainResult(check_results: mailchannels.domain_checks.CheckResults | None, references: list[str] | None)`
+- Signature: `mailchannels.domain_checks.CheckDomainResult(check_results: CheckResults | None, references: list[str] | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `check_results` | `mailchannels.domain_checks.CheckResults \| None` | no | `None` |
+| `check_results` | `CheckResults \| None` | no | `None` |
 | `references` | `list[str] \| None` | no | `None` |
 
 #### `mailchannels.domain_checks.CheckResults`
 
 - Kind: `Pydantic model`
 - Summary: Grouped check results returned by `/check-domain`.
-- Signature: `mailchannels.domain_checks.CheckResults(dkim: list[mailchannels.domain_checks.DkimResult] | None, domain_lockdown: mailchannels.domain_checks.LockdownResult | None, sender_domain: mailchannels.domain_checks.SenderDomainResult | None, spf: mailchannels.domain_checks.SpfResult | None)`
+- Signature: `mailchannels.domain_checks.CheckResults(dkim: list[DkimResult] | None, domain_lockdown: LockdownResult | None, sender_domain: SenderDomainResult | None, spf: SpfResult | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `dkim` | `list[mailchannels.domain_checks.DkimResult] \| None` | no | `None` |
-| `domain_lockdown` | `mailchannels.domain_checks.LockdownResult \| None` | no | `None` |
-| `sender_domain` | `mailchannels.domain_checks.SenderDomainResult \| None` | no | `None` |
-| `spf` | `mailchannels.domain_checks.SpfResult \| None` | no | `None` |
+| `dkim` | `list[DkimResult] \| None` | no | `None` |
+| `domain_lockdown` | `LockdownResult \| None` | no | `None` |
+| `sender_domain` | `SenderDomainResult \| None` | no | `None` |
+| `spf` | `SpfResult \| None` | no | `None` |
 
 #### `mailchannels.domain_checks.DkimResult`
 
 - Kind: `Pydantic model`
 - Summary: One DKIM result returned by the domain check endpoint.
-- Signature: `mailchannels.domain_checks.DkimResult(dkim_domain: str | None, dkim_selector: str | None, dkim_key_status: str | None, reason: str | None, verdict: Optional)`
+- Signature: `mailchannels.domain_checks.DkimResult(dkim_domain: str | None, dkim_selector: str | None, dkim_key_status: str | None, reason: str | None, verdict: DomainCheckVerdict | None)`
 
 Fields:
 
@@ -1279,7 +1279,7 @@ Fields:
 | `dkim_selector` | `str \| None` | no | `None` |
 | `dkim_key_status` | `str \| None` | no | `None` |
 | `reason` | `str \| None` | no | `None` |
-| `verdict` | `Optional` | no | `None` |
+| `verdict` | `DomainCheckVerdict \| None` | no | `None` |
 
 #### `mailchannels.domain_checks.DkimSetting`
 
@@ -1329,34 +1329,34 @@ Methods:
 
 - Kind: `Pydantic model`
 - Summary: Domain Lockdown check result.
-- Signature: `mailchannels.domain_checks.LockdownResult(reason: str | None, verdict: Optional)`
+- Signature: `mailchannels.domain_checks.LockdownResult(reason: str | None, verdict: DomainCheckVerdict | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
 | `reason` | `str \| None` | no | `None` |
-| `verdict` | `Optional` | no | `None` |
+| `verdict` | `DomainCheckVerdict \| None` | no | `None` |
 
 #### `mailchannels.domain_checks.SenderDomainResult`
 
 - Kind: `Pydantic model`
 - Summary: Sender-domain DNS check result.
-- Signature: `mailchannels.domain_checks.SenderDomainResult(a: mailchannels.domain_checks.SenderDomainRecordResult | None, mx: mailchannels.domain_checks.SenderDomainRecordResult | None, verdict: Optional)`
+- Signature: `mailchannels.domain_checks.SenderDomainResult(a: SenderDomainRecordResult | None, mx: SenderDomainRecordResult | None, verdict: DomainCheckVerdict | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `a` | `mailchannels.domain_checks.SenderDomainRecordResult \| None` | no | `None` |
-| `mx` | `mailchannels.domain_checks.SenderDomainRecordResult \| None` | no | `None` |
-| `verdict` | `Optional` | no | `None` |
+| `a` | `SenderDomainRecordResult \| None` | no | `None` |
+| `mx` | `SenderDomainRecordResult \| None` | no | `None` |
+| `verdict` | `DomainCheckVerdict \| None` | no | `None` |
 
 #### `mailchannels.domain_checks.SpfResult`
 
 - Kind: `Pydantic model`
 - Summary: SPF check result.
-- Signature: `mailchannels.domain_checks.SpfResult(reason: str | None, spfRecord: str | None, spfRecordError: str | None, verdict: Optional)`
+- Signature: `mailchannels.domain_checks.SpfResult(reason: str | None, spfRecord: str | None, spfRecordError: str | None, verdict: DomainCheckVerdict | None)`
 
 Fields:
 
@@ -1365,7 +1365,7 @@ Fields:
 | `reason` | `str \| None` | no | `None` |
 | `spfRecord` | `str \| None` | no | `None` |
 | `spfRecordError` | `str \| None` | no | `None` |
-| `verdict` | `Optional` | no | `None` |
+| `verdict` | `DomainCheckVerdict \| None` | no | `None` |
 
 ### `mailchannels.check_domain`
 
@@ -1387,7 +1387,7 @@ Methods:
 
 - Kind: `Pydantic model`
 - Summary: Request body for `/check-domain`.
-- Signature: `mailchannels.check_domain.CheckDomainParams(domain: str, sender_id: str | None, dkim_settings: list[mailchannels.domain_checks.DkimSetting | dict[str, str]] | None)`
+- Signature: `mailchannels.check_domain.CheckDomainParams(domain: str, sender_id: str | None, dkim_settings: list[DkimSetting | dict[str, str]] | None)`
 
 Fields:
 
@@ -1395,7 +1395,7 @@ Fields:
 | --- | --- | --- | --- |
 | `domain` | `str` | yes | `` |
 | `sender_id` | `str \| None` | no | `None` |
-| `dkim_settings` | `list[mailchannels.domain_checks.DkimSetting \| dict[str, str]] \| None` | no | `None` |
+| `dkim_settings` | `list[DkimSetting \| dict[str, str]] \| None` | no | `None` |
 
 #### `mailchannels.check_domain.CheckDomainResource`
 
@@ -1414,35 +1414,35 @@ Methods:
 
 - Kind: `Pydantic model`
 - Summary: Domain configuration check response model.
-- Signature: `mailchannels.check_domain.CheckDomainResult(check_results: mailchannels.domain_checks.CheckResults | None, references: list[str] | None)`
+- Signature: `mailchannels.check_domain.CheckDomainResult(check_results: CheckResults | None, references: list[str] | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `check_results` | `mailchannels.domain_checks.CheckResults \| None` | no | `None` |
+| `check_results` | `CheckResults \| None` | no | `None` |
 | `references` | `list[str] \| None` | no | `None` |
 
 #### `mailchannels.check_domain.CheckResults`
 
 - Kind: `Pydantic model`
 - Summary: Grouped check results returned by `/check-domain`.
-- Signature: `mailchannels.check_domain.CheckResults(dkim: list[mailchannels.domain_checks.DkimResult] | None, domain_lockdown: mailchannels.domain_checks.LockdownResult | None, sender_domain: mailchannels.domain_checks.SenderDomainResult | None, spf: mailchannels.domain_checks.SpfResult | None)`
+- Signature: `mailchannels.check_domain.CheckResults(dkim: list[DkimResult] | None, domain_lockdown: LockdownResult | None, sender_domain: SenderDomainResult | None, spf: SpfResult | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `dkim` | `list[mailchannels.domain_checks.DkimResult] \| None` | no | `None` |
-| `domain_lockdown` | `mailchannels.domain_checks.LockdownResult \| None` | no | `None` |
-| `sender_domain` | `mailchannels.domain_checks.SenderDomainResult \| None` | no | `None` |
-| `spf` | `mailchannels.domain_checks.SpfResult \| None` | no | `None` |
+| `dkim` | `list[DkimResult] \| None` | no | `None` |
+| `domain_lockdown` | `LockdownResult \| None` | no | `None` |
+| `sender_domain` | `SenderDomainResult \| None` | no | `None` |
+| `spf` | `SpfResult \| None` | no | `None` |
 
 #### `mailchannels.check_domain.DkimResult`
 
 - Kind: `Pydantic model`
 - Summary: One DKIM result returned by the domain check endpoint.
-- Signature: `mailchannels.check_domain.DkimResult(dkim_domain: str | None, dkim_selector: str | None, dkim_key_status: str | None, reason: str | None, verdict: Optional)`
+- Signature: `mailchannels.check_domain.DkimResult(dkim_domain: str | None, dkim_selector: str | None, dkim_key_status: str | None, reason: str | None, verdict: DomainCheckVerdict | None)`
 
 Fields:
 
@@ -1452,7 +1452,7 @@ Fields:
 | `dkim_selector` | `str \| None` | no | `None` |
 | `dkim_key_status` | `str \| None` | no | `None` |
 | `reason` | `str \| None` | no | `None` |
-| `verdict` | `Optional` | no | `None` |
+| `verdict` | `DomainCheckVerdict \| None` | no | `None` |
 
 #### `mailchannels.check_domain.DkimSetting`
 
@@ -1502,34 +1502,34 @@ Methods:
 
 - Kind: `Pydantic model`
 - Summary: Domain Lockdown check result.
-- Signature: `mailchannels.check_domain.LockdownResult(reason: str | None, verdict: Optional)`
+- Signature: `mailchannels.check_domain.LockdownResult(reason: str | None, verdict: DomainCheckVerdict | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
 | `reason` | `str \| None` | no | `None` |
-| `verdict` | `Optional` | no | `None` |
+| `verdict` | `DomainCheckVerdict \| None` | no | `None` |
 
 #### `mailchannels.check_domain.SenderDomainResult`
 
 - Kind: `Pydantic model`
 - Summary: Sender-domain DNS check result.
-- Signature: `mailchannels.check_domain.SenderDomainResult(a: mailchannels.domain_checks.SenderDomainRecordResult | None, mx: mailchannels.domain_checks.SenderDomainRecordResult | None, verdict: Optional)`
+- Signature: `mailchannels.check_domain.SenderDomainResult(a: SenderDomainRecordResult | None, mx: SenderDomainRecordResult | None, verdict: DomainCheckVerdict | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `a` | `mailchannels.domain_checks.SenderDomainRecordResult \| None` | no | `None` |
-| `mx` | `mailchannels.domain_checks.SenderDomainRecordResult \| None` | no | `None` |
-| `verdict` | `Optional` | no | `None` |
+| `a` | `SenderDomainRecordResult \| None` | no | `None` |
+| `mx` | `SenderDomainRecordResult \| None` | no | `None` |
+| `verdict` | `DomainCheckVerdict \| None` | no | `None` |
 
 #### `mailchannels.check_domain.SpfResult`
 
 - Kind: `Pydantic model`
 - Summary: SPF check result.
-- Signature: `mailchannels.check_domain.SpfResult(reason: str | None, spfRecord: str | None, spfRecordError: str | None, verdict: Optional)`
+- Signature: `mailchannels.check_domain.SpfResult(reason: str | None, spfRecord: str | None, spfRecordError: str | None, verdict: DomainCheckVerdict | None)`
 
 Fields:
 
@@ -1538,7 +1538,7 @@ Fields:
 | `reason` | `str \| None` | no | `None` |
 | `spfRecord` | `str \| None` | no | `None` |
 | `spfRecordError` | `str \| None` | no | `None` |
-| `verdict` | `Optional` | no | `None` |
+| `verdict` | `DomainCheckVerdict \| None` | no | `None` |
 
 ### `mailchannels.dkim`
 
@@ -1598,7 +1598,7 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: MailChannels-hosted DKIM key metadata.
-- Signature: `mailchannels.dkim.DkimKeyInfo(domain: str, selector: str, public_key: str, status: Literal, algorithm: str, key_length: int | None, dkim_dns_records: list[mailchannels.dkim.DkimDnsRecord] | None)`
+- Signature: `mailchannels.dkim.DkimKeyInfo(domain: str, selector: str, public_key: str, status: DkimKeyStatus, algorithm: str, key_length: int | None, dkim_dns_records: list[DkimDnsRecord] | None)`
 
 Fields:
 
@@ -1607,22 +1607,22 @@ Fields:
 | `domain` | `str` | yes | `` |
 | `selector` | `str` | yes | `` |
 | `public_key` | `str` | yes | `` |
-| `status` | `Literal` | yes | `` |
+| `status` | `DkimKeyStatus` | yes | `` |
 | `algorithm` | `str` | yes | `` |
 | `key_length` | `int \| None` | no | `None` |
-| `dkim_dns_records` | `list[mailchannels.dkim.DkimDnsRecord] \| None` | no | `None` |
+| `dkim_dns_records` | `list[DkimDnsRecord] \| None` | no | `None` |
 
 #### `mailchannels.dkim.DkimKeyList`
 
 - Kind: `Pydantic model`
 - Summary: Response model for listing MailChannels-hosted DKIM keys.
-- Signature: `mailchannels.dkim.DkimKeyList(keys: list)`
+- Signature: `mailchannels.dkim.DkimKeyList(keys: list[DkimKeyInfo])`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `keys` | `list` | yes | `` |
+| `keys` | `list[DkimKeyInfo]` | yes | `` |
 
 #### `mailchannels.dkim.DkimKeyStatus`
 
@@ -1724,7 +1724,7 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Engagement metrics response model.
-- Signature: `mailchannels.metrics.MetricsEngagement(open: int, open_tracking_delivered: int, click: int, click_tracking_delivered: int, buckets: dict)`
+- Signature: `mailchannels.metrics.MetricsEngagement(open: int, open_tracking_delivered: int, click: int, click_tracking_delivered: int, buckets: dict[str, list[MetricsBucket]])`
 
 Fields:
 
@@ -1734,7 +1734,7 @@ Fields:
 | `open_tracking_delivered` | `int` | yes | `` |
 | `click` | `int` | yes | `` |
 | `click_tracking_delivered` | `int` | yes | `` |
-| `buckets` | `dict` | yes | `` |
+| `buckets` | `dict[str, list[MetricsBucket]]` | yes | `` |
 
 #### `mailchannels.metrics.MetricsInterval`
 
@@ -1745,7 +1745,7 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Performance metrics response model.
-- Signature: `mailchannels.metrics.MetricsPerformance(processed: int, delivered: int, bounced: int, buckets: dict)`
+- Signature: `mailchannels.metrics.MetricsPerformance(processed: int, delivered: int, bounced: int, buckets: dict[str, list[MetricsBucket]])`
 
 Fields:
 
@@ -1754,7 +1754,7 @@ Fields:
 | `processed` | `int` | yes | `` |
 | `delivered` | `int` | yes | `` |
 | `bounced` | `int` | yes | `` |
-| `buckets` | `dict` | yes | `` |
+| `buckets` | `dict[str, list[MetricsBucket]]` | yes | `` |
 
 #### `mailchannels.metrics.MetricsQueryParams`
 
@@ -1774,7 +1774,7 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Recipient behaviour metrics response model.
-- Signature: `mailchannels.metrics.MetricsRecipientBehaviour(unsubscribed: int, unsubscribe_delivered: int, buckets: dict)`
+- Signature: `mailchannels.metrics.MetricsRecipientBehaviour(unsubscribed: int, unsubscribe_delivered: int, buckets: dict[str, list[MetricsBucket]])`
 
 Fields:
 
@@ -1782,7 +1782,7 @@ Fields:
 | --- | --- | --- | --- |
 | `unsubscribed` | `int` | yes | `` |
 | `unsubscribe_delivered` | `int` | yes | `` |
-| `buckets` | `dict` | yes | `` |
+| `buckets` | `dict[str, list[MetricsBucket]]` | yes | `` |
 
 #### `mailchannels.metrics.MetricsResource`
 
@@ -1842,7 +1842,7 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Sender metrics response model.
-- Signature: `mailchannels.metrics.MetricsSenderResponse(limit: int, offset: int, total: int, senders: list)`
+- Signature: `mailchannels.metrics.MetricsSenderResponse(limit: int, offset: int, total: int, senders: list[MetricsSender])`
 
 Fields:
 
@@ -1851,7 +1851,7 @@ Fields:
 | `limit` | `int` | yes | `` |
 | `offset` | `int` | yes | `` |
 | `total` | `int` | yes | `` |
-| `senders` | `list` | yes | `` |
+| `senders` | `list[MetricsSender]` | yes | `` |
 
 #### `mailchannels.metrics.MetricsSenderType`
 
@@ -1872,7 +1872,7 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Volume metrics response model.
-- Signature: `mailchannels.metrics.MetricsVolume(processed: int, delivered: int, dropped: int, buckets: dict)`
+- Signature: `mailchannels.metrics.MetricsVolume(processed: int, delivered: int, dropped: int, buckets: dict[str, list[MetricsBucket]])`
 
 Fields:
 
@@ -1881,7 +1881,7 @@ Fields:
 | `processed` | `int` | yes | `` |
 | `delivered` | `int` | yes | `` |
 | `dropped` | `int` | yes | `` |
-| `buckets` | `dict` | yes | `` |
+| `buckets` | `dict[str, list[MetricsBucket]]` | yes | `` |
 
 ### `mailchannels.sub_accounts`
 
@@ -2078,16 +2078,16 @@ Suppression list resource exports.
 
 - Kind: `Pydantic model`
 - Summary: Suppression entry returned by MailChannels.
-- Signature: `mailchannels.suppressions.SuppressionEntry(recipient: str, suppression_types: list[Literal['transactional', 'non-transactional']] | None, notes: str | None, source: Optional, sender: str | None, created_at: str | None)`
+- Signature: `mailchannels.suppressions.SuppressionEntry(recipient: str, suppression_types: list[SuppressionType] | None, notes: str | None, source: SuppressionSource | None, sender: str | None, created_at: str | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
 | `recipient` | `str` | yes | `` |
-| `suppression_types` | `list[Literal['transactional', 'non-transactional']] \| None` | no | `None` |
+| `suppression_types` | `list[SuppressionType] \| None` | no | `None` |
 | `notes` | `str \| None` | no | `None` |
-| `source` | `Optional` | no | `None` |
+| `source` | `SuppressionSource \| None` | no | `None` |
 | `sender` | `str \| None` | no | `None` |
 | `created_at` | `str \| None` | no | `None` |
 
@@ -2108,13 +2108,13 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Response model for suppression list retrieval.
-- Signature: `mailchannels.suppressions.SuppressionListResponse(suppression_list: list)`
+- Signature: `mailchannels.suppressions.SuppressionListResponse(suppression_list: list[SuppressionEntry])`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `suppression_list` | `list` | yes | `` |
+| `suppression_list` | `list[SuppressionEntry]` | yes | `` |
 
 #### `mailchannels.suppressions.SuppressionSource`
 
@@ -2210,14 +2210,14 @@ Webhook resources for the MailChannels SDK.
 
 - Kind: `Pydantic model`
 - Summary: Parsed metadata from a MailChannels Signature-Input header.
-- Signature: `mailchannels.webhooks.SignatureParameters(signature_name: str, covered_components: list, created: int | None, algorithm: str | None, key_id: str | None, raw: str)`
+- Signature: `mailchannels.webhooks.SignatureParameters(signature_name: str, covered_components: list[str], created: int | None, algorithm: str | None, key_id: str | None, raw: str)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
 | `signature_name` | `str` | yes | `` |
-| `covered_components` | `list` | yes | `` |
+| `covered_components` | `list[str]` | yes | `` |
 | `created` | `int \| None` | no | `None` |
 | `algorithm` | `str \| None` | no | `None` |
 | `key_id` | `str \| None` | no | `None` |
@@ -2239,7 +2239,7 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: One MailChannels webhook batch delivery attempt.
-- Signature: `mailchannels.webhooks.WebhookBatch(batch_id: int, customer_handle: str, webhook: str, status: str, created_at: str, event_count: int, duration: mailchannels.webhooks.WebhookBatchDuration | None, status_code: int | None)`
+- Signature: `mailchannels.webhooks.WebhookBatch(batch_id: int, customer_handle: str, webhook: str, status: str, created_at: str, event_count: int, duration: WebhookBatchDuration | None, status_code: int | None)`
 
 Fields:
 
@@ -2251,33 +2251,33 @@ Fields:
 | `status` | `str` | yes | `` |
 | `created_at` | `str` | yes | `` |
 | `event_count` | `int` | yes | `` |
-| `duration` | `mailchannels.webhooks.WebhookBatchDuration \| None` | no | `None` |
+| `duration` | `WebhookBatchDuration \| None` | no | `None` |
 | `status_code` | `int \| None` | no | `None` |
 
 #### `mailchannels.webhooks.WebhookBatchDuration`
 
 - Kind: `Pydantic model`
 - Summary: Duration metadata for a webhook batch delivery attempt.
-- Signature: `mailchannels.webhooks.WebhookBatchDuration(value: int, unit: Literal)`
+- Signature: `mailchannels.webhooks.WebhookBatchDuration(value: int, unit: Literal['milliseconds'])`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
 | `value` | `int` | yes | `` |
-| `unit` | `Literal` | yes | `` |
+| `unit` | `Literal['milliseconds']` | yes | `` |
 
 #### `mailchannels.webhooks.WebhookBatchResult`
 
 - Kind: `Pydantic model`
 - Summary: Paged webhook batch result.
-- Signature: `mailchannels.webhooks.WebhookBatchResult(webhook_batches: list)`
+- Signature: `mailchannels.webhooks.WebhookBatchResult(webhook_batches: list[WebhookBatch])`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
-| `webhook_batches` | `list` | yes | `` |
+| `webhook_batches` | `list[WebhookBatch]` | yes | `` |
 
 #### `mailchannels.webhooks.WebhookBatchStatus`
 
@@ -2293,7 +2293,7 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Common fields present on MailChannels delivery event payloads.
-- Signature: `mailchannels.webhooks.WebhookEventPayload(email: str | None, customer_handle: str, timestamp: int, event: Union, request_id: str | None, smtp_id: str | None, recipients: list[str] | None, status: str | None, reason: str | None)`
+- Signature: `mailchannels.webhooks.WebhookEventPayload(email: str | None, customer_handle: str, timestamp: int, event: WebhookEvent | str, request_id: str | None, smtp_id: str | None, recipients: list[str] | None, status: str | None, reason: str | None)`
 
 Fields:
 
@@ -2302,7 +2302,7 @@ Fields:
 | `email` | `str \| None` | no | `None` |
 | `customer_handle` | `str` | yes | `` |
 | `timestamp` | `int` | yes | `` |
-| `event` | `Union` | yes | `` |
+| `event` | `WebhookEvent \| str` | yes | `` |
 | `request_id` | `str \| None` | no | `None` |
 | `smtp_id` | `str \| None` | no | `None` |
 | `recipients` | `list[str] \| None` | no | `None` |
@@ -2360,28 +2360,28 @@ Fields:
 
 - Kind: `Pydantic model`
 - Summary: Validation result for one webhook endpoint.
-- Signature: `mailchannels.webhooks.WebhookValidationResult(webhook: str, result: Literal, response: mailchannels.webhooks.WebhookValidationResponse | None)`
+- Signature: `mailchannels.webhooks.WebhookValidationResult(webhook: str, result: Literal['passed', 'failed'], response: WebhookValidationResponse | None)`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
 | `webhook` | `str` | yes | `` |
-| `result` | `Literal` | yes | `` |
-| `response` | `mailchannels.webhooks.WebhookValidationResponse \| None` | no | `None` |
+| `result` | `Literal['passed', 'failed']` | yes | `` |
+| `response` | `WebhookValidationResponse \| None` | no | `None` |
 
 #### `mailchannels.webhooks.WebhookValidationResults`
 
 - Kind: `Pydantic model`
 - Summary: Validation results for enrolled webhook endpoints.
-- Signature: `mailchannels.webhooks.WebhookValidationResults(all_passed: bool, results: list)`
+- Signature: `mailchannels.webhooks.WebhookValidationResults(all_passed: bool, results: list[WebhookValidationResult])`
 
 Fields:
 
 | Field | Type | Required | Default |
 | --- | --- | --- | --- |
 | `all_passed` | `bool` | yes | `` |
-| `results` | `list` | yes | `` |
+| `results` | `list[WebhookValidationResult]` | yes | `` |
 
 #### `mailchannels.webhooks.Webhooks`
 

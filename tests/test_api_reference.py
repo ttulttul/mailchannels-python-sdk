@@ -6,7 +6,7 @@ import importlib.util
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import TypedDict
+from typing import Literal, Optional, TypedDict, Union
 
 import pytest
 
@@ -84,6 +84,21 @@ def test_generic_alias_exports_are_not_rendered_as_classes(
 
     assert reference._kind(mailchannels.EmailHeaders) == "value"
     assert reference._summary(mailchannels.EmailHeaders) == ""
+    assert reference._signature(mailchannels.EmailHeaders) == ""
+
+
+def test_format_annotation_normalizes_older_typing_forms() -> None:
+    """It keeps rendered annotations stable across Python versions."""
+    assert reference._format_annotation(Optional[str]) == "str | None"
+    assert reference._format_annotation(Literal["passed", "failed"]) == "Literal"
+    assert reference._format_annotation(Union[Literal["open"], str]) == "Union"
+
+
+def test_pydantic_fields_render_source_annotations() -> None:
+    """It avoids Python-version-specific evaluated Pydantic annotations."""
+    fields = reference._pydantic_model_fields(mailchannels.EmailParams)
+
+    assert "| `headers` | `EmailHeaders \\| None` | no | `None` |" in fields
 
 
 def test_api_reference_file_is_current() -> None:

@@ -426,7 +426,7 @@ Python versions can disagree about whether built-in generic aliases such as
 `dict[str, str]` look class-like to `inspect.isclass()`. The API reference
 generator should classify these aliases before regular class introspection so
 exports such as `EmailHeaders` stay rendered as simple values without inheriting
-the built-in `dict` docstring.
+the built-in `dict` docstring or a synthetic `(*args, **kwargs)` signature.
 
 ## 2026-05-07: SKILLS.md should stay focused on SDK usage
 
@@ -434,3 +434,12 @@ the built-in `dict` docstring.
 a repository contributor playbook. Keep maintenance procedures, test workflows,
 release notes, and implementation chores out of that file unless they directly
 teach correct SDK usage.
+
+## 2026-05-07: API reference annotations must be version-normalized
+
+Python 3.9 can expose Pydantic field annotations as evaluated `Optional[...]`,
+detailed `Literal[...]`, unqualified model classes, or bare containers where
+newer Python versions preserve newer syntax and generic details. Render
+Pydantic fields from raw source `__annotations__`, not `field.annotation`, and
+test the snapshot under Python 3.9 and 3.10 before assuming the reference is
+stable.

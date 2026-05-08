@@ -9,7 +9,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from types import GenericAlias, ModuleType
-from typing import Any
+from typing import Any, Literal, Union, get_args, get_origin
 
 from pydantic import BaseModel
 
@@ -252,7 +252,7 @@ def _pydantic_model_fields(value: type[BaseModel]) -> list[str]:
         "| --- | --- | --- | --- |",
     ]
     for name, field in value.model_fields.items():
-        annotation = _format_annotation(field.annotation)
+        annotation = _format_annotation(_model_field_annotation(value, name, field))
         required = "yes" if field.is_required() else "no"
         default = "" if field.is_required() else _format_default(field.default)
         lines.append(
@@ -321,9 +321,12 @@ def _method_signature(function: Any) -> str:
 
 def _signature(value: Any) -> str:
     """Return a public callable signature when available."""
+    if _is_generic_alias(value):
+        return ""
     if inspect.isclass(value) and issubclass(value, BaseModel):
         parts = [
-            f"{field.alias or name}: {_format_annotation(field.annotation)}"
+            f"{field.alias or name}: "
+            f"{_format_annotation(_model_field_annotation(value, name, field))}"
             for name, field in value.model_fields.items()
         ]
         return f"({', '.join(parts)})"
@@ -407,10 +410,28 @@ def _quick_examples() -> list[str]:
     return lines
 
 
+def _model_field_annotation(
+    model: type[BaseModel],
+    name: str,
+    field: Any,
+) -> Any:
+    """Return the stable source annotation for a Pydantic model field."""
+    return getattr(model, "__annotations__", {}).get(name, field.annotation)
+
+
 def _format_annotation(value: Any) -> str:
     """Return a readable annotation string."""
     if value is None:
         return "None"
+    origin = get_origin(value)
+    args = get_args(value)
+    if origin is Literal:
+        return "Literal"
+    if origin is Union:
+        non_none_args = [item for item in args if item is not type(None)]
+        if len(non_none_args) == 1 and len(non_none_args) != len(args):
+            return f"{_format_annotation(non_none_args[0])} | None"
+        return "Union"
     forward_arg = getattr(value, "__forward_arg__", None)
     if isinstance(forward_arg, str):
         return forward_arg.strip("'\"")
