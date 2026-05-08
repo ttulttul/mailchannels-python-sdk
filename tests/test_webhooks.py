@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import logging
 
 import pytest
 from conftest import FakeHTTPXClient, FakeRequestsClient
@@ -77,6 +78,25 @@ def test_webhook_batches_public_key_and_resend() -> None:
         "User-Agent": user_agent(),
         "X-Customer-Handle": "customer_123",
     }
+
+
+def test_webhook_destructive_operations_log_at_info(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """It logs intentional webhook mutations at info level."""
+    transport = FakeRequestsClient(SDKResponse(200, {"ok": True}, "{}"))
+    client = Client(api_key="test-key", http_client=transport)
+
+    with caplog.at_level(logging.INFO, logger="mailchannels.webhooks.webhooks"):
+        client.webhooks.delete()
+        client.webhooks.resend_batch(123, customer_handle="customer_123")
+
+    records = [
+        record
+        for record in caplog.records
+        if record.name == "mailchannels.webhooks.webhooks"
+    ]
+    assert [record.levelno for record in records] == [logging.INFO, logging.INFO]
 
 
 async def test_webhook_async_methods_use_async_transport() -> None:

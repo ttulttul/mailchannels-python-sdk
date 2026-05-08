@@ -412,3 +412,10 @@ Replay windows should not treat future timestamps like stale timestamps.
 `Webhooks.verify(...)` now use separate `max_age_seconds` and `max_skew_seconds`
 windows. Keep `tolerance_seconds` only as a compatibility alias for stale-age
 tolerance.
+
+## 2026-05-07: Intentional destructive operations are info-level logs
+
+Delete, suspend, rotate, resend, and similar user-requested operations are
+normal SDK activity, even when destructive. Log them at info level and reserve
+warning for unexpected recoverable states such as missing webhook signature
+metadata, malformed webhook headers, or optional dependency fallbacks.

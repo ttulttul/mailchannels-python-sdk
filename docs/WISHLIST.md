@@ -6,20 +6,11 @@ choosing the next engineering task.
 
 ## Recommended Order
 
-1. Lower intentional destructive-operation logs from warning to info
-2. Add API spec compatibility guarantees
-3. Explore OpenAPI-assisted generation
-4. Add request options if the API exposes per-request controls
+1. Add API spec compatibility guarantees
+2. Explore OpenAPI-assisted generation
+3. Add request options if the API exposes per-request controls
 
-## 1. Lower Intentional Destructive-Operation Logs
-
-User-initiated destructive calls currently log at warning level in DKIM,
-webhooks, sub-accounts, and suppressions. Lower those normal operations to info
-level and reserve warning for unexpected recoverable behavior.
-
-Priority: high.
-
-## 2. Add API Spec Compatibility Guarantees
+## 1. Add API Spec Compatibility Guarantees
 
 Tie SDK releases to the MailChannels OpenAPI document they were checked against.
 Expose the OpenAPI source URL, spec hash, and checked date in generated
@@ -33,7 +24,7 @@ introspection.
 
 Priority: high.
 
-## 3. Explore OpenAPI-Assisted Generation
+## 2. Explore OpenAPI-Assisted Generation
 
 Investigate generating selected SDK artifacts from the MailChannels OpenAPI
 spec. A fully generated SDK may not be the right product design, but generated
@@ -46,7 +37,7 @@ the desired generated artifacts obvious.
 
 Priority: medium.
 
-## 4. Add Request Options If Needed
+## 3. Add Request Options If Needed
 
 If MailChannels exposes per-request option headers such as idempotency keys,
 model them as an `options` argument rather than forcing those controls into
@@ -102,6 +93,8 @@ API changes:
 - Directional webhook signature freshness checks with separate stale-age and
   future-skew windows.
 - Full webhook digest, freshness, and RFC 9421 Ed25519 signature verification.
+- Intentional destructive-operation logging lowered to info level, with warning
+  reserved for unexpected recoverable behavior.
 - Email payload negative tests for local validation, mocked API rejection, and
   live dry-run API rejection.
 - Refined API error taxonomy.

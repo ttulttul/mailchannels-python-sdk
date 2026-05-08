@@ -420,6 +420,10 @@ Exceptions expose `headers`, `request_id`, `retry_after`, `error_type`,
 `suggested_action`, `response`, and `to_dict()`. Prefer logging `to_dict()` when
 building examples or support-facing error paths.
 
+Routine destructive operations log at info level, not warning. Keep warning
+logs for unexpected recoverable behavior such as missing webhook signature
+metadata, malformed webhook headers, or optional dependency fallbacks.
+
 ## Version And Custom HTTP Clients
 
 The SDK exports `mailchannels.__version__` and `mailchannels.get_version()`.

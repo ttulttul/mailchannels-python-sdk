@@ -99,12 +99,12 @@ class WebhooksResource(Generic[StrictResponses]):
 
     def delete(self) -> dict[str, Any]:
         """Delete all configured webhook endpoints."""
-        logger.warning("Deleting all MailChannels webhooks")
+        logger.info("Deleting all MailChannels webhooks")
         return self._client.request("DELETE", "/webhook")
 
     async def delete_async(self) -> dict[str, Any]:
         """Delete all configured webhook endpoints using async HTTP."""
-        logger.warning("Deleting all MailChannels webhooks using async HTTP")
+        logger.info("Deleting all MailChannels webhooks using async HTTP")
         return await self._client.request_async("DELETE", "/webhook")
 
     @overload
@@ -235,7 +235,7 @@ class WebhooksResource(Generic[StrictResponses]):
 
     def resend_batch(self, batch_id: int, *, customer_handle: str) -> dict[str, Any]:
         """Synchronously resend one webhook batch."""
-        logger.warning(
+        logger.info(
             "Resending MailChannels webhook batch batch_id=%s customer_handle=%s",
             batch_id,
             customer_handle,
@@ -254,7 +254,7 @@ class WebhooksResource(Generic[StrictResponses]):
         customer_handle: str,
     ) -> dict[str, Any]:
         """Synchronously resend one webhook batch using async HTTP."""
-        logger.warning(
+        logger.info(
             "Resending MailChannels webhook batch using async HTTP batch_id=%s "
             "customer_handle=%s",
             batch_id,

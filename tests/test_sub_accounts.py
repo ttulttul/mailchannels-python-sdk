@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import pytest
 from conftest import FakeHTTPXClient, FakeRequestsClient
 
@@ -82,6 +84,25 @@ def test_sub_account_limit_rejects_ambiguous_limit_arguments() -> None:
         )
 
     assert error.value.code == "InvalidLimitParameters"
+
+
+def test_sub_account_destructive_operations_log_at_info(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """It logs intentional sub-account state changes at info level."""
+    transport = FakeRequestsClient(SDKResponse(204, None, ""))
+    client = Client(api_key="test-key", http_client=transport)
+
+    with caplog.at_level(logging.INFO, logger="mailchannels.sub_accounts.sub_accounts"):
+        client.sub_accounts.suspend("clienta")
+        client.sub_accounts.delete("clienta")
+
+    records = [
+        record
+        for record in caplog.records
+        if record.name == "mailchannels.sub_accounts.sub_accounts"
+    ]
+    assert [record.levelno for record in records] == [logging.INFO, logging.INFO]
 
 
 async def test_sub_account_async_methods_use_async_transport() -> None:

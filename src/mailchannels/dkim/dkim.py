@@ -276,7 +276,7 @@ class DkimResource(Generic[StrictResponses]):
         status: DkimUpdateStatus,
     ) -> dict[str, Any]:
         """Update the status of a MailChannels-hosted DKIM key pair."""
-        logger.warning(
+        logger.info(
             "Updating MailChannels DKIM key status domain=%s selector=%s status=%s",
             domain,
             selector,
@@ -296,7 +296,7 @@ class DkimResource(Generic[StrictResponses]):
         status: DkimUpdateStatus,
     ) -> dict[str, Any]:
         """Update the status of a MailChannels-hosted DKIM key pair using async HTTP."""
-        logger.warning(
+        logger.info(
             "Updating MailChannels DKIM key status using async HTTP domain=%s "
             "selector=%s status=%s",
             domain,
@@ -344,7 +344,7 @@ class DkimResource(Generic[StrictResponses]):
         new_selector: str,
     ) -> DkimRotateResponse | MailChannelsResponse:
         """Rotate a MailChannels-hosted DKIM key pair."""
-        logger.warning(
+        logger.info(
             "Rotating MailChannels DKIM key domain=%s selector=%s new_selector=%s",
             domain,
             selector,
@@ -392,7 +392,7 @@ class DkimResource(Generic[StrictResponses]):
         new_selector: str,
     ) -> DkimRotateResponse | MailChannelsResponse:
         """Rotate a MailChannels-hosted DKIM key pair using async HTTP."""
-        logger.warning(
+        logger.info(
             "Rotating MailChannels DKIM key using async HTTP domain=%s "
             "selector=%s new_selector=%s",
             domain,

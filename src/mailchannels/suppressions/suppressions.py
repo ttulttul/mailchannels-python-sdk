@@ -200,7 +200,7 @@ class SuppressionsResource(Generic[StrictResponses]):
         source: SuppressionDeleteSource | None = None,
     ) -> dict[str, Any]:
         """Delete suppression entries for a recipient."""
-        logger.warning("Deleting MailChannels suppression recipient=%s", recipient)
+        logger.info("Deleting MailChannels suppression recipient=%s", recipient)
         return self._client.request(
             "DELETE",
             f"/suppression-list/recipients/{recipient}",
@@ -214,7 +214,7 @@ class SuppressionsResource(Generic[StrictResponses]):
         source: SuppressionDeleteSource | None = None,
     ) -> dict[str, Any]:
         """Delete suppression entries for a recipient using async HTTP."""
-        logger.warning(
+        logger.info(
             "Deleting MailChannels suppression using async HTTP recipient=%s",
             recipient,
         )

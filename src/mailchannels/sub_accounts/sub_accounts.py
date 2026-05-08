@@ -587,12 +587,12 @@ class SubAccountsResource(Generic[StrictResponses]):
 
     def suspend(self, handle: str) -> dict[str, Any]:
         """Suspend a sub-account."""
-        logger.warning("Suspending MailChannels sub-account handle=%s", handle)
+        logger.info("Suspending MailChannels sub-account handle=%s", handle)
         return self._client.request("POST", f"/sub-account/{handle}/suspend")
 
     async def suspend_async(self, handle: str) -> dict[str, Any]:
         """Suspend a sub-account using async HTTP."""
-        logger.warning(
+        logger.info(
             "Suspending MailChannels sub-account using async HTTP handle=%s",
             handle,
         )
@@ -619,12 +619,12 @@ class SubAccountsResource(Generic[StrictResponses]):
 
     def delete(self, handle: str) -> dict[str, Any]:
         """Delete a sub-account."""
-        logger.warning("Deleting MailChannels sub-account handle=%s", handle)
+        logger.info("Deleting MailChannels sub-account handle=%s", handle)
         return self._client.request("DELETE", f"/sub-account/{handle}")
 
     async def delete_async(self, handle: str) -> dict[str, Any]:
         """Delete a sub-account using async HTTP."""
-        logger.warning(
+        logger.info(
             "Deleting MailChannels sub-account using async HTTP handle=%s",
             handle,
         )

@@ -906,6 +906,9 @@ Each exception carries structured metadata for logs and support workflows:
 `status_code`, `code`, `error_type`, `headers`, `request_id`, `retry_after`,
 `suggested_action`, and the parsed API `response`. Use `to_dict()` when you want
 to send consistent error metadata to your logger.
+Routine SDK operations, including user-requested delete, suspend, rotate, and
+resend calls, log at info level. Warning logs are reserved for unexpected
+recoverable conditions such as missing webhook signature metadata.
 
 ```python
 try:

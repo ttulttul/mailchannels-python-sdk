@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import pytest
 from conftest import FakeHTTPXClient, FakeRequestsClient
 
@@ -99,6 +101,23 @@ def test_update_and_rotate_dkim_keys_use_documented_paths() -> None:
     assert transport.calls[0]["json"] == {"status": "rotated"}
     assert transport.calls[1]["method"] == "POST"
     assert transport.calls[1]["json"] == {"new_key": {"selector": "mcdkim2"}}
+
+
+def test_dkim_destructive_operations_log_at_info(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """It logs intentional DKIM mutations at info level."""
+    transport = FakeRequestsClient(SDKResponse(204, None, ""))
+    client = Client(api_key="test-key", http_client=transport)
+
+    with caplog.at_level(logging.INFO, logger="mailchannels.dkim.dkim"):
+        client.dkim.update_status("example.com", "mcdkim", status="rotated")
+        client.dkim.rotate("example.com", "mcdkim", new_selector="mcdkim2")
+
+    records = [
+        record for record in caplog.records if record.name == "mailchannels.dkim.dkim"
+    ]
+    assert [record.levelno for record in records] == [logging.INFO, logging.INFO]
 
 
 def test_module_level_dkim_api_uses_global_configuration(

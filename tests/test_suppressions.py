@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import logging
+
+import pytest
 from conftest import FakeHTTPXClient, FakeRequestsClient
 
 from mailchannels.client import Client
@@ -67,6 +70,22 @@ def test_create_and_delete_suppression_entries() -> None:
         "https://api.mailchannels.net/tx/v1/suppression-list/recipients/a@example.net"
     )
     assert transport.calls[1]["params"] == {"source": "all"}
+
+
+def test_suppression_delete_logs_at_info(caplog: pytest.LogCaptureFixture) -> None:
+    """It logs intentional suppression deletion at info level."""
+    transport = FakeRequestsClient(SDKResponse(204, None, ""))
+    client = Client(api_key="test-key", http_client=transport)
+
+    with caplog.at_level(logging.INFO, logger="mailchannels.suppressions.suppressions"):
+        client.suppressions.delete("a@example.net", source="all")
+
+    records = [
+        record
+        for record in caplog.records
+        if record.name == "mailchannels.suppressions.suppressions"
+    ]
+    assert [record.levelno for record in records] == [logging.INFO]
 
 
 async def test_suppression_async_methods_use_async_transport() -> None:
