@@ -5,14 +5,16 @@ This reference is generated from public SDK exports, type hints, Pydantic models
 For task-oriented examples, start with the README. This file is the formal public surface reference.
 
 - SDK version: `0.1.0`
-- Top-level exports: `64`
-- Documented public module exports: `179`
+- Top-level exports: `66`
+- Documented public module exports: `181`
 
 ## Top-Level Exports
 
 | Name | Kind | Summary |
 | --- | --- | --- |
+| `API_SPEC_COMPATIBILITY` | `value` |  |
 | `ApiError` | `exception` | Raised for MailChannels API failures. |
+| `ApiSpecCompatibility` | `class` | MailChannels OpenAPI document targeted by this SDK release. |
 | `AsyncClientNotConfigured` | `exception` | Raised when async support is requested without an async HTTP client. |
 | `AsyncHTTPClient` | `protocol` | Protocol implemented by asynchronous MailChannels HTTP transports. |
 | `Attachment` | `Pydantic model` | Email attachment encoded for the MailChannels API. |
@@ -118,10 +120,27 @@ mailchannels.Webhooks.list()
 
 Python SDK for the MailChannels Email API.
 
+#### `mailchannels.API_SPEC_COMPATIBILITY`
+
+- Kind: `value`
+- Summary: 
+
 #### `mailchannels.ApiError`
 
 - Kind: `exception`
 - Summary: Raised for MailChannels API failures.
+
+#### `mailchannels.ApiSpecCompatibility`
+
+- Kind: `class`
+- Summary: MailChannels OpenAPI document targeted by this SDK release.
+- Signature: `mailchannels.ApiSpecCompatibility(source_url: str, openapi_version: str, sha256: str, checked_at: str, sdk_version: str) -> None`
+
+Methods:
+
+| Method | Signature | Summary |
+| --- | --- | --- |
+| `to_dict` | `to_dict() -> dict[str, str]` | Return compatibility metadata as a plain dictionary. |
 
 #### `mailchannels.AsyncClientNotConfigured`
 

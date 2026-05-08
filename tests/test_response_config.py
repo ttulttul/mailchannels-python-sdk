@@ -574,6 +574,28 @@ def test_user_agent_uses_exported_version() -> None:
     )
 
 
+def test_api_spec_compatibility_metadata_is_exported() -> None:
+    """It exposes the OpenAPI contract targeted by the installed SDK."""
+    metadata = mailchannels.API_SPEC_COMPATIBILITY
+
+    assert isinstance(metadata, mailchannels.ApiSpecCompatibility)
+    assert metadata.source_url == "https://docs.mailchannels.net/email-api.yaml"
+    assert metadata.openapi_version == "0.21.0"
+    assert (
+        metadata.sha256
+        == "f637ea36aa2c45b86bb88608e5a38d6c25bfd783e4368967456e32a293b0e0a9"
+    )
+    assert metadata.checked_at == "2026-04-26T19:12:40+00:00"
+    assert metadata.sdk_version == mailchannels.__version__
+    assert metadata.to_dict() == {
+        "source_url": metadata.source_url,
+        "openapi_version": metadata.openapi_version,
+        "sha256": metadata.sha256,
+        "checked_at": metadata.checked_at,
+        "sdk_version": mailchannels.__version__,
+    }
+
+
 def test_module_level_api_accepts_custom_http_client(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

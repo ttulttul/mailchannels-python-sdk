@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 
 from .client import DEFAULT_BASE_URL, Client
+from .compatibility import API_SPEC_COMPATIBILITY, ApiSpecCompatibility
 from .dkim import Dkim
 from .domain_checks import (
     CheckDomain,
@@ -77,6 +78,7 @@ strict_responses: bool = False
 
 __all__ = [
     "ApiError",
+    "ApiSpecCompatibility",
     "AsyncHTTPClient",
     "AsyncClientNotConfigured",
     "Attachment",
@@ -128,6 +130,7 @@ __all__ = [
     "UsageStats",
     "WebhookEventPayload",
     "Webhooks",
+    "API_SPEC_COMPATIBILITY",
     "__version__",
     "api_key",
     "base_url",

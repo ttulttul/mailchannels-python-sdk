@@ -414,6 +414,10 @@ building examples or support-facing error paths.
 
 The SDK exports `mailchannels.__version__` and `mailchannels.get_version()`.
 The User-Agent is derived from this value.
+The SDK also exports `mailchannels.API_SPEC_COMPATIBILITY`, an immutable
+`ApiSpecCompatibility` value with `source_url`, `openapi_version`, `sha256`,
+`checked_at`, and `sdk_version` fields. Use `to_dict()` when logging or
+displaying the OpenAPI contract targeted by an installed SDK release.
 
 Default transports are pooled. `RequestsClient` owns one `requests.Session`;
 `HTTPXClient` lazily creates and reuses one `httpx.AsyncClient`. Reuse explicit

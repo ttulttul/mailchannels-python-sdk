@@ -6,25 +6,10 @@ choosing the next engineering task.
 
 ## Recommended Order
 
-1. Add API spec compatibility guarantees
-2. Explore OpenAPI-assisted generation
-3. Add request options if the API exposes per-request controls
+1. Explore OpenAPI-assisted generation
+2. Add request options if the API exposes per-request controls
 
-## 1. Add API Spec Compatibility Guarantees
-
-Tie SDK releases to the MailChannels OpenAPI document they were checked against.
-Expose the OpenAPI source URL, spec hash, and checked date in generated
-documentation or package metadata so users can see which API contract a release
-targets.
-
-`docs/API_COVERAGE.md` now includes the spec URL, SHA-256 hash, generated
-timestamp, and SDK version. The next step is deciding whether to expose this
-contract metadata from package metadata or a public module constant for runtime
-introspection.
-
-Priority: high.
-
-## 2. Explore OpenAPI-Assisted Generation
+## 1. Explore OpenAPI-Assisted Generation
 
 Investigate generating selected SDK artifacts from the MailChannels OpenAPI
 spec. A fully generated SDK may not be the right product design, but generated
@@ -37,7 +22,7 @@ the desired generated artifacts obvious.
 
 Priority: medium.
 
-## 3. Add Request Options If Needed
+## 2. Add Request Options If Needed
 
 If MailChannels exposes per-request option headers such as idempotency keys,
 model them as an `options` argument rather than forcing those controls into
@@ -79,6 +64,8 @@ API changes:
 - `/check-domain` support.
 - Route registry and bidirectional OpenAPI drift checks.
 - Generated `docs/API_COVERAGE.md` endpoint coverage report.
+- Public `mailchannels.API_SPEC_COMPATIBILITY` runtime metadata for the
+  OpenAPI document targeted by the installed SDK release.
 - Generated `docs/API_REFERENCE.md` public SDK reference.
 - Operation-level request contract tests.
 - Exact route-call matrix coverage.

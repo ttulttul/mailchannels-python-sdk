@@ -922,12 +922,16 @@ except mailchannels.MailChannelsError as error:
 
 The package exports its version so applications can log it at startup or include
 it in diagnostics. The SDK uses the same value in its `User-Agent` header.
+It also exports the MailChannels OpenAPI document metadata that this SDK release
+was checked against, which is useful for support tickets, release audits, and
+startup diagnostics.
 
 ```python
 import mailchannels
 
 print(mailchannels.__version__)
 print(mailchannels.get_version())
+print(mailchannels.API_SPEC_COMPATIBILITY.to_dict())
 ```
 
 The default synchronous transport keeps one `requests.Session` per SDK

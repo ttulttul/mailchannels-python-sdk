@@ -443,3 +443,12 @@ newer Python versions preserve newer syntax and generic details. Render
 Pydantic fields from raw source `__annotations__`, not `field.annotation`, and
 test the snapshot under Python 3.9 and 3.10 before assuming the reference is
 stable.
+
+## 2026-05-08: API spec compatibility should be runtime-visible
+
+Coverage reports are useful before release, but installed packages also need a
+network-free way to report which MailChannels OpenAPI document they target.
+Expose an immutable `mailchannels.API_SPEC_COMPATIBILITY` value with the spec
+source URL, OpenAPI version, SHA-256 hash, checked timestamp, and SDK version so
+applications can include that contract metadata in diagnostics and support
+logs.
