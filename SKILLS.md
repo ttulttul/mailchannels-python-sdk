@@ -377,21 +377,21 @@ mailchannels.Webhooks.batches(statuses=["4xx", "5xx"], limit=50)
 mailchannels.Webhooks.resend_batch(12345, customer_handle="customer_123")
 ```
 
-For webhook receivers, use helpers for local checks before processing events:
+For webhook receivers, verify the full digest, replay window, and Ed25519
+signature before processing events:
 
 ```python
-if not mailchannels.verify_content_digest(headers, raw_body):
-    raise ValueError("Invalid MailChannels webhook digest")
-
 key_id = mailchannels.signature_key_id(headers)
-parameters = mailchannels.parse_signature_input(headers["Signature-Input"])
-if not mailchannels.signature_is_fresh(parameters):
-    raise ValueError("Stale MailChannels webhook signature")
+if key_id is None:
+    raise ValueError("Missing MailChannels webhook key ID")
+public_key = mailchannels.Webhooks.public_key(key_id)
+if not mailchannels.Webhooks.verify(headers, raw_body, public_key):
+    raise ValueError("Invalid MailChannels webhook signature")
 ```
 
 Fetch unknown public signing keys with `mailchannels.Webhooks.public_key(key_id)`.
-Use a dedicated RFC 9421/Ed25519 HTTP-signature verification library for the
-final cryptographic signature check.
+Use `verify_content_digest`, `parse_signature_input`, and
+`signature_is_fresh` only for low-level diagnostics or custom verification flows.
 
 ## Error Handling
 

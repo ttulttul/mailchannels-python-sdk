@@ -6,24 +6,13 @@ choosing the next engineering task.
 
 ## Recommended Order
 
-1. Add complete webhook signature verification
-2. Fix future-dated webhook signature freshness checks
-3. Lower intentional destructive-operation logs from warning to info
-4. Add API spec compatibility guarantees
-5. Explore OpenAPI-assisted generation
-6. Add request options if the API exposes per-request controls
+1. Fix future-dated webhook signature freshness checks
+2. Lower intentional destructive-operation logs from warning to info
+3. Add API spec compatibility guarantees
+4. Explore OpenAPI-assisted generation
+5. Add request options if the API exposes per-request controls
 
-## 1. Add Complete Webhook Signature Verification
-
-`Webhooks.verify_content_digest(...)` only validates the `Content-Digest` header
-against the raw body. It does not verify the RFC 9421 Ed25519 signature. Add a
-high-level `Webhooks.verify(headers, body, public_key)` helper that verifies the
-signature and keep the digest helper as a lower-level primitive with clear
-documentation.
-
-Priority: high.
-
-## 2. Fix Future-Dated Webhook Signature Freshness
+## 1. Fix Future-Dated Webhook Signature Freshness
 
 `signature_is_fresh(...)` uses `abs(reference - created)`, which treats
 signatures from the future the same as old signatures. Split the check into
@@ -32,7 +21,7 @@ for one release.
 
 Priority: high.
 
-## 3. Lower Intentional Destructive-Operation Logs
+## 2. Lower Intentional Destructive-Operation Logs
 
 User-initiated destructive calls currently log at warning level in DKIM,
 webhooks, sub-accounts, and suppressions. Lower those normal operations to info
@@ -40,7 +29,7 @@ level and reserve warning for unexpected recoverable behavior.
 
 Priority: high.
 
-## 4. Add API Spec Compatibility Guarantees
+## 3. Add API Spec Compatibility Guarantees
 
 Tie SDK releases to the MailChannels OpenAPI document they were checked against.
 Expose the OpenAPI source URL, spec hash, and checked date in generated
@@ -54,7 +43,7 @@ introspection.
 
 Priority: high.
 
-## 5. Explore OpenAPI-Assisted Generation
+## 4. Explore OpenAPI-Assisted Generation
 
 Investigate generating selected SDK artifacts from the MailChannels OpenAPI
 spec. A fully generated SDK may not be the right product design, but generated
@@ -67,7 +56,7 @@ the desired generated artifacts obvious.
 
 Priority: medium.
 
-## 6. Add Request Options If Needed
+## 5. Add Request Options If Needed
 
 If MailChannels exposes per-request option headers such as idempotency keys,
 model them as an `options` argument rather than forcing those controls into
@@ -120,6 +109,7 @@ API changes:
   callers across the modeled resource surface.
 - Persistent sync and async HTTP transport client pooling with explicit close
   and context-manager lifecycle hooks.
+- Full webhook digest, freshness, and RFC 9421 Ed25519 signature verification.
 - Email payload negative tests for local validation, mocked API rejection, and
   live dry-run API rejection.
 - Refined API error taxonomy.

@@ -9,7 +9,12 @@ import logging
 import re
 import time
 from builtins import list as list_type
+from collections.abc import Mapping
 from typing import Any, Generic, Literal, TypeVar, overload
+
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
 
 from ..query import compact_query, pagination_query
 from ..response import MailChannelsResponse
@@ -29,6 +34,7 @@ _SIGNATURE_INPUT_RE = re.compile(
 )
 _PARAM_RE = re.compile(r";(?P<key>[a-zA-Z0-9_-]+)=(?P<value>\"[^\"]*\"|[^;]+)")
 _DIGEST_RE = re.compile(r"sha-256=:(?P<digest>[^:]+):")
+_SIGNATURE_RE = re.compile(r"(?P<name>[^=, ]+)=:(?P<signature>[^:]+):")
 
 
 class WebhooksResource(Generic[StrictResponses]):
@@ -37,6 +43,24 @@ class WebhooksResource(Generic[StrictResponses]):
     def __init__(self, client: Any) -> None:
         """Create a webhook resource bound to a client."""
         self._client = client
+
+    @staticmethod
+    def verify(
+        headers: dict[str, str],
+        body: bytes | str,
+        public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey,
+        *,
+        tolerance_seconds: int = 300,
+        now: int | None = None,
+    ) -> bool:
+        """Verify a MailChannels webhook digest, freshness, and Ed25519 signature."""
+        return verify_webhook_signature(
+            headers,
+            body,
+            public_key,
+            tolerance_seconds=tolerance_seconds,
+            now=now,
+        )
 
     def list(self) -> dict[str, Any]:
         """Retrieve configured webhook endpoints."""
@@ -540,6 +564,24 @@ class Webhooks:
         return verify_content_digest(headers, body)
 
     @staticmethod
+    def verify(
+        headers: dict[str, str],
+        body: bytes | str,
+        public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey,
+        *,
+        tolerance_seconds: int = 300,
+        now: int | None = None,
+    ) -> bool:
+        """Verify a MailChannels webhook digest, freshness, and Ed25519 signature."""
+        return verify_webhook_signature(
+            headers,
+            body,
+            public_key,
+            tolerance_seconds=tolerance_seconds,
+            now=now,
+        )
+
+    @staticmethod
     def signature_key_id(headers: dict[str, str]) -> str | None:
         """Extract the signing key ID from webhook headers."""
         return signature_key_id(headers)
@@ -622,7 +664,7 @@ def verify_content_digest(headers: dict[str, str], body: bytes | str) -> bool:
     if not match:
         logger.warning("Webhook Content-Digest header is not sha-256 encoded")
         return False
-    raw_body = body.encode("utf-8") if isinstance(body, str) else body
+    raw_body = body.encode() if isinstance(body, str) else body
     try:
         expected = base64.b64decode(match.group("digest"), validate=True)
     except binascii.Error:
@@ -632,6 +674,147 @@ def verify_content_digest(headers: dict[str, str], body: bytes | str) -> bool:
     verified = expected == actual
     logger.debug("Webhook content digest verified=%s", verified)
     return verified
+
+
+def verify_webhook_signature(
+    headers: dict[str, str],
+    body: bytes | str,
+    public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey,
+    *,
+    tolerance_seconds: int = 300,
+    now: int | None = None,
+) -> bool:
+    """Verify a MailChannels webhook digest, freshness, and Ed25519 signature."""
+    if not verify_content_digest(headers, body):
+        logger.warning("Webhook signature verification failed digest check")
+        return False
+    signature_input = _header(headers, "Signature-Input")
+    signature_header = _header(headers, "Signature")
+    if signature_input is None or signature_header is None:
+        logger.warning("Webhook request is missing signature headers")
+        return False
+    try:
+        parameters = parse_signature_input(signature_input)
+    except ValueError:
+        logger.warning("Webhook Signature-Input header is malformed")
+        return False
+    if parameters.algorithm not in {None, "ed25519"}:
+        logger.warning(
+            "Webhook signature algorithm is unsupported alg=%s",
+            parameters.algorithm,
+        )
+        return False
+    if not signature_is_fresh(
+        parameters,
+        tolerance_seconds=tolerance_seconds,
+        now=now,
+    ):
+        logger.warning("Webhook signature timestamp is stale")
+        return False
+    try:
+        signature = _signature_bytes(signature_header, parameters.signature_name)
+        verifier = _ed25519_public_key(public_key)
+        verifier.verify(signature, _signature_base(headers, parameters))
+    except (InvalidSignature, ValueError, TypeError) as error:
+        logger.warning("Webhook Ed25519 signature verification failed: %s", error)
+        return False
+    logger.debug("Webhook Ed25519 signature verified key_id=%s", parameters.key_id)
+    return True
+
+
+def _signature_bytes(signature_header: str, signature_name: str) -> bytes:
+    """Extract the named RFC 9421 signature bytes from a Signature header."""
+    for match in _SIGNATURE_RE.finditer(signature_header):
+        if match.group("name").strip() != signature_name:
+            continue
+        try:
+            return base64.b64decode(match.group("signature"), validate=True)
+        except binascii.Error as error:
+            raise ValueError("Signature header is not valid base64.") from error
+    raise ValueError("Signature header does not include the Signature-Input name.")
+
+
+def _signature_base(
+    headers: dict[str, str],
+    parameters: SignatureParameters,
+) -> bytes:
+    """Build the RFC 9421 signature base for MailChannels webhook signatures."""
+    lines: list[str] = []
+    for component in parameters.covered_components:
+        normalized = component.lower()
+        if normalized.startswith("@"):
+            raise ValueError(f"Unsupported derived signature component: {component}")
+        value = _header(headers, normalized)
+        if value is None:
+            raise ValueError(f"Signed header is missing: {component}")
+        lines.append(f'"{normalized}": {value}')
+    lines.append(f'"@signature-params": {_signature_params(parameters)}')
+    return "\n".join(lines).encode()
+
+
+def _signature_params(parameters: SignatureParameters) -> str:
+    """Return the Signature-Input value after the signature name."""
+    if parameters.raw is None or "=" not in parameters.raw:
+        covered = " ".join(
+            f'"{component}"' for component in parameters.covered_components
+        )
+        params = f"({covered})"
+        if parameters.created is not None:
+            params += f";created={parameters.created}"
+        if parameters.algorithm is not None:
+            params += f';alg="{parameters.algorithm}"'
+        if parameters.key_id is not None:
+            params += f';keyid="{parameters.key_id}"'
+        return params
+    return parameters.raw.split("=", maxsplit=1)[1].strip()
+
+
+def _ed25519_public_key(
+    public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey,
+) -> Ed25519PublicKey:
+    """Load a MailChannels Ed25519 public key from common SDK response shapes."""
+    key_value = _public_key_value(public_key)
+    if isinstance(key_value, bytes):
+        if key_value.startswith(b"-----BEGIN"):
+            loaded = load_pem_public_key(key_value)
+            if not isinstance(loaded, Ed25519PublicKey):
+                raise ValueError("Public key is not an Ed25519 key.")
+            return loaded
+        raw = key_value if len(key_value) == 32 else _base64_public_key(key_value)
+    else:
+        stripped = key_value.strip()
+        raw = stripped.encode()
+        if stripped.startswith("-----BEGIN"):
+            loaded = load_pem_public_key(raw)
+            if not isinstance(loaded, Ed25519PublicKey):
+                raise ValueError("Public key is not an Ed25519 key.")
+            return loaded
+        raw = _base64_public_key(stripped)
+    if len(raw) != 32:
+        raise ValueError("Ed25519 public keys must be 32 raw bytes.")
+    return Ed25519PublicKey.from_public_bytes(raw)
+
+
+def _base64_public_key(value: str | bytes) -> bytes:
+    """Decode a Base64-encoded Ed25519 public key."""
+    try:
+        return base64.b64decode(value, validate=True)
+    except binascii.Error as error:
+        raise ValueError("Public key is not valid base64.") from error
+
+
+def _public_key_value(
+    public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey,
+) -> str | bytes:
+    """Extract a public key value from a string, bytes, model, or response mapping."""
+    if isinstance(public_key, (str, bytes)):
+        return public_key
+    if isinstance(public_key, WebhookPublicKey):
+        return public_key.key
+    value = public_key.get("key")
+    if isinstance(value, (str, bytes)):
+        return value
+    raise ValueError("Public key must be a key string, bytes, or response with `key`.")
 
 
 def _header(headers: dict[str, str], name: str) -> str | None:

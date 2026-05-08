@@ -5,8 +5,8 @@ This reference is generated from public SDK exports, type hints, Pydantic models
 For task-oriented examples, start with the README. This file is the formal public surface reference.
 
 - SDK version: `0.1.0`
-- Top-level exports: `63`
-- Documented public module exports: `177`
+- Top-level exports: `64`
+- Documented public module exports: `179`
 
 ## Top-Level Exports
 
@@ -75,6 +75,7 @@ For task-oriented examples, start with the README. This file is the formal publi
 | `signature_key_id` | `function` | Extract the signing key ID from webhook headers. |
 | `strict_responses` | `value` |  |
 | `verify_content_digest` | `function` | Verify the webhook Content-Digest header against the raw request body. |
+| `verify_webhook_signature` | `function` | Verify a MailChannels webhook digest, freshness, and Ed25519 signature. |
 
 ## Quick Examples
 
@@ -831,6 +832,7 @@ Methods:
 | `signature_key_id` | `signature_key_id(headers: dict[str, str]) -> str | None` | Extract the signing key ID from webhook headers. |
 | `validate` | `validate(*, request_id: str | None = None) -> WebhookValidationResults | MailChannelsResponse` | Validate enrolled webhook endpoints with a test event. |
 | `validate_async` | `validate_async(*, request_id: str | None = None) -> WebhookValidationResults | MailChannelsResponse` | Validate enrolled webhook endpoints with a test event using async HTTP. |
+| `verify` | `verify(headers: dict[str, str], body: bytes | str, public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey, *, tolerance_seconds: int = 300, now: int | None = None) -> bool` | Verify a MailChannels webhook digest, freshness, and Ed25519 signature. |
 | `verify_content_digest` | `verify_content_digest(headers: dict[str, str], body: bytes | str) -> bool` | Verify the webhook Content-Digest header against the raw body. |
 
 Example for `list`:
@@ -898,6 +900,12 @@ mailchannels.Webhooks.list()
 - Kind: `function`
 - Summary: Verify the webhook Content-Digest header against the raw request body.
 - Signature: `mailchannels.verify_content_digest(headers: dict[str, str], body: bytes | str) -> bool`
+
+#### `mailchannels.verify_webhook_signature`
+
+- Kind: `function`
+- Summary: Verify a MailChannels webhook digest, freshness, and Ed25519 signature.
+- Signature: `mailchannels.verify_webhook_signature(headers: dict[str, str], body: bytes | str, public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey, *, tolerance_seconds: int = 300, now: int | None = None) -> bool`
 
 ### `mailchannels.emails`
 
@@ -2401,6 +2409,7 @@ Methods:
 | `signature_key_id` | `signature_key_id(headers: dict[str, str]) -> str | None` | Extract the signing key ID from webhook headers. |
 | `validate` | `validate(*, request_id: str | None = None) -> WebhookValidationResults | MailChannelsResponse` | Validate enrolled webhook endpoints with a test event. |
 | `validate_async` | `validate_async(*, request_id: str | None = None) -> WebhookValidationResults | MailChannelsResponse` | Validate enrolled webhook endpoints with a test event using async HTTP. |
+| `verify` | `verify(headers: dict[str, str], body: bytes | str, public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey, *, tolerance_seconds: int = 300, now: int | None = None) -> bool` | Verify a MailChannels webhook digest, freshness, and Ed25519 signature. |
 | `verify_content_digest` | `verify_content_digest(headers: dict[str, str], body: bytes | str) -> bool` | Verify the webhook Content-Digest header against the raw body. |
 
 #### `mailchannels.webhooks.WebhooksResource`
@@ -2427,6 +2436,7 @@ Methods:
 | `resend_batch_async` | `resend_batch_async(batch_id: int, *, customer_handle: str) -> dict[str, Any]` | Synchronously resend one webhook batch using async HTTP. |
 | `validate` | `validate(*, request_id: str | None = None) -> WebhookValidationResults | MailChannelsResponse` | Validate enrolled webhook endpoints with a test event. |
 | `validate_async` | `validate_async(*, request_id: str | None = None) -> WebhookValidationResults | MailChannelsResponse` | Validate enrolled webhook endpoints with a test event using async HTTP. |
+| `verify` | `verify(headers: dict[str, str], body: bytes | str, public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey, *, tolerance_seconds: int = 300, now: int | None = None) -> bool` | Verify a MailChannels webhook digest, freshness, and Ed25519 signature. |
 
 #### `mailchannels.webhooks.parse_signature_input`
 
@@ -2451,4 +2461,10 @@ Methods:
 - Kind: `function`
 - Summary: Verify the webhook Content-Digest header against the raw request body.
 - Signature: `mailchannels.webhooks.verify_content_digest(headers: dict[str, str], body: bytes | str) -> bool`
+
+#### `mailchannels.webhooks.verify_webhook_signature`
+
+- Kind: `function`
+- Summary: Verify a MailChannels webhook digest, freshness, and Ed25519 signature.
+- Signature: `mailchannels.webhooks.verify_webhook_signature(headers: dict[str, str], body: bytes | str, public_key: str | bytes | Mapping[str, Any] | WebhookPublicKey, *, tolerance_seconds: int = 300, now: int | None = None) -> bool`
 

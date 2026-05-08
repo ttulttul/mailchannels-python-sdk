@@ -24,6 +24,7 @@ from .webhooks import (
     signature_is_fresh,
     signature_key_id,
     verify_content_digest,
+    verify_webhook_signature,
 )
 
 __all__ = [
@@ -48,4 +49,5 @@ __all__ = [
     "signature_is_fresh",
     "signature_key_id",
     "verify_content_digest",
+    "verify_webhook_signature",
 ]

@@ -29,15 +29,19 @@ def inspect_failed_batches(client: mailchannels.Client) -> dict[str, Any]:
     return client.webhooks.batches(statuses=["4xx", "5xx", "no_response"], limit=50)
 
 
-def verify_webhook_metadata(headers: dict[str, str], body: bytes) -> str | None:
-    """Validate local webhook metadata and return the signing key ID."""
-    if not mailchannels.verify_content_digest(headers, body):
-        logger.error("MailChannels webhook content digest failed verification")
-        raise ValueError("Invalid MailChannels webhook digest.")
+def verify_webhook_metadata(
+    headers: dict[str, str],
+    body: bytes,
+    public_key: str | bytes | dict[str, object],
+) -> str:
+    """Verify webhook authenticity and return the signing key ID."""
     parameters = mailchannels.parse_signature_input(headers["Signature-Input"])
-    if not mailchannels.signature_is_fresh(parameters):
-        logger.error("MailChannels webhook signature timestamp is stale")
-        raise ValueError("Stale MailChannels webhook signature.")
+    if not mailchannels.Webhooks.verify(headers, body, public_key):
+        logger.error("MailChannels webhook signature failed verification")
+        raise ValueError("Invalid MailChannels webhook signature.")
+    if parameters.key_id is None:
+        logger.error("MailChannels webhook signature is missing a key ID")
+        raise ValueError("Missing MailChannels webhook key ID.")
     return parameters.key_id
 
 

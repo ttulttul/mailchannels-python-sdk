@@ -133,13 +133,18 @@ def test_webhook_example_configures_and_verifies_metadata(monkeypatch) -> None:
     headers = {
         "Content-Digest": f"sha-256=:{digest}:",
         "Signature-Input": 'sig=("content-digest");created=1;keyid="mckey"',
+        "Signature": "sig=:ZmFrZQ==:",
     }
-    monkeypatch.setattr(webhooks.mailchannels, "signature_is_fresh", lambda _: True)
+    monkeypatch.setattr(
+        webhooks.mailchannels.Webhooks,
+        "verify",
+        lambda *_args, **_kwargs: True,
+    )
 
     webhooks.configure_webhook(client, "https://example.com/events")
     webhooks.validate_webhooks(client)
     webhooks.inspect_failed_batches(client)
-    key_id = webhooks.verify_webhook_metadata(headers, body)
+    key_id = webhooks.verify_webhook_metadata(headers, body, {"key": "fake"})
 
     assert key_id == "mckey"
     assert transport.calls[2]["params"] == {

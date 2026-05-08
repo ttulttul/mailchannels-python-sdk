@@ -395,3 +395,12 @@ literal and overload modeled methods so explicit strict clients return Pydantic
 models statically, while non-strict clients keep the dict-like
 `MailChannelsResponse`. Module-level helpers should remain broader because
 `mailchannels.strict_responses` is mutable runtime state.
+
+## 2026-05-07: Webhook verification should cover digest and signature
+
+`Content-Digest` verification proves body integrity but not authenticity. The
+high-level webhook receiver path should use `Webhooks.verify(...)` or
+`verify_webhook_signature(...)` so the SDK checks the digest, signature
+freshness, and the RFC 9421 Ed25519 `Signature` value against the public key
+returned by `/webhook/public-key`. Keep the lower-level helpers for diagnostics
+and custom verification flows.

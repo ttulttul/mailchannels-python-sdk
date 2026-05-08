@@ -7,6 +7,8 @@ import hashlib
 
 import pytest
 from conftest import FakeHTTPXClient, FakeRequestsClient
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 from mailchannels.client import Client
 from mailchannels.response import SDKResponse
@@ -16,6 +18,7 @@ from mailchannels.webhooks import (
     signature_is_fresh,
     signature_key_id,
     verify_content_digest,
+    verify_webhook_signature,
 )
 
 
@@ -110,9 +113,113 @@ def test_webhook_signature_helpers() -> None:
     assert verify_content_digest(headers, body)
 
 
+def test_webhook_signature_verification_accepts_valid_ed25519_signature() -> None:
+    """It verifies a complete MailChannels webhook signature."""
+    private_key = Ed25519PrivateKey.generate()
+    public_key = private_key.public_key().public_bytes(
+        encoding=Encoding.Raw,
+        format=PublicFormat.Raw,
+    )
+    body = b'[{"event":"delivered","customer_handle":"customer_123"}]'
+    digest = base64.b64encode(hashlib.sha256(body).digest()).decode("ascii")
+    signature_input = (
+        'sig=("content-digest");created=1738868393;alg="ed25519";keyid="mckey"'
+    )
+    signature_base = (
+        f'"content-digest": sha-256=:{digest}:\n'
+        f'"@signature-params": {signature_input.split("=", maxsplit=1)[1]}'
+    ).encode()
+    signature = base64.b64encode(private_key.sign(signature_base)).decode("ascii")
+    headers = {
+        "Content-Digest": f"sha-256=:{digest}:",
+        "Signature-Input": signature_input,
+        "Signature": f"sig=:{signature}:",
+    }
+
+    assert verify_webhook_signature(
+        headers,
+        body,
+        {"key": base64.b64encode(public_key).decode("ascii")},
+        now=1738868400,
+    )
+
+
+def test_webhooks_static_verify_accepts_public_key_model_response() -> None:
+    """It exposes full signature verification from the Webhooks namespace."""
+    private_key = Ed25519PrivateKey.generate()
+    public_key = private_key.public_key().public_bytes(
+        encoding=Encoding.Raw,
+        format=PublicFormat.Raw,
+    )
+    body = b'{"event":"processed"}'
+    digest = base64.b64encode(hashlib.sha256(body).digest()).decode("ascii")
+    signature_input = 'sig=("content-digest");created=10;keyid="mckey"'
+    signature_base = (
+        f'"content-digest": sha-256=:{digest}:\n'
+        f'"@signature-params": {signature_input.split("=", maxsplit=1)[1]}'
+    ).encode()
+    signature = base64.b64encode(private_key.sign(signature_base)).decode("ascii")
+    headers = {
+        "content-digest": f"sha-256=:{digest}:",
+        "signature-input": signature_input,
+        "signature": f"sig=:{signature}:",
+    }
+
+    assert Client(api_key="test-key").webhooks.verify(
+        headers,
+        body,
+        base64.b64encode(public_key).decode("ascii"),
+        now=12,
+    )
+
+
 def test_webhook_content_digest_missing_header_returns_false() -> None:
     """It rejects webhook requests without a Content-Digest header."""
     assert not verify_content_digest({}, b"{}")
+
+
+def test_webhook_signature_verification_rejects_bad_signature() -> None:
+    """It rejects forged webhook signatures even when the digest matches."""
+    private_key = Ed25519PrivateKey.generate()
+    other_key = Ed25519PrivateKey.generate().public_key().public_bytes(
+        encoding=Encoding.Raw,
+        format=PublicFormat.Raw,
+    )
+    body = b"{}"
+    digest = base64.b64encode(hashlib.sha256(body).digest()).decode("ascii")
+    signature_input = 'sig=("content-digest");created=10;keyid="mckey"'
+    signature_base = (
+        f'"content-digest": sha-256=:{digest}:\n'
+        f'"@signature-params": {signature_input.split("=", maxsplit=1)[1]}'
+    ).encode()
+    signature = base64.b64encode(private_key.sign(signature_base)).decode("ascii")
+
+    assert not verify_webhook_signature(
+        {
+            "Content-Digest": f"sha-256=:{digest}:",
+            "Signature-Input": signature_input,
+            "Signature": f"sig=:{signature}:",
+        },
+        body,
+        base64.b64encode(other_key).decode("ascii"),
+        now=12,
+    )
+
+
+def test_webhook_signature_verification_rejects_missing_signature_header() -> None:
+    """It rejects requests that only include a matching content digest."""
+    body = b"{}"
+    digest = base64.b64encode(hashlib.sha256(body).digest()).decode("ascii")
+
+    assert not verify_webhook_signature(
+        {
+            "Content-Digest": f"sha-256=:{digest}:",
+            "Signature-Input": 'sig=("content-digest");created=10;keyid="mckey"',
+        },
+        body,
+        "x" * 44,
+        now=12,
+    )
 
 
 def test_webhook_content_digest_wrong_digest_returns_false() -> None:

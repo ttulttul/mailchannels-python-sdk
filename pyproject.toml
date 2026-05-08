@@ -7,6 +7,7 @@ requires-python = ">=3.9"
 license = { file = "LICENSE" }
 authors = [{ name = "MailChannels" }]
 dependencies = [
+    "cryptography>=42,<47",
     "eval-type-backport>=0.2,<1; python_version < '3.10'",
     "pydantic>=2.6,<3",
     "requests>=2.31,<3",

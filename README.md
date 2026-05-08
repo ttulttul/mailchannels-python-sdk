@@ -841,39 +841,33 @@ mailchannels.Webhooks.resend_batch(
 ```
 
 Webhook receivers should verify the `customer_handle` in each event and check
-the signature headers MailChannels sends with the request. The SDK includes
-small helpers for the local pieces that can be done without extra crypto
-dependencies: parsing `Signature-Input`, extracting the key ID, checking replay
-age, and verifying the `Content-Digest` against the raw request body.
+the signature headers MailChannels sends with the request. The SDK can verify
+the `Content-Digest`, replay age, and RFC 9421 Ed25519 signature when given the
+public signing key returned by `Webhooks.public_key(...)`.
 
 ```python
+import mailchannels
 from mailchannels import (
-    parse_signature_input,
-    signature_is_fresh,
     signature_key_id,
-    verify_content_digest,
 )
 
 
 def receive_webhook(headers: dict[str, str], body: bytes) -> None:
-    """Validate local webhook metadata before processing events."""
-    if not verify_content_digest(headers, body):
-        raise ValueError("Invalid MailChannels webhook digest")
-
+    """Verify a webhook before processing events."""
     key_id = signature_key_id(headers)
-    public_key = mailchannels.Webhooks.public_key(key_id) if key_id else None
+    if key_id is None:
+        raise ValueError("Missing MailChannels webhook key ID")
 
-    parameters = parse_signature_input(headers["Signature-Input"])
-    if not signature_is_fresh(parameters, tolerance_seconds=300):
-        raise ValueError("Stale MailChannels webhook signature")
+    public_key = mailchannels.Webhooks.public_key(key_id)
 
-    # Use `public_key["key"]` with an RFC 9421/Ed25519 verification library.
+    if not mailchannels.Webhooks.verify(headers, body, public_key):
+        raise ValueError("Invalid MailChannels webhook signature")
 ```
 
 MailChannels signs webhooks with Ed25519 and documents the signing flow in terms
-of RFC 9421. This SDK intentionally leaves the final cryptographic verification
-step to a dedicated HTTP-signature library so application code can choose the
-verification package that fits its web framework.
+of RFC 9421. `verify_content_digest(...)`, `parse_signature_input(...)`,
+`signature_key_id(...)`, and `signature_is_fresh(...)` remain available as
+low-level helpers when an application needs to inspect individual checks.
 
 ### Error Handling
 
